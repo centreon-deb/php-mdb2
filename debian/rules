@@ -1,0 +1,25 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+
+PACKAGE=php-mdb2
+PACKAGEDIR=debian/$(PACKAGE)
+
+# See debhelper(7) (uncomment to enable)
+# output every command that modifies files on the build system.
+# export DH_VERBOSE=1
+
+#RULES_START_TEXT#
+%:
+        # if using cmake with definition in a specific directory (build):
+        # dh $@ --sourcedirectory=build
+        #
+        # to run with quilt use this instead:
+        # dh  --with quilt $@
+	dh $@ --buildsystem=phppear --with phppear
+
+override_dh_phppear:
+	dh_phppear -O--buildsystem=phppear
+	rm -rf $(PACKAGEDIR)/usr/share/php/data/MDB2/LICENSE
+
+
+#RULES_END_TEXT#

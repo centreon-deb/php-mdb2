@@ -1,0 +1,79 @@
+<?php
+
+$testcases = array(
+    'MDB2_manager_testcase',
+    'MDB2_api_testcase',
+    'MDB2_usage_testcase',
+    'MDB2_bugs_testcase',
+    'MDB2_reverse_testcase',
+    'MDB2_native_testcase',
+);
+
+$dbarray[] = array(
+    'dsn' => array(
+        'phptype' => 'mysql',
+        'username' => 'username',
+        'password' => 'password',
+        'hostspec' => 'hostname',
+    ),
+    'options' => array(
+        'use_transactions' => true
+    )
+);
+
+$dbarray[] = array(
+    'dsn' => array(
+        'phptype' => 'pgsql',
+        'username' => 'username',
+        'password' => 'password',
+        'hostspec' => 'hostname',
+    )
+);
+
+$dbarray[] = array(
+    'dsn' => array(
+        'phptype' => 'oci8',
+        'username' => '',
+        'password' => 'password',
+        'hostspec' => 'hostname',
+    ),
+    'options' => array(
+        'DBA_username' => 'username',
+        'DBA_password' => 'password'
+    )
+);
+
+$dbarray[] = array(
+    'dsn' => array(
+        'phptype' => 'sqlite',
+        'username' => '',
+        'password' => 'password',
+        'hostspec' => 'hostname',
+    ),
+    'options' => array(
+        'database_path' => '',
+        'database_extension' => '',
+    )
+);
+
+$dbarray[] = array(
+    'dsn' => array(
+        'phptype' => 'mssql',
+        'username' => 'username',
+        'password' => 'password',
+        'hostspec' => 'hostname',
+    )
+);
+
+$dbarray[] = array(
+    'dsn' => array(
+        'phptype' => 'fbsql',
+        'username' => 'username',
+        'password' => 'password',
+        'hostspec' => 'hostname',
+    )
+);
+
+// you may need to uncomment the line and modify the multiplier as you see fit
+#set_time_limit(60*count($dbarray));
+?>

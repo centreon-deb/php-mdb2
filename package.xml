@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1" ?>
 <!DOCTYPE package SYSTEM "http://pear.php.net/dtd/package-1.0">
-<package version="1.0" packagerversion="1.4.0a11">
+<package version="1.0" packagerversion="1.4.0a12">
  <name>MDB2</name>
  <summary>database abstraction layer</summary>
  <description>PEAR MDB2 is a merge of the PEAR DB and Metabase php database abstraction layers.
@@ -30,20 +30,9 @@ portability. Among other things MDB2 features:
 * Table information interface
 * RDBMS management methods (creating, dropping, altering)
 * RDBMS independent xml based schema definition management
-* Reverse engineering schemas from an existing DB (currently only MySQL)
+* Reverse engineering schemas from an existing DB
 * Full integration into the PEAR Framework
 * PHPDoc API documentation
-
-Currently supported RDBMS:
-MySQL (mysql and mysqli extension)
-PostGreSQL
-Oracle
-Frontbase
-Querysim
-Interbase/Firebird
-MSSQL
-SQLite
-Other soon to follow.
  </description>
  <maintainers>
   <maintainer>
@@ -56,12 +45,6 @@ Other soon to follow.
    <user>pgc</user>
    <name>Paul Cooper</name>
    <email>pgc@ucecom.com</email>
-   <role>contributor</role>
-  </maintainer>
-  <maintainer>
-   <user>fmk</user>
-   <name>Frank M. Kromann</name>
-   <email>frank@kromann.info</email>
    <role>contributor</role>
   </maintainer>
   <maintainer>
@@ -78,223 +61,49 @@ Other soon to follow.
   </maintainer>
   </maintainers>
  <release>
-  <version>2.0.0beta4</version>
-  <date>2005-04-29</date>
+  <version>2.0.0beta5</version>
+  <date>2005-06-08</date>
   <license>BSD License</license>
   <state>beta</state>
   <notes>Warning: this release features numerous BC breaks to make the MDB2 API be as
 similar as possible as the ext/pdo API! The next release is likely to also break
 BC for the same reason. Check php.net/pdo for information on the pdo API.
 
-- fixed bugs in MDB2_Extended::buildManipSQL() introduced in latest tweaks (bug #3725)
-- mysqli has connection objects instead of resources
-- fix mssql tableInfo() so flags are returned (bug #3691)
-- fixed bug in handling of force_array when 2 or less columns are fetched in fetchAll()
-- added map error message for sqlite multi-column unique constraints.
-- added listUsers(), listViews(), listFunctions() to oracle manager
-- added listFunctions() to pgsql manager
-- updated listViews() in pgsql manager
-- added __call() support for module handling
-- mysql driver now uses mysqli implementations where feasible
-- ensure that internal calls to query dont wrap the result
-- for some reason mysqli didnt like SELECT LAST_INSERT_ID()
-- fixed bug in table alteration when only an index was added
-- updated pgsql API calls to 4.2.0 recommended names (bug #3904)
-- moved logic to compareDefinitions from the Manager into the Datatype module
-  to increase flexibility
-- extended MDB2::isError() to be able to handle an array or codes
-- added error handling into autoPrepare() and autoExecute()
-- migrade all MDB2::isError calls that dont check for specific errors codes to PEAR::isError
-- don't pass new_link to mysql_pconnect() (bug #3993)
-- use MDB2::raiseError() instead of MDB2_Driver_Common::raiseError()
-- do not disable result wrapping when doing internal calls to query() (bug #3997)
-- _wrapResult() now ensures that the result class is an instance of MDB2_Result_Common
-- unbundled the MDB2_Tools_Manager into a separate package PEAR::MDB2_Schema
-- improved getTableFieldDefinition() and moved native type mapping to the
-  datatype module mapNativeDatatype() method (mysql, sqlite, pgsql and ibase drivers)
-- fixes for listTables() in sqlite and pgsql driver
-- ensure that mysql drivers use the dummy_primary_key property
-- severely reworked how data is fetched and buffered and freed in the iterator
-- added mapNativeDatatype() to ibase driver
-- getTypeDeclaration() =&gt; _getTypeDeclaration() in ibase driver
-- cosmetic fixes and tweaks (replace(). fetchOne() ..)
-- renamed 'seqname_col_name' option to 'seqcol_name'
-- moved schema documentation, xml_reverse_engineering.php, MDB.dtd
-  and MDB.xls to MDB_Schema package
-- Mysqli: implicit sequence is named as table by default
-- Mysqli: text types now map to clob first
-- ensure that types are numerically keyed in setResultTypes()
-- added caching to getColumnNames()
-- added bindColumn() support
-- use MDB2_Schema::factory()
-- phpdoc fixes in regards to flipped fetchmode
-- remove renegate mysql code in sqlite driver
+- refactored LOB support (BC breaks)
+- moved all drivers into separate packages MDB2_Driver_* (BC break)
+- bindParam() and bindColumn() are now 1-indexed (BC break)
+- removed special handling for day light saving time (bug #4341) (BC break)
+- ensure SQL injection protection in all _quote() methods
+  (was missing in some decimal, float, time, date and timestamp implementations)
+- renamed getRowCount() to rowCount() for PDO compliance (BC break)
+  (doesnt take into account the offset anymore)
+- added new quote() parameter to remove quotes (ugly hack will get cleaned up)
+- renamed execute() to _execute() since common provides some common functionality via execute()
+- fixed some issues regarding limit/offset in prepared statements
+- fixed bug in _assignBindColumns() when using associative fetches
+- support numeric and string keys in types array for prepared queries
+- call trigger error if __call() is unable to find a method in any of the modules
+- work around php5 bugs in the test suite
   </notes>
   <deps>
    <dep type="php" rel="ge" version="4.2.0" optional="no"/>
    <dep type="pkg" rel="ge" version="1.0b1" optional="no">PEAR</dep>
-   <dep type="pkg" rel="has" optional="no">XML_Parser</dep>
   </deps>
   <provides type="class" name="MDB2_Driver_Datatype_Common" />
   <provides type="function" name="MDB2_Driver_Datatype_Common::setResultTypes" />
   <provides type="function" name="MDB2_Driver_Datatype_Common::convertResult" />
   <provides type="function" name="MDB2_Driver_Datatype_Common::convertResultRow" />
   <provides type="function" name="MDB2_Driver_Datatype_Common::getDeclaration" />
-  <provides type="class" name="MDB2_Driver_Datatype_fbsql" extends="MDB2_Driver_Datatype_Common" />
-  <provides type="function" name="MDB2_Driver_Datatype_fbsql::convertResult" />
-  <provides type="class" name="MDB2_Driver_Datatype_ibase" extends="MDB2_Driver_Datatype_Common" />
-  <provides type="function" name="MDB2_Driver_Datatype_ibase::convertResult" />
-  <provides type="function" name="MDB2_Driver_Datatype_ibase::mapNativeDatatype" />
-  <provides type="class" name="MDB2_Driver_Datatype_mssql" extends="MDB2_Driver_Datatype_Common" />
-  <provides type="function" name="MDB2_Driver_Datatype_mssql::convertResult" />
-  <provides type="class" name="MDB2_Driver_Datatype_mysql" extends="MDB2_Driver_Datatype_mysqli" />
-  <provides type="class" name="MDB2_Driver_Datatype_mysqli" extends="MDB2_Driver_Datatype_Common" />
-  <provides type="function" name="MDB2_Driver_Datatype_mysqli::convertResult" />
-  <provides type="function" name="MDB2_Driver_Datatype_mysqli::mapNativeDatatype" />
-  <provides type="class" name="MDB2_Driver_Datatype_oci8" extends="MDB2_Driver_Datatype_Common" />
-  <provides type="function" name="MDB2_Driver_Datatype_oci8::convertResult" />
-  <provides type="class" name="MDB2_Driver_Datatype_pgsql" extends="MDB2_Driver_Datatype_Common" />
-  <provides type="function" name="MDB2_Driver_Datatype_pgsql::convertResult" />
-  <provides type="function" name="MDB2_Driver_Datatype_pgsql::mapNativeDatatype" />
-  <provides type="class" name="MDB2_Driver_Datatype_sqlite" extends="MDB2_Driver_Datatype_Common" />
-  <provides type="function" name="MDB2_Driver_Datatype_sqlite::convertResult" />
-  <provides type="function" name="MDB2_Driver_Datatype_sqlite::mapNativeDatatype" />
   <provides type="class" name="MDB2_Driver_Manager_Common" />
   <provides type="function" name="MDB2_Driver_Manager_Common::getFieldDeclarationList" />
   <provides type="function" name="MDB2_Driver_Manager_Common::createDatabase" />
   <provides type="function" name="MDB2_Driver_Manager_Common::dropDatabase" />
   <provides type="function" name="MDB2_Driver_Manager_Common::createTable" />
-  <provides type="class" name="MDB2_Driver_Manager_fbsql" extends="MDB2_Driver_Manager_Common" />
-  <provides type="function" name="MDB2_Driver_Manager_fbsql::createDatabase" />
-  <provides type="class" name="MDB2_Driver_Manager_ibase" extends="MDB2_Driver_Manager_Common" />
-  <provides type="function" name="MDB2_Driver_Manager_ibase::createDatabase" />
-  <provides type="function" name="MDB2_Driver_Manager_ibase::dropDatabase" />
-  <provides type="function" name="MDB2_Driver_Manager_ibase::checkSupportedChanges" />
-  <provides type="function" name="MDB2_Driver_Manager_ibase::alterTable" />
-  <provides type="class" name="MDB2_Driver_Manager_mssql" extends="MDB2_Driver_Manager_Common" />
-  <provides type="function" name="MDB2_Driver_Manager_mssql::createDatabase" />
-  <provides type="class" name="MDB2_Driver_Manager_mysql" extends="MDB2_Driver_Manager_mysqli" />
-  <provides type="class" name="MDB2_Driver_Manager_mysqli" extends="MDB2_Driver_Manager_Common" />
-  <provides type="function" name="MDB2_Driver_Manager_mysqli::createDatabase" />
-  <provides type="function" name="MDB2_Driver_Manager_mysqli::dropDatabase" />
-  <provides type="function" name="MDB2_Driver_Manager_mysqli::createTable" />
-  <provides type="class" name="MDB2_Driver_Manager_oci8" extends="MDB2_Driver_Manager_Common" />
-  <provides type="function" name="MDB2_Driver_Manager_oci8::createDatabase" />
-  <provides type="function" name="MDB2_Driver_Manager_oci8::dropDatabase" />
-  <provides type="function" name="MDB2_Driver_Manager_oci8::alterTable" />
-  <provides type="class" name="MDB2_Driver_Manager_pgsql" extends="MDB2_Driver_Manager_common" />
-  <provides type="function" name="MDB2_Driver_Manager_pgsql::createDatabase" />
-  <provides type="class" name="MDB2_Driver_Manager_sqlite" extends="MDB2_Driver_Manager_Common" />
-  <provides type="function" name="MDB2_Driver_Manager_sqlite::createDatabase" />
-  <provides type="function" name="MDB2_Driver_Manager_sqlite::dropDatabase" />
-  <provides type="function" name="MDB2_Driver_Manager_sqlite::listDatabases" />
-  <provides type="function" name="MDB2_Driver_Manager_sqlite::listUsers" />
-  <provides type="function" name="MDB2_Driver_Manager_sqlite::listTables" />
-  <provides type="function" name="MDB2_Driver_Manager_sqlite::listTableFields" />
-  <provides type="class" name="MDB2_Driver_Native_fbsql" />
-  <provides type="function" name="MDB2_Driver_Native_fbsql::getInsertID" />
-  <provides type="class" name="MDB2_Driver_Native_ibase" />
-  <provides type="class" name="MDB2_Driver_Native_mssql" />
-  <provides type="function" name="MDB2_Driver_Native_mssql::getInsertID" />
-  <provides type="class" name="MDB2_Driver_Native_mysql" />
-  <provides type="function" name="MDB2_Driver_Native_mysql::getInsertID" />
-  <provides type="class" name="MDB2_Driver_Native_mysqli" />
-  <provides type="function" name="MDB2_Driver_Native_mysqli::getInsertID" />
-  <provides type="class" name="MDB2_Driver_Native_oci8" />
-  <provides type="class" name="MDB2_Driver_Native_pgsql" />
-  <provides type="function" name="MDB2_Driver_Native_pgsql::deleteOID" />
-  <provides type="class" name="MDB2_Driver_Native_sqlite" />
-  <provides type="function" name="MDB2_Driver_Native_sqlite::getInsertID" />
   <provides type="class" name="MDB2_Driver_Reverse_Common" />
   <provides type="function" name="MDB2_Driver_Reverse_Common::getTableFieldDefinition" />
   <provides type="function" name="MDB2_Driver_Reverse_Common::getTableIndexDefinition" />
   <provides type="function" name="MDB2_Driver_Reverse_Common::getSequenceDefinition" />
   <provides type="function" name="MDB2_Driver_Reverse_Common::tableInfo" />
-  <provides type="class" name="MDB2_Driver_Reverse_fbsql" extends="MDB2_Driver_Reverse_Common" />
-  <provides type="function" name="MDB2_Driver_Reverse_fbsql::tableInfo" />
-  <provides type="class" name="MDB2_Driver_Reverse_ibase" extends="MDB2_Driver_Reverse_Common" />
-  <provides type="function" name="MDB2_Driver_Reverse_ibase::tableInfo" />
-  <provides type="class" name="MDB2_Driver_Reverse_mssql" extends="MDB2_Driver_Reverse_Common" />
-  <provides type="function" name="MDB2_Driver_Reverse_mssql::tableInfo" />
-  <provides type="class" name="MDB2_Driver_Reverse_mysql" extends="MDB2_Driver_Reverse_mysqli" />
-  <provides type="function" name="MDB2_Driver_Reverse_mysql::tableInfo" />
-  <provides type="class" name="MDB2_Driver_Reverse_mysqli" extends="MDB2_Driver_Reverse_Common" />
-  <provides type="function" name="MDB2_Driver_Reverse_mysqli::getTableFieldDefinition" />
-  <provides type="class" name="MDB2_Driver_Reverse_oci8" extends="MDB2_Driver_Reverse_Common" />
-  <provides type="function" name="MDB2_Driver_Reverse_oci8::tableInfo" />
-  <provides type="class" name="MDB2_Driver_Reverse_pgsql" extends="MDB2_Driver_Reverse_common" />
-  <provides type="function" name="MDB2_Driver_Reverse_pgsql::getTableFieldDefinition" />
-  <provides type="class" name="MDB2_Driver_Reverse_sqlite" extends="MDB2_Driver_Reverse_Common" />
-  <provides type="function" name="MDB2_Driver_Reverse_sqlite::getTableFieldDefinition" />
-  <provides type="class" name="MDB2_Driver_fbsql" extends="MDB2_Driver_Common" />
-  <provides type="function" name="MDB2_Driver_fbsql::errorInfo" />
-  <provides type="function" name="MDB2_Driver_fbsql::beginTransaction" />
-  <provides type="function" name="MDB2_Driver_fbsql::commit" />
-  <provides type="function" name="MDB2_Driver_fbsql::rollback" />
-  <provides type="function" name="MDB2_Driver_fbsql::connect" />
-  <provides type="function" name="MDB2_Driver_fbsql::disconnect" />
-  <provides type="class" name="MDB2_Driver_ibase" extends="MDB2_Driver_Common" />
-  <provides type="function" name="MDB2_Driver_ibase::errorInfo" />
-  <provides type="function" name="MDB2_Driver_ibase::beginTransaction" />
-  <provides type="function" name="MDB2_Driver_ibase::commit" />
-  <provides type="function" name="MDB2_Driver_ibase::rollback" />
-  <provides type="function" name="MDB2_Driver_ibase::connect" />
-  <provides type="function" name="MDB2_Driver_ibase::disconnect" />
-  <provides type="class" name="MDB2_Driver_mssql" extends="MDB2_Driver_Common" />
-  <provides type="function" name="MDB2_Driver_mssql::errorInfo" />
-  <provides type="function" name="MDB2_Driver_mssql::quoteIdentifier" />
-  <provides type="function" name="MDB2_Driver_mssql::beginTransaction" />
-  <provides type="function" name="MDB2_Driver_mssql::commit" />
-  <provides type="function" name="MDB2_Driver_mssql::rollback" />
-  <provides type="function" name="MDB2_Driver_mssql::connect" />
-  <provides type="function" name="MDB2_Driver_mssql::disconnect" />
-  <provides type="class" name="MDB2_Driver_mysql" extends="MDB2_Driver_Common" />
-  <provides type="function" name="MDB2_Driver_mysql::errorInfo" />
-  <provides type="function" name="MDB2_Driver_mysql::escape" />
-  <provides type="function" name="MDB2_Driver_mysql::quoteIdentifier" />
-  <provides type="function" name="MDB2_Driver_mysql::beginTransaction" />
-  <provides type="function" name="MDB2_Driver_mysql::commit" />
-  <provides type="function" name="MDB2_Driver_mysql::rollback" />
-  <provides type="function" name="MDB2_Driver_mysql::connect" />
-  <provides type="function" name="MDB2_Driver_mysql::disconnect" />
-  <provides type="class" name="MDB2_Driver_mysqli" extends="MDB2_Driver_Common" />
-  <provides type="function" name="MDB2_Driver_mysqli::errorInfo" />
-  <provides type="function" name="MDB2_Driver_mysqli::escape" />
-  <provides type="function" name="MDB2_Driver_mysqli::quoteIdentifier" />
-  <provides type="function" name="MDB2_Driver_mysqli::beginTransaction" />
-  <provides type="function" name="MDB2_Driver_mysqli::commit" />
-  <provides type="function" name="MDB2_Driver_mysqli::rollback" />
-  <provides type="function" name="MDB2_Driver_mysqli::connect" />
-  <provides type="function" name="MDB2_Driver_mysqli::disconnect" />
-  <provides type="class" name="MDB2_Driver_oci8" extends="MDB2_Driver_Common" />
-  <provides type="function" name="MDB2_Driver_oci8::errorInfo" />
-  <provides type="function" name="MDB2_Driver_oci8::beginTransaction" />
-  <provides type="function" name="MDB2_Driver_oci8::commit" />
-  <provides type="function" name="MDB2_Driver_oci8::rollback" />
-  <provides type="function" name="MDB2_Driver_oci8::connect" />
-  <provides type="function" name="MDB2_Driver_oci8::disconnect" />
-  <provides type="function" name="MDB2_Driver_oci8::standaloneQuery" />
-  <provides type="function" name="MDB2_Driver_oci8::prepare" />
-  <provides type="function" name="MDB2_Driver_oci8::nextID" />
-  <provides type="class" name="MDB2_Driver_pgsql" extends="MDB2_Driver_Common" />
-  <provides type="function" name="MDB2_Driver_pgsql::errorInfo" />
-  <provides type="function" name="MDB2_Driver_pgsql::beginTransaction" />
-  <provides type="function" name="MDB2_Driver_pgsql::commit" />
-  <provides type="function" name="MDB2_Driver_pgsql::rollback" />
-  <provides type="function" name="MDB2_Driver_pgsql::connect" />
-  <provides type="function" name="MDB2_Driver_pgsql::disconnect" />
-  <provides type="function" name="MDB2_Driver_pgsql::standaloneQuery" />
-  <provides type="class" name="MDB2_Driver_querysim" extends="MDB2_Driver_Common" />
-  <provides type="function" name="MDB2_Driver_querysim::connect" />
-  <provides type="function" name="MDB2_Driver_querysim::disconnect" />
-  <provides type="class" name="MDB2_Driver_sqlite" extends="MDB2_Driver_Common" />
-  <provides type="function" name="MDB2_Driver_sqlite::errorInfo" />
-  <provides type="function" name="MDB2_Driver_sqlite::escape" />
-  <provides type="function" name="MDB2_Driver_sqlite::beginTransaction" />
-  <provides type="function" name="MDB2_Driver_sqlite::commit" />
-  <provides type="function" name="MDB2_Driver_sqlite::rollback" />
-  <provides type="function" name="MDB2_Driver_sqlite::connect" />
-  <provides type="function" name="MDB2_Driver_sqlite::disconnect" />
   <provides type="class" name="DB" />
   <provides type="class" name="DB_Error" extends="PEAR_Error" />
   <provides type="function" name="DB::factory" />
@@ -339,20 +148,13 @@ BC for the same reason. Check php.net/pdo for information on the pdo API.
   <provides type="function" name="MDB2_BufferedIterator::rewind" />
   <provides type="function" name="MDB2_BufferedIterator::prev" />
   <provides type="class" name="MDB2_LOB" />
-  <provides type="class" name="MDB2_LOB_Result" extends="MDB2_LOB" />
-  <provides type="class" name="MDB2_LOB_Output_File" extends="MDB2_LOB" />
-  <provides type="function" name="MDB2_LOB::create" />
-  <provides type="function" name="MDB2_LOB::destroy" />
-  <provides type="function" name="MDB2_LOB::endOfLOB" />
-  <provides type="function" name="MDB2_LOB::readLOB" />
-  <provides type="function" name="MDB2_LOB_Result::create" />
-  <provides type="function" name="MDB2_LOB_Result::destroy" />
-  <provides type="function" name="MDB2_LOB_Result::endOfLOB" />
-  <provides type="function" name="MDB2_LOB_Result::readLOB" />
-  <provides type="function" name="MDB2_LOB_Output_File::create" />
-  <provides type="function" name="MDB2_LOB_Output_File::destroy" />
-  <provides type="function" name="MDB2_LOB_Output_File::endOfLOB" />
-  <provides type="function" name="MDB2_LOB_Output_File::readLOB" />
+  <provides type="function" name="MDB2_LOB::stream_open" />
+  <provides type="function" name="MDB2_LOB::stream_read" />
+  <provides type="function" name="MDB2_LOB::stream_write" />
+  <provides type="function" name="MDB2_LOB::stream_tell" />
+  <provides type="function" name="MDB2_LOB::stream_eof" />
+  <provides type="function" name="MDB2_LOB::stream_seek" />
+  <provides type="function" name="MDB2_LOB::stream_close" />
   <provides type="class" name="MDB2" />
   <provides type="class" name="MDB2_Error" extends="PEAR_Error" />
   <provides type="function" name="MDB2::setOptions" />
@@ -404,166 +206,37 @@ BC for the same reason. Check php.net/pdo for information on the pdo API.
    <file role="doc" baseinstalldir="/" md5sum="c1fe9863db1ef4da67e4be7c549b0290" name="docs/MAINTAINERS">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="doc" baseinstalldir="/" md5sum="179b32b981a6b6807550b01e799f2b84" name="docs/querysim_readme.txt">
+   <file role="doc" baseinstalldir="/" md5sum="c7b68ea23aa2ae6d91913703a2246f15" name="docs/README">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="doc" baseinstalldir="/" md5sum="2804f898c7cedd55613e89c5d4249694" name="docs/README">
+   <file role="doc" baseinstalldir="/" md5sum="fefa281d64ca27963a63eeb87ee1e902" name="docs/STATUS">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="doc" baseinstalldir="/" md5sum="bc422988051fb70b3763a09675f2901b" name="docs/STATUS">
+   <file role="doc" baseinstalldir="/" md5sum="ec0c4383ddfd3af69d577344d0d5b4dd" name="docs/TODO">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="doc" baseinstalldir="/" md5sum="690f96be982ff89dae76a826818c4ece" name="docs/TODO">
-    <replace type="package-info" from="@package_version@" to="version"/>
-   </file>
-   <file role="php" baseinstalldir="/" md5sum="4a8ea4ab09a5320b7cfd1191395813c2" name="MDB2/Driver/Datatype/Common.php">
-    <replace type="package-info" from="@package_version@" to="version"/>
-   </file>
-   <file role="php" baseinstalldir="/" md5sum="4a3d03bb8eda4c73652b5f232f561693" name="MDB2/Driver/Datatype/fbsql.php">
-    <replace type="package-info" from="@package_version@" to="version"/>
-   </file>
-   <file role="php" baseinstalldir="/" md5sum="c07de9f03cc382e8d049925a9829c426" name="MDB2/Driver/Datatype/ibase.php">
-    <replace type="package-info" from="@package_version@" to="version"/>
-   </file>
-   <file role="php" baseinstalldir="/" md5sum="95a399b00297fb4f0eb9b85394a285bb" name="MDB2/Driver/Datatype/mssql.php">
-    <replace type="package-info" from="@package_version@" to="version"/>
-   </file>
-   <file role="php" baseinstalldir="/" md5sum="538fd5bb85ecf2e2b1d17d8f50919ef1" name="MDB2/Driver/Datatype/mysql.php">
-    <replace type="package-info" from="@package_version@" to="version"/>
-   </file>
-   <file role="php" baseinstalldir="/" md5sum="2a4a3b12c55604ee0ffc8c4cef7d0d40" name="MDB2/Driver/Datatype/mysqli.php">
-    <replace type="package-info" from="@package_version@" to="version"/>
-   </file>
-   <file role="php" baseinstalldir="/" md5sum="2955fb542a7beb1b81a22e63ebcb8fac" name="MDB2/Driver/Datatype/oci8.php">
-    <replace type="package-info" from="@package_version@" to="version"/>
-   </file>
-   <file role="php" baseinstalldir="/" md5sum="3c39f7093f035b8e551bfe29dbbb4130" name="MDB2/Driver/Datatype/pgsql.php">
-    <replace type="package-info" from="@package_version@" to="version"/>
-   </file>
-   <file role="php" baseinstalldir="/" md5sum="860de4206874ee26b7c77d34b19bfb22" name="MDB2/Driver/Datatype/sqlite.php">
+   <file role="php" baseinstalldir="/" md5sum="35aaaa62bea312d7c414d6eb2555ef7e" name="MDB2/Driver/Datatype/Common.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
    <file role="php" baseinstalldir="/" md5sum="d84fa1f42aac637834f19e553a1c1e79" name="MDB2/Driver/Manager/Common.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="php" baseinstalldir="/" md5sum="8e9ab55ada175c0e239d642d82d464a5" name="MDB2/Driver/Manager/fbsql.php">
-    <replace type="package-info" from="@package_version@" to="version"/>
-   </file>
-   <file role="php" baseinstalldir="/" md5sum="1848b49425ab8a3d9e8652733513576f" name="MDB2/Driver/Manager/ibase.php">
-    <replace type="package-info" from="@package_version@" to="version"/>
-   </file>
-   <file role="php" baseinstalldir="/" md5sum="b78faf0341f07c6bbe0081c1a5a7d762" name="MDB2/Driver/Manager/mssql.php">
-    <replace type="package-info" from="@package_version@" to="version"/>
-   </file>
-   <file role="php" baseinstalldir="/" md5sum="787026c1fc2979fd7b26d9faad904b04" name="MDB2/Driver/Manager/mysql.php">
-    <replace type="package-info" from="@package_version@" to="version"/>
-   </file>
-   <file role="php" baseinstalldir="/" md5sum="f9f22a4cb038b0820a979bcd4f45d1ee" name="MDB2/Driver/Manager/mysqli.php">
-    <replace type="package-info" from="@package_version@" to="version"/>
-   </file>
-   <file role="php" baseinstalldir="/" md5sum="1a135d5b544d54264234720766e32a33" name="MDB2/Driver/Manager/oci8.php">
-    <replace type="package-info" from="@package_version@" to="version"/>
-   </file>
-   <file role="php" baseinstalldir="/" md5sum="a8db32acd74fc8582f4aa5d30bad9fe9" name="MDB2/Driver/Manager/pgsql.php">
-    <replace type="package-info" from="@package_version@" to="version"/>
-   </file>
-   <file role="php" baseinstalldir="/" md5sum="2f3af7fcf4358a51db758bab7afd435a" name="MDB2/Driver/Manager/sqlite.php">
-    <replace type="package-info" from="@package_version@" to="version"/>
-   </file>
-   <file role="php" baseinstalldir="/" md5sum="56ea6703638c5a7c83ebea82cbc6f995" name="MDB2/Driver/Native/fbsql.php">
-    <replace type="package-info" from="@package_version@" to="version"/>
-   </file>
-   <file role="php" baseinstalldir="/" md5sum="213e93b813a1c9fe819283f3d4d63c34" name="MDB2/Driver/Native/ibase.php">
-    <replace type="package-info" from="@package_version@" to="version"/>
-   </file>
-   <file role="php" baseinstalldir="/" md5sum="a8ac9ce7d21be75f947dcd6140d7a1e0" name="MDB2/Driver/Native/mssql.php">
-    <replace type="package-info" from="@package_version@" to="version"/>
-   </file>
-   <file role="php" baseinstalldir="/" md5sum="3019eaf36b2ddeffb493d7e57efb9a16" name="MDB2/Driver/Native/mysql.php">
-    <replace type="package-info" from="@package_version@" to="version"/>
-   </file>
-   <file role="php" baseinstalldir="/" md5sum="11de349124f5b7527e6784a8ac522aeb" name="MDB2/Driver/Native/mysqli.php">
-    <replace type="package-info" from="@package_version@" to="version"/>
-   </file>
-   <file role="php" baseinstalldir="/" md5sum="0081a0d842d903b1542941a4a1954616" name="MDB2/Driver/Native/oci8.php">
-    <replace type="package-info" from="@package_version@" to="version"/>
-   </file>
-   <file role="php" baseinstalldir="/" md5sum="ae77f6e514e0dc9e8ca8dd798f287578" name="MDB2/Driver/Native/pgsql.php">
-    <replace type="package-info" from="@package_version@" to="version"/>
-   </file>
-   <file role="php" baseinstalldir="/" md5sum="4e570a7fffc947a71a8cd67ba1ec8b93" name="MDB2/Driver/Native/sqlite.php">
-    <replace type="package-info" from="@package_version@" to="version"/>
-   </file>
    <file role="php" baseinstalldir="/" md5sum="9d57c99e488119ed346165f334020d7f" name="MDB2/Driver/Reverse/Common.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="php" baseinstalldir="/" md5sum="9c38d067d90825c0bb795024a9dc0e3e" name="MDB2/Driver/Reverse/fbsql.php">
+   <file role="php" baseinstalldir="/" md5sum="815cd450293d94a0aeb247706e421b3d" name="MDB2/Wrapper/peardb.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="php" baseinstalldir="/" md5sum="8041f70b969b41273803901368a01aab" name="MDB2/Driver/Reverse/ibase.php">
+   <file role="php" baseinstalldir="/" md5sum="b5750450d89927deb5e5421065b780b0" name="MDB2/Date.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="php" baseinstalldir="/" md5sum="8ba20c72c33103221ecb0484dc953d98" name="MDB2/Driver/Reverse/mssql.php">
+   <file role="php" baseinstalldir="/" md5sum="a9999010c22a368c72eb52853af982c3" name="MDB2/Extended.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="php" baseinstalldir="/" md5sum="6b2184ed1bc98e5cc35341383bf13dc6" name="MDB2/Driver/Reverse/mysql.php">
+   <file role="php" baseinstalldir="/" md5sum="d54a136b49781ae67e578fdfd962584c" name="MDB2/Iterator.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="php" baseinstalldir="/" md5sum="4ec45db454995cd29b94998d43ea6821" name="MDB2/Driver/Reverse/mysqli.php">
-    <replace type="package-info" from="@package_version@" to="version"/>
-   </file>
-   <file role="php" baseinstalldir="/" md5sum="6de9b4e2a2f08067feda2b7b7d7d7067" name="MDB2/Driver/Reverse/oci8.php">
-    <replace type="package-info" from="@package_version@" to="version"/>
-   </file>
-   <file role="php" baseinstalldir="/" md5sum="8103bef7ffe98a4789325ddd8320dddc" name="MDB2/Driver/Reverse/pgsql.php">
-    <replace type="package-info" from="@package_version@" to="version"/>
-   </file>
-   <file role="php" baseinstalldir="/" md5sum="cfff86c8f756dd9dda9b219962b5e76b" name="MDB2/Driver/Reverse/sqlite.php">
-    <replace type="package-info" from="@package_version@" to="version"/>
-   </file>
-   <file role="php" baseinstalldir="/" md5sum="8c64ed47a5f19418ab3b64e02b49429e" name="MDB2/Driver/fbsql.php">
-    <replace type="package-info" from="@package_version@" to="version"/>
-   </file>
-   <file role="php" baseinstalldir="/" md5sum="188b144bdab1b20f296c73d80c7adb61" name="MDB2/Driver/ibase.php">
-    <replace type="package-info" from="@package_version@" to="version"/>
-   </file>
-   <file role="php" baseinstalldir="/" md5sum="fffa16ecec106700a8404a9b58d2c5b8" name="MDB2/Driver/mssql.php">
-    <replace type="package-info" from="@package_version@" to="version"/>
-   </file>
-   <file role="php" baseinstalldir="/" md5sum="49048d5889c7d9886b17e390e449a2a7" name="MDB2/Driver/mysql.php">
-    <replace type="package-info" from="@package_version@" to="version"/>
-   </file>
-   <file role="php" baseinstalldir="/" md5sum="47a4c31227c50ee61396cdef1437745f" name="MDB2/Driver/mysqli.php">
-    <replace type="package-info" from="@package_version@" to="version"/>
-   </file>
-   <file role="php" baseinstalldir="/" md5sum="c84232fe13f3ad3580cd67efba7528d1" name="MDB2/Driver/oci8.php">
-    <replace type="package-info" from="@package_version@" to="version"/>
-   </file>
-   <file role="php" baseinstalldir="/" md5sum="82255016442494c941dd68b3e6d4fec3" name="MDB2/Driver/pgsql.php">
-    <replace type="package-info" from="@package_version@" to="version"/>
-   </file>
-   <file role="php" baseinstalldir="/" md5sum="34a53713de00fb99409293388361456f" name="MDB2/Driver/querysim.php">
-    <replace type="package-info" from="@package_version@" to="version"/>
-   </file>
-   <file role="php" baseinstalldir="/" md5sum="ec84633ad83765dad65ba05748e38282" name="MDB2/Driver/sqlite.php">
-    <replace type="package-info" from="@package_version@" to="version"/>
-   </file>
-   <file role="php" baseinstalldir="/" md5sum="be0fc4436b6df5bf64e99e06e8c3a178" name="MDB2/Wrapper/peardb.php">
-    <replace type="package-info" from="@package_version@" to="version"/>
-   </file>
-   <file role="php" baseinstalldir="/" md5sum="45d0294ce10540496158c80d17ac908e" name="MDB2/Date.php">
-    <replace type="package-info" from="@package_version@" to="version"/>
-   </file>
-   <file role="php" baseinstalldir="/" md5sum="25896e941424b7664b91f65609a2c696" name="MDB2/Extended.php">
-    <replace type="package-info" from="@package_version@" to="version"/>
-   </file>
-   <file role="php" baseinstalldir="/" md5sum="e0c715905719a2119e768f9f75b19cac" name="MDB2/Iterator.php">
-    <replace type="package-info" from="@package_version@" to="version"/>
-   </file>
-   <file role="php" baseinstalldir="/" md5sum="e06b25002e837e2bcb753dbd090569b1" name="MDB2/LOB.php">
-    <replace type="package-info" from="@package_version@" to="version"/>
-   </file>
-   <file role="test" baseinstalldir="/" md5sum="f243a1982517f94f116f23d21fa9d794" name="tests/templates/results.tpl">
+   <file role="php" baseinstalldir="/" md5sum="c93a83d61946cffc4d7117158bf67b5b" name="MDB2/LOB.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
    <file role="test" baseinstalldir="/" md5sum="e422576d1b0cb3ee0455c2dd64ab51b9" name="tests/clitest.php">
@@ -584,7 +257,7 @@ BC for the same reason. Check php.net/pdo for information on the pdo API.
    <file role="test" baseinstalldir="/" md5sum="33eef11a81854a0a1083c819ac54e04b" name="tests/MDB2_api_testcase.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="test" baseinstalldir="/" md5sum="03764e9439cc29883fb51bebbb4aa759" name="tests/MDB2_bugs_testcase.php">
+   <file role="test" baseinstalldir="/" md5sum="250bcd080c1e4d0d89ae52ca63b75380" name="tests/MDB2_bugs_testcase.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
    <file role="test" baseinstalldir="/" md5sum="7b5c271945fd59365e38793bd9d6efa9" name="tests/MDB2_manager_testcase.php">
@@ -593,16 +266,16 @@ BC for the same reason. Check php.net/pdo for information on the pdo API.
    <file role="test" baseinstalldir="/" md5sum="873185d6804884fcba22dd01f5d18b09" name="tests/MDB2_native_testcase.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="test" baseinstalldir="/" md5sum="a940d8f5528f71ff6bf4c9f5616be6bd" name="tests/MDB2_reverse_testcase.php">
+   <file role="test" baseinstalldir="/" md5sum="8a6580cb1e1a50c69f45732da4693432" name="tests/MDB2_reverse_testcase.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="test" baseinstalldir="/" md5sum="46166df6fb660978074c93bf72db40c0" name="tests/MDB2_usage_testcase.php">
+   <file role="test" baseinstalldir="/" md5sum="cc1db9fa87e1b8325231c5c3fef4c185" name="tests/MDB2_usage_testcase.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
    <file role="test" baseinstalldir="/" md5sum="59f2441ab897a919b75acc4409597a10" name="tests/README">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="test" baseinstalldir="/" md5sum="52cb8846edd4bdc49d1c944d89993512" name="tests/test.php">
+   <file role="test" baseinstalldir="/" md5sum="585283644b2a161aedb15b6c6c379aa7" name="tests/test.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
    <file role="test" baseinstalldir="/" md5sum="aea7a3e5eaba197c7b7ff215d2305d61" name="tests/testchoose.php">
@@ -611,18 +284,44 @@ BC for the same reason. Check php.net/pdo for information on the pdo API.
    <file role="test" baseinstalldir="/" md5sum="3c4d2c9d89398c5692d36299d98f9c6e" name="tests/tests.css">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="test" baseinstalldir="/" md5sum="435a37eb1acdea594dab91c5f11308ed" name="tests/testUtils.php">
+   <file role="test" baseinstalldir="/" md5sum="a6970f07ba7b6785097dec2e8ec2bdac" name="tests/testUtils.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
    <file role="test" baseinstalldir="/" md5sum="7494ce5eae49f6b03cc374cb61db8f08" name="tests/test_setup.php.dist">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="php" baseinstalldir="/" md5sum="3bb5c9dc773c852e2ff966302558b763" name="MDB2.php">
+   <file role="php" baseinstalldir="/" md5sum="800558c2ee7962dc2b5cfd850fdcb542" name="MDB2.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
   </filelist>
  </release>
  <changelog>
+   <release>
+    <version>2.0.0beta5</version>
+    <date>2005-06-08</date>
+    <license>BSD License</license>
+    <state>beta</state>
+    <notes>Warning: this release features numerous BC breaks to make the MDB2 API be as
+similar as possible as the ext/pdo API! The next release is likely to also break
+BC for the same reason. Check php.net/pdo for information on the pdo API.
+
+- refactored LOB support (BC breaks)
+- moved all drivers into separate packages MDB2_Driver_* (BC break)
+- bindParam() and bindColumn() are now 1-indexed (BC break)
+- removed special handling for day light saving time (bug #4341) (BC break)
+- ensure SQL injection protection in all _quote() methods
+  (was missing in some decimal, float, time, date and timestamp implementations)
+- renamed getRowCount() to rowCount() for PDO compliance (BC break)
+  (doesnt take into account the offset anymore)
+- added new quote() parameter to remove quotes (ugly hack will get cleaned up)
+- renamed execute() to _execute() since common provides some common functionality via execute()
+- fixed some issues regarding limit/offset in prepared statements
+- fixed bug in _assignBindColumns() when using associative fetches
+- support numeric and string keys in types array for prepared queries
+- call trigger error if __call() is unable to find a method in any of the modules
+- work around php5 bugs in the test suite
+    </notes>
+   </release>
    <release>
     <version>2.0.0beta4</version>
     <date>2005-04-29</date>

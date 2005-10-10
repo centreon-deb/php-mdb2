@@ -1,6 +1,6 @@
-<?xml version="1.0" encoding="ISO-8859-1" ?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE package SYSTEM "http://pear.php.net/dtd/package-1.0">
-<package version="1.0" packagerversion="1.4.0a12">
+<package version="1.0" packagerversion="1.4.1">
  <name>MDB2</name>
  <summary>database abstraction layer</summary>
  <description>PEAR MDB2 is a merge of the PEAR DB and Metabase php database abstraction layers.
@@ -8,12 +8,13 @@
 Note that the API will be adapted to better fit with the new php5 only PDO
 before the first stable release.
 
-It provides a common API for all support RDBMS. The main difference to most
+It provides a common API for all supported RDBMS. The main difference to most
 other DB abstraction packages is that MDB2 goes much further to ensure
 portability. Among other things MDB2 features:
 * An OO-style query API
 * A DSN (data source name) or array format for specifying database servers
 * Datatype abstraction and on demand datatype conversion
+* Various optional fetch modes to fix portability issues
 * Portable error codes
 * Sequential and non sequential row fetching as well as bulk fetching
 * Ability to make buffered and unbuffered queries
@@ -21,12 +22,13 @@ portability. Among other things MDB2 features:
 * Prepare/execute (bind) emulation
 * Sequence emulation
 * Replace emulation
-* Limited Subselect emulation
+* Limited sub select emulation
 * Row limit support
 * Transactions support
 * Large Object support
-* Index/Unique support
-* Module Framework to load advanced functionality on demand
+* Index/Unique Key/Primary Key support
+* Autoincrement emulation
+* Module framework to load advanced functionality on demand
 * Table information interface
 * RDBMS management methods (creating, dropping, altering)
 * RDBMS independent xml based schema definition management
@@ -38,7 +40,7 @@ portability. Among other things MDB2 features:
   <maintainer>
    <user>lsmith</user>
    <name>Lukas Kahwe Smith</name>
-   <email>smith@backendmedia.com</email>
+   <email>smith@pooteeweet.org</email>
    <role>lead</role>
   </maintainer>
   <maintainer>
@@ -59,47 +61,84 @@ portability. Among other things MDB2 features:
    <email>danielc@php.net</email>
    <role>helper</role>
   </maintainer>
+  <maintainer>
+   <user>davidc</user>
+   <name>David Coallier</name>
+   <email>david@jaws.com.mx</email>
+   <role>helper</role>
+  </maintainer>
   </maintainers>
  <release>
-  <version>2.0.0beta5</version>
-  <date>2005-06-08</date>
+  <version>2.0.0beta6</version>
+  <date>2005-10-10</date>
   <license>BSD License</license>
   <state>beta</state>
-  <notes>Warning: this release features numerous BC breaks to make the MDB2 API be as
-similar as possible as the ext/pdo API! The next release is likely to also break
-BC for the same reason. Check php.net/pdo for information on the pdo API.
+  <notes>Warning: this release features numerous BC breaks!
 
-- refactored LOB support (BC breaks)
-- moved all drivers into separate packages MDB2_Driver_* (BC break)
-- bindParam() and bindColumn() are now 1-indexed (BC break)
-- removed special handling for day light saving time (bug #4341) (BC break)
-- ensure SQL injection protection in all _quote() methods
-  (was missing in some decimal, float, time, date and timestamp implementations)
-- renamed getRowCount() to rowCount() for PDO compliance (BC break)
-  (doesnt take into account the offset anymore)
-- added new quote() parameter to remove quotes (ugly hack will get cleaned up)
-- renamed execute() to _execute() since common provides some common functionality via execute()
-- fixed some issues regarding limit/offset in prepared statements
-- fixed bug in _assignBindColumns() when using associative fetches
-- support numeric and string keys in types array for prepared queries
-- call trigger error if __call() is unable to find a method in any of the modules
-- work around php5 bugs in the test suite
+There have been considerable improvements to the datatype, manager and reverse
+modules. Furthermore preliminary support for auto increment and primary keys
+has been added. Please note that making a field auto increment implies a single
+column primary key on this field.
+
+- increased php dependency to 4.3.0 due to the usage of the streams API since beta5
+- moved logic from MDB2::connect() to MDB2::factory(), the only difference is
+  that MDB2::connect will immediatly try to connect to the database
+- MDB2::singleton now uses MDB2::factory()
+- added support for auto increment and primary key in schema. (mysql[i])
+- alterTable now needs the full definition to work (use getTableFieldDefinition
+ from Reverse module if you do not have a definition at hand) this eliminates the need
+ of the declaration part in the alterTable array.
+- nicer test chooser. Added some js magic to [un]select all the tests in a group
+- fixed typo in _getTextDeclaration()
+- fix PHP4.4 breakage
+- ensure that types and result_types property in the statement class is an array (bug #4695)
+- added support for fetchmode in the iterator class and for any other result wrapper class (bug #4685)
+- moved getInsertID() into core as lastInsertID()
+- moved getBeforeID() and getAfterID() from core into the extended module
+- added base class for all modules (which provides getDBInstance())
+- added free() method to remove an instance from the global instance array
+- removed schema manager related error codes from MDB2::errorMessage()
+- dont set the include path in test suite (people can do that in test_setup.php)
+- added missing default numRows() method
+- added hack into stream_eof() to handle the BC break in 5.0.x
+- removed uncessary duplicate quoting in quote() in the peardb wrapper (bug #5195)
+- warning fix in BC hack of connect() in the peardb wrapper
+- tweaked error message in setResultTypes()
+- removed PDO compatibility code in bindParam and bindCol, now using 0-index numeric keys again
+- expect keys in type arrays the same way as they are passed for the values in execute() and bindParamArray()
+- add s pattern modifier to preg_replace() call for parameter searches in prepare() (bug #5362)
+- moved all private fetch mode fix methods into _fixResultArrayValues() for performance reasons
+- added new portability fetch mode MDB2_PORTABILITY_FIX_ASSOC_FIELD_NAMES (to remove database/table qualifiers from assoc indexes)
+- renamed MDB2_PORTABILITY_LOWERCASE to MDB2_PORTABILITY_FIX_CASE and use &apos;field_case&apos; option to determine if to upper- or lowercase (CASE_LOWER/CASE_UPPER)
+- ensure that fetchAll always returns an array() even if the result set was empty
+- use array_key_exists() instead of isset() where possible
+- changed structure of field add/remove/change in alterTable() to match MDB2_Schema
+- added default values for supported property
+- reworked supports() to return the given value and also return errors for non existant support feature
+- reworked subSelect() to use the &apos;emulated&apos; supports() return value
+- removed implementation of createIndex() (now every driver needs to implement it themselves)
+- sync fileExists with the LiveUser one, explode instead of split and is_readable instead of file_exists.
+- tweaked compare method family to better deal with optional properties
+
+open todo items:
+- add test cases for the various module methods
+- add getServerVersion()
   </notes>
   <deps>
-   <dep type="php" rel="ge" version="4.2.0" optional="no"/>
-   <dep type="pkg" rel="ge" version="1.0b1" optional="no">PEAR</dep>
+   <dep type="php" rel="ge" version="4.3.0" optional="no"/>
+   <dep type="pkg" rel="ge" version="1.3.6" optional="no">PEAR</dep>
   </deps>
-  <provides type="class" name="MDB2_Driver_Datatype_Common" />
+  <provides type="class" name="MDB2_Driver_Datatype_Common" extends="MDB2_Module_Common" />
   <provides type="function" name="MDB2_Driver_Datatype_Common::setResultTypes" />
   <provides type="function" name="MDB2_Driver_Datatype_Common::convertResult" />
   <provides type="function" name="MDB2_Driver_Datatype_Common::convertResultRow" />
   <provides type="function" name="MDB2_Driver_Datatype_Common::getDeclaration" />
-  <provides type="class" name="MDB2_Driver_Manager_Common" />
+  <provides type="class" name="MDB2_Driver_Manager_Common" extends="MDB2_Module_Common" />
   <provides type="function" name="MDB2_Driver_Manager_Common::getFieldDeclarationList" />
   <provides type="function" name="MDB2_Driver_Manager_Common::createDatabase" />
   <provides type="function" name="MDB2_Driver_Manager_Common::dropDatabase" />
   <provides type="function" name="MDB2_Driver_Manager_Common::createTable" />
-  <provides type="class" name="MDB2_Driver_Reverse_Common" />
+  <provides type="class" name="MDB2_Driver_Reverse_Common" extends="MDB2_Module_Common" />
   <provides type="function" name="MDB2_Driver_Reverse_Common::getTableFieldDefinition" />
   <provides type="function" name="MDB2_Driver_Reverse_Common::getTableIndexDefinition" />
   <provides type="function" name="MDB2_Driver_Reverse_Common::getSequenceDefinition" />
@@ -122,7 +161,7 @@ BC for the same reason. Check php.net/pdo for information on the pdo API.
   <provides type="function" name="MDB2_Date::unix2Mdbstamp" />
   <provides type="function" name="MDB2_Date::mdbstamp2Unix" />
   <provides type="function" name="MDB2_Date::mdbstamp2Date" />
-  <provides type="class" name="MDB2_Extended" />
+  <provides type="class" name="MDB2_Extended" extends="MDB2_Module_Common" />
   <provides type="function" name="MDB2_Extended::autoPrepare" />
   <provides type="function" name="MDB2_Extended::autoExecute" />
   <provides type="function" name="MDB2_Extended::buildManipSQL" />
@@ -133,6 +172,8 @@ BC for the same reason. Check php.net/pdo for information on the pdo API.
   <provides type="function" name="MDB2_Extended::getAll" />
   <provides type="function" name="MDB2_Extended::getAssoc" />
   <provides type="function" name="MDB2_Extended::executeMultiple" />
+  <provides type="function" name="MDB2_Extended::getBeforeID" />
+  <provides type="function" name="MDB2_Extended::getAfterID" />
   <provides type="class" name="MDB2_Iterator" />
   <provides type="class" name="MDB2_BufferedIterator" extends="MDB2_Iterator" />
   <provides type="function" name="MDB2_Iterator::seek" />
@@ -157,6 +198,7 @@ BC for the same reason. Check php.net/pdo for information on the pdo API.
   <provides type="function" name="MDB2_LOB::stream_close" />
   <provides type="class" name="MDB2" />
   <provides type="class" name="MDB2_Error" extends="PEAR_Error" />
+  <provides type="class" name="MDB2_Driver_Common" extends="PEAR" />
   <provides type="function" name="MDB2::setOptions" />
   <provides type="function" name="MDB2::factory" />
   <provides type="function" name="MDB2::connect" />
@@ -168,18 +210,22 @@ BC for the same reason. Check php.net/pdo for information on the pdo API.
   <provides type="function" name="MDB2::isConnection" />
   <provides type="function" name="MDB2::isResult" />
   <provides type="function" name="MDB2::isResultCommon" />
+  <provides type="function" name="MDB2::isStatement" />
   <provides type="function" name="MDB2::isManip" />
   <provides type="function" name="MDB2::errorMessage" />
   <provides type="function" name="MDB2::parseDSN" />
   <provides type="function" name="MDB2::fileExists" />
+  <provides type="function" name="MDB2_Driver_Common::free" />
+  <provides type="function" name="MDB2_Driver_Common::errorInfo" />
+  <provides type="function" name="MDB2_Driver_Common::raiseError" />
   <filelist>
-   <file role="doc" baseinstalldir="/" md5sum="0e90b169d5be664dcbf4de8a3d0f3c0f" name="docs/examples/example.php">
+   <file role="doc" baseinstalldir="/" md5sum="5ff02c3bae3d18ede6dea7fbd49ee242" name="docs/examples/example.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
    <file role="doc" baseinstalldir="/" md5sum="74b2bb45de61eccbffed7d75d5268af9" name="docs/examples/metapear_test_db.schema">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="doc" baseinstalldir="/" md5sum="735ae01f0aa509ba72d31a8add91a7e5" name="docs/examples/peardb_wrapper_example.php">
+   <file role="doc" baseinstalldir="/" md5sum="09ad0256806b19646d6fa10ecb1bb6c8" name="docs/examples/peardb_wrapper_example.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
    <file role="doc" baseinstalldir="/" md5sum="a253b37e185622112acfef6c94b79aef" name="docs/CONTRIBUTORS">
@@ -188,19 +234,19 @@ BC for the same reason. Check php.net/pdo for information on the pdo API.
    <file role="doc" baseinstalldir="/" md5sum="cc1befe78146094be02f89bbb201b4ab" name="docs/datatypes.html">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="doc" baseinstalldir="/" md5sum="58cfee79a8e774d8c10e3a773af7fe80" name="docs/Driver_Datatype_skeleton.php">
+   <file role="doc" baseinstalldir="/" md5sum="7bda82148a6598f6fec7af51a9c0e04d" name="docs/Driver_Datatype_skeleton.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="doc" baseinstalldir="/" md5sum="b194e5252ada4e068b40fc9c9364e957" name="docs/Driver_Manager_skeleton.php">
+   <file role="doc" baseinstalldir="/" md5sum="6c02ac7b0ea79459c6c1fbe982077b48" name="docs/Driver_Manager_skeleton.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="doc" baseinstalldir="/" md5sum="5ff94c70cae0816c90ac45e7f3c0032e" name="docs/Driver_Native_skeleton.php">
+   <file role="doc" baseinstalldir="/" md5sum="1bb24c7f1e52f0419935504861238a77" name="docs/Driver_Native_skeleton.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="doc" baseinstalldir="/" md5sum="a8e3f88b940affb93e1e31c6ed32b8f1" name="docs/Driver_Reverse_skeleton.php">
+   <file role="doc" baseinstalldir="/" md5sum="35add1a9ff4f0a3b9a3ff7b60ac7efba" name="docs/Driver_Reverse_skeleton.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="doc" baseinstalldir="/" md5sum="c2b4f60ac6441368ff1ccc9ec566f0a1" name="docs/Driver_skeleton.php">
+   <file role="doc" baseinstalldir="/" md5sum="29393a4eb7ef44fa247a7384466f33ec" name="docs/Driver_skeleton.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
    <file role="doc" baseinstalldir="/" md5sum="c1fe9863db1ef4da67e4be7c549b0290" name="docs/MAINTAINERS">
@@ -215,31 +261,37 @@ BC for the same reason. Check php.net/pdo for information on the pdo API.
    <file role="doc" baseinstalldir="/" md5sum="ec0c4383ddfd3af69d577344d0d5b4dd" name="docs/TODO">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="php" baseinstalldir="/" md5sum="35aaaa62bea312d7c414d6eb2555ef7e" name="MDB2/Driver/Datatype/Common.php">
+   <file role="php" baseinstalldir="/" md5sum="e18c970ca79e43171d4ae1b7681a28b1" name="MDB2/Driver/Datatype/Common.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="php" baseinstalldir="/" md5sum="d84fa1f42aac637834f19e553a1c1e79" name="MDB2/Driver/Manager/Common.php">
+   <file role="php" baseinstalldir="/" md5sum="cf90b5639b6c863a8e93289ccae40fe2" name="MDB2/Driver/Manager/Common.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="php" baseinstalldir="/" md5sum="9d57c99e488119ed346165f334020d7f" name="MDB2/Driver/Reverse/Common.php">
+   <file role="php" baseinstalldir="/" md5sum="2337611bd1c3cfe1764b5ae4afece278" name="MDB2/Driver/Reverse/Common.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="php" baseinstalldir="/" md5sum="815cd450293d94a0aeb247706e421b3d" name="MDB2/Wrapper/peardb.php">
+   <file role="php" baseinstalldir="/" md5sum="47114cbf59f7f954abd75f5713dbc8d3" name="MDB2/Wrapper/peardb.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="php" baseinstalldir="/" md5sum="b5750450d89927deb5e5421065b780b0" name="MDB2/Date.php">
+   <file role="php" baseinstalldir="/" md5sum="c4e68ee3dfe75e5d021b0b8d1b6c861c" name="MDB2/Date.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="php" baseinstalldir="/" md5sum="a9999010c22a368c72eb52853af982c3" name="MDB2/Extended.php">
+   <file role="php" baseinstalldir="/" md5sum="9a043b6bc2ff1ac5039eb6441c993879" name="MDB2/Extended.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="php" baseinstalldir="/" md5sum="d54a136b49781ae67e578fdfd962584c" name="MDB2/Iterator.php">
+   <file role="php" baseinstalldir="/" md5sum="a0c9d67ab88b4fe76605341734fc5af4" name="MDB2/Iterator.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="php" baseinstalldir="/" md5sum="c93a83d61946cffc4d7117158bf67b5b" name="MDB2/LOB.php">
+   <file role="php" baseinstalldir="/" md5sum="7b3274ffd3669ccbb8d23a6ccfec5cc6" name="MDB2/LOB.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="test" baseinstalldir="/" md5sum="e422576d1b0cb3ee0455c2dd64ab51b9" name="tests/clitest.php">
+   <file role="test" baseinstalldir="/" md5sum="01d41e566bdb62c7bcb432c8039dda9a" name="tests/basic.phpt">
+    <replace type="package-info" from="@package_version@" to="version"/>
+   </file>
+   <file role="test" baseinstalldir="/" md5sum="81e37fdc47113dae6eae8c9541dc4611" name="tests/clitest.php">
+    <replace type="package-info" from="@package_version@" to="version"/>
+   </file>
+   <file role="test" baseinstalldir="/" md5sum="9d91b99a7a8f5d1e0ab644ce77d274ca" name="tests/config.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
    <file role="test" baseinstalldir="/" md5sum="2a2c534ab4afb0c05ca9d7ca47815bf5" name="tests/Console_TestListener.php">
@@ -254,48 +306,108 @@ BC for the same reason. Check php.net/pdo for information on the pdo API.
    <file role="test" baseinstalldir="/" md5sum="229d54dc8298b7513515cce639c83f38" name="tests/lob_test.schema">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="test" baseinstalldir="/" md5sum="33eef11a81854a0a1083c819ac54e04b" name="tests/MDB2_api_testcase.php">
+   <file role="test" baseinstalldir="/" md5sum="fe548e687af1e233497c5362f0039848" name="tests/MDB2_api_testcase.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="test" baseinstalldir="/" md5sum="250bcd080c1e4d0d89ae52ca63b75380" name="tests/MDB2_bugs_testcase.php">
+   <file role="test" baseinstalldir="/" md5sum="6168624e782df6f82efc3e4be2f62339" name="tests/MDB2_bugs_testcase.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="test" baseinstalldir="/" md5sum="7b5c271945fd59365e38793bd9d6efa9" name="tests/MDB2_manager_testcase.php">
+   <file role="test" baseinstalldir="/" md5sum="071d17f3e19934b85fd13bea448e3c58" name="tests/MDB2_Connect_Test.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="test" baseinstalldir="/" md5sum="873185d6804884fcba22dd01f5d18b09" name="tests/MDB2_native_testcase.php">
+   <file role="test" baseinstalldir="/" md5sum="87421c369582e94effadca6968063805" name="tests/MDB2_manager_testcase.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="test" baseinstalldir="/" md5sum="8a6580cb1e1a50c69f45732da4693432" name="tests/MDB2_reverse_testcase.php">
+   <file role="test" baseinstalldir="/" md5sum="8e9ef83133d0b23f8e75f84c904b2b26" name="tests/MDB2_native_testcase.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="test" baseinstalldir="/" md5sum="cc1db9fa87e1b8325231c5c3fef4c185" name="tests/MDB2_usage_testcase.php">
+   <file role="test" baseinstalldir="/" md5sum="f6b2f183346247a567f7ed2c26957072" name="tests/MDB2_reverse_testcase.php">
+    <replace type="package-info" from="@package_version@" to="version"/>
+   </file>
+   <file role="test" baseinstalldir="/" md5sum="572e3e8c56186825ba221262d7ff2426" name="tests/MDB2_usage_testcase.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
    <file role="test" baseinstalldir="/" md5sum="59f2441ab897a919b75acc4409597a10" name="tests/README">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="test" baseinstalldir="/" md5sum="585283644b2a161aedb15b6c6c379aa7" name="tests/test.php">
+   <file role="test" baseinstalldir="/" md5sum="5a27ce050a989954698c822255f4df96" name="tests/test.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="test" baseinstalldir="/" md5sum="aea7a3e5eaba197c7b7ff215d2305d61" name="tests/testchoose.php">
+   <file role="test" baseinstalldir="/" md5sum="dc05c6cc4540981d350ccac2005c2578" name="tests/testchoose.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
    <file role="test" baseinstalldir="/" md5sum="3c4d2c9d89398c5692d36299d98f9c6e" name="tests/tests.css">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="test" baseinstalldir="/" md5sum="a6970f07ba7b6785097dec2e8ec2bdac" name="tests/testUtils.php">
+   <file role="test" baseinstalldir="/" md5sum="fc624785ab567f03ac1e05e886942eb7" name="tests/testUtils.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
    <file role="test" baseinstalldir="/" md5sum="7494ce5eae49f6b03cc374cb61db8f08" name="tests/test_setup.php.dist">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="php" baseinstalldir="/" md5sum="800558c2ee7962dc2b5cfd850fdcb542" name="MDB2.php">
+   <file role="php" baseinstalldir="/" md5sum="10eedfc4d2ffb18c47fac8ac3842fc1b" name="MDB2.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
   </filelist>
  </release>
  <changelog>
+   <release>
+    <version>2.0.0beta6</version>
+    <date>2005-10-10</date>
+    <license>BSD License</license>
+    <state>beta</state>
+    <notes>Warning: this release features numerous BC breaks!
+
+There have been considerable improvements to the datatype, manager and reverse
+modules. Furthermore preliminary support for auto increment and primary keys
+has been added. Please note that making a field auto increment implies a single
+column primary key on this field.
+
+- increased php dependency to 4.3.0 due to the usage of the streams API since beta5
+- moved logic from MDB2::connect() to MDB2::factory(), the only difference is
+  that MDB2::connect will immediatly try to connect to the database
+- MDB2::singleton now uses MDB2::factory()
+- added support for auto increment and primary key in schema. (mysql[i])
+- alterTable now needs the full definition to work (use getTableFieldDefinition
+ from Reverse module if you do not have a definition at hand) this eliminates the need
+ of the declaration part in the alterTable array.
+- nicer test chooser. Added some js magic to [un]select all the tests in a group
+- fixed typo in _getTextDeclaration()
+- fix PHP4.4 breakage
+- ensure that types and result_types property in the statement class is an array (bug #4695)
+- added support for fetchmode in the iterator class and for any other result wrapper class (bug #4685)
+- moved getInsertID() into core as lastInsertID()
+- moved getBeforeID() and getAfterID() from core into the extended module
+- added base class for all modules (which provides getDBInstance())
+- added free() method to remove an instance from the global instance array
+- removed schema manager related error codes from MDB2::errorMessage()
+- dont set the include path in test suite (people can do that in test_setup.php)
+- added missing default numRows() method
+- added hack into stream_eof() to handle the BC break in 5.0.x
+- removed uncessary duplicate quoting in quote() in the peardb wrapper (bug #5195)
+- warning fix in BC hack of connect() in the peardb wrapper
+- tweaked error message in setResultTypes()
+- removed PDO compatibility code in bindParam and bindCol, now using 0-index numeric keys again
+- expect keys in type arrays the same way as they are passed for the values in execute() and bindParamArray()
+- add s pattern modifier to preg_replace() call for parameter searches in prepare() (bug #5362)
+- moved all private fetch mode fix methods into _fixResultArrayValues() for performance reasons
+- added new portability fetch mode MDB2_PORTABILITY_FIX_ASSOC_FIELD_NAMES (to remove database/table qualifiers from assoc indexes)
+- renamed MDB2_PORTABILITY_LOWERCASE to MDB2_PORTABILITY_FIX_CASE and use &apos;field_case&apos; option to determine if to upper- or lowercase (CASE_LOWER/CASE_UPPER)
+- ensure that fetchAll always returns an array() even if the result set was empty
+- use array_key_exists() instead of isset() where possible
+- changed structure of field add/remove/change in alterTable() to match MDB2_Schema
+- added default values for supported property
+- reworked supports() to return the given value and also return errors for non existant support feature
+- reworked subSelect() to use the &apos;emulated&apos; supports() return value
+- removed implementation of createIndex() (now every driver needs to implement it themselves)
+- sync fileExists with the LiveUser one, explode instead of split and is_readable instead of file_exists.
+- tweaked compare method family to better deal with optional properties
+
+open todo items:
+- add test cases for the various module methods
+- add getServerVersion()
+    </notes>
+   </release>
    <release>
     <version>2.0.0beta5</version>
     <date>2005-06-08</date>
@@ -350,7 +462,7 @@ BC for the same reason. Check php.net/pdo for information on the pdo API.
 - extended MDB2::isError() to be able to handle an array or codes
 - added error handling into autoPrepare() and autoExecute()
 - migrade all MDB2::isError calls that dont check for specific errors codes to PEAR::isError
-- don't pass new_link to mysql_pconnect() (bug #3993)
+- don&apos;t pass new_link to mysql_pconnect() (bug #3993)
 - use MDB2::raiseError() instead of MDB2_Driver_Common::raiseError()
 - do not disable result wrapping when doing internal calls to query() (bug #3997)
 - _wrapResult() now ensures that the result class is an instance of MDB2_Result_Common
@@ -363,7 +475,7 @@ BC for the same reason. Check php.net/pdo for information on the pdo API.
 - added mapNativeDatatype() to ibase driver
 - getTypeDeclaration() =&gt; _getTypeDeclaration() in ibase driver
 - cosmetic fixes and tweaks (replace(). fetchOne() ..)
-- renamed 'seqname_col_name' option to 'seqcol_name'
+- renamed &apos;seqname_col_name&apos; option to &apos;seqcol_name&apos;
 - moved schema documentation, xml_reverse_engineering.php, MDB.dtd
   and MDB.xls to MDB_Schema package
 - Mysqli: implicit sequence is named as table by default
@@ -415,14 +527,14 @@ All drivers:
   called by the user
 - instead of having a generic implemention of disconnect() we will rename
   _close() to disconnect() to overwrite the generic implementation
-- added support for 'new_link' dsn option for all supported drivers (mysql, oci8, pgsql)
+- added support for &apos;new_link&apos; dsn option for all supported drivers (mysql, oci8, pgsql)
 
 - transaction API moved over to PDO: removed autoCommit(), added beginTransaction()
-  and refactored commit() (it doesn't start a new transaction automatically anymore)
+  and refactored commit() (it doesn&apos;t start a new transaction automatically anymore)
 - reworked handling of uncommited transaction for persistant connections when
   a given connection is no longer in use
 
-- added 'disable_query' option to be able to disable the execution of all queries
+- added &apos;disable_query&apos; option to be able to disable the execution of all queries
  (this might be useful in conjuntion with a custom debug handler to be able to
  dump all queries into a file instead of executing them)
 - removed affectedRows() method in favor of returning affectedRows() on query if relevant
@@ -437,7 +549,7 @@ All drivers:
 
 - explicitly specify colum name in sequence emulation queries
 - added getBeforeId() and getAfterId()
-- added new supported feature 'auto_increment'
+- added new supported feature &apos;auto_increment&apos;
 
 - added default implementation for quoteCLOB() and quoteBLOB()
 - reworked quote handling: moved all implementation details into the extension,
@@ -468,7 +580,7 @@ All drivers prepared statements
 - removed requirement for LOB inserts to pass the parameters as an array
 - placeholders are now numbered starting from 0 (BC break in setParam() !)
 - queries inside the prepared_queries property now start counting at 1 (performance tweak)
-- refactored handling of filename LOB values (prefix with 'file://')
+- refactored handling of filename LOB values (prefix with &apos;file://&apos;)
 - removed _executePrepared(), drivers need to overwrite execute() for now on
 - add support for oracle style named parameters and modified test suite accordingly
 
@@ -506,7 +618,7 @@ Interbase driver:
 - completely revised ibase driver, now passing all tests under php5
 
 Frontbase driver:
-- fbsql: use correct error codes. Was using MySQL's codes by mistake.
+- fbsql: use correct error codes. Was using MySQL&apos;s codes by mistake.
 
 MySQLi driver:
 - added mysqli driver (passes all tests, but doesnt use native prepare yet)
@@ -569,7 +681,7 @@ stable release.
 - renamed toString() to __toString() in order to take advantage of new PHP5
   goodness and made it public
 - MDB2_Driver_Datatype_Common::setResultTypes() can now handle missing elements
-  inside type arrays: array(2 =&gt; 'boolean', 4 =&gt; 'timestamp')
+  inside type arrays: array(2 =&gt; &apos;boolean&apos;, 4 =&gt; &apos;timestamp&apos;)
 - fixed potential warning due to manipulation query detection in the query*()
   and the get*() query+fetch methods
 - added tests for fetchAll() and fetchCol()
@@ -579,7 +691,7 @@ stable release.
 - renamed MDB2::isResult() to MDB2::isResultCommon()
 - added base result class MDB2_Result from which all result sets should be
   inherited and added MDB2::isResult() which checks if a given object extends from it
-- added 'result_wrap_class' option and optional parameter to query() to enable
+- added &apos;result_wrap_class&apos; option and optional parameter to query() to enable
   wrapping of result classes into an arbitrary class
 - added $result_class param to all drivers where it was missing from the
   query() and _executePrepared() methods

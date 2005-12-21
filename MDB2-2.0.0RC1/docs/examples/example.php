@@ -1,6 +1,6 @@
 <?php
 
-    // $Id: example.php,v 1.15 2005/09/29 14:37:44 lsmith Exp $
+    // $Id: example.php,v 1.18 2005/12/09 21:27:01 lsmith Exp $
     //
     // MDB2 test script.
     //
@@ -141,7 +141,7 @@
                      array(3, 'three', 'trois'),
                      array(4, 'four', 'quatre')
     );
-    $stmt = $db->prepare('INSERT INTO numbers VALUES(?,?,?)', array('integer', 'text', 'text'));
+    $stmt = $db->prepare('INSERT INTO numbers VALUES(?,?,?)', array('integer', 'text', 'text'), false);
     foreach ($alldata as $row) {
         echo('running execute<br>');
         $stmt->bindParamArray($row);
@@ -166,7 +166,7 @@
     echo(Var_Dump($db->reverse->tableInfo('numbers')).'<br>');
     echo('<br>just a simple update query:<br>');
     echo('<br>affected rows:<br>');
-    echo(Var_Dump($db->query('UPDATE numbers set trans_en ='.$db->quote(0, 'integer'))).'<br>');
+    echo(Var_Dump($db->exec('UPDATE numbers set trans_en ='.$db->quote(0, 'integer'))).'<br>');
     // subselect test
     $sub_select = $db->subSelect('SELECT test_name from test WHERE test_name = '.$db->quote('gummihuhn', 'text'), 'text');
     echo(Var_Dump($sub_select).'<br>');
@@ -204,14 +204,14 @@
             MDB2_MANAGER_DUMP_STRUCTURE
         )).'<br>');
         if ($manager->db->getOption('debug') === true) {
-            echo($manager->db->debugOutput().'<br>');
+            echo($manager->db->getDebugOutput().'<br>');
         }
         // this is the database definition as an array
         echo(Var_Dump($manager->database_definition).'<br>');
     }
 
     echo('<br>just a simple delete query:<br>');
-    echo(Var_Dump($db->query('DELETE FROM numbers')).'<br>');
+    echo(Var_Dump($db->exec('DELETE FROM numbers')).'<br>');
     // You can disconnect from the database with:
     $db->disconnect()
 ?>

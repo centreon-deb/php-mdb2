@@ -42,7 +42,7 @@
 // | Author: Lukas Smith <smith@pooteeweet.org>                           |
 // +----------------------------------------------------------------------+
 //
-// $Id: peardb.php,v 1.34 2005/09/26 14:42:01 lsmith Exp $
+// $Id: peardb.php,v 1.37 2005/12/08 15:50:57 lsmith Exp $
 //
 
 /**
@@ -330,7 +330,7 @@ class MDB2_PEARProxy extends PEAR
         $this->db_object->setOption('seqcol_name', 'id');
         $this->db_object->setOption('result_wrap_class', 'DB_result');
         $this->phptype = $this->db_object->phptype;
-        $this->connection = $this->db_object->connection;
+        $this->connection = $this->db_object->getConnection();
         $this->dsn = $this->db_object->getDSN();
     }
 
@@ -387,7 +387,7 @@ class MDB2_PEARProxy extends PEAR
 
     function quoteIdentifier($string)
     {
-        return $this->db_object->quoteIdentifier($string);
+        return $this->db_object->quoteIdentifier($string, false);
     }
 
     // map?
@@ -481,10 +481,16 @@ class MDB2_PEARProxy extends PEAR
             $stmt->bindParamArray($params);
             return $stmt->execute();
         }
+        if (MDB2::isManip($query)) {
+            return $this->db_object->exec($query);
+        }
         return $this->db_object->query($query);
     }
 
     function simpleQuery($query) {
+        if (MDB2::isManip($query)) {
+            return $this->db_object->exec($query);
+        }
         $result = $this->db_object->query($query);
         if (PEAR::isError($result) || $result === MDB2_OK) {
             return $result;

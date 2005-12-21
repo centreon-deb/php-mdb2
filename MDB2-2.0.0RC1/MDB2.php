@@ -43,7 +43,7 @@
 // | Author: Lukas Smith <smith@pooteeweet.org>                           |
 // +----------------------------------------------------------------------+
 //
-// $Id: MDB2.php,v 1.126 2005/10/06 10:54:48 dufuz Exp $
+// $Id: MDB2.php,v 1.147 2005/12/16 12:08:49 lsmith Exp $
 //
 
 /**
@@ -98,6 +98,13 @@ define('MDB2_ERROR_MANAGER',            -32);
 define('MDB2_ERROR_MANAGER_PARSE',      -33);
 define('MDB2_ERROR_LOADMODULE',         -34);
 define('MDB2_ERROR_INSUFFICIENT_DATA',  -35);
+
+/**
+ * These are just helper constants to more verbosely express parameters to prepare()
+ */
+
+define('MDB2_PREPARE_MANIP',  false);
+define('MDB2_PREPARE_RESULT', null);
 
 /**
  * This is a special constant that tells MDB2 the user hasn't specified
@@ -314,14 +321,13 @@ class MDB2
 
         if (!class_exists($class_name)) {
             $file_name = str_replace('_', DIRECTORY_SEPARATOR, $class_name).'.php';
-            if (!MDB2::fileExists($file_name)) {
-                $err =& MDB2::raiseError(MDB2_ERROR_NOT_FOUND, null, null,
-                    'unable to find: '.$file_name);
-                return $err;
-            }
             if (!include_once($file_name)) {
-                $err =& MDB2::raiseError(MDB2_ERROR_NOT_FOUND, null, null,
-                    'unable to load driver class: '.$file_name);
+                if (!MDB2::fileExists($file_name)) {
+                    $msg = "unable to find package '$class_name' file '$file_name'";
+                } else {
+                    $msg = "unable to load driver class '$class_name' from file '$file_name'";
+                }
+                $err =& MDB2::raiseError(MDB2_ERROR_NOT_FOUND, null, null, $msg);
                 return $err;
             }
         }
@@ -969,8 +975,10 @@ class MDB2_Driver_Common extends PEAR
      * $options['debug_handler'] -> string function/meothd that captures debug messages
      * $options['lob_buffer_length'] -> integer LOB buffer length
      * $options['log_line_break'] -> string line-break format
+     * $options['idxname_format'] -> string pattern for index name
      * $options['seqname_format'] -> string pattern for sequence name
      * $options['seqcol_name'] -> string sequence column name
+     * $options['quote_identifier'] -> if identifier quoting should be done when check_option is used
      * $options['use_transactions'] -> boolean
      * $options['decimal_places'] -> integer
      * $options['portability'] -> portability constant
@@ -992,8 +1000,10 @@ class MDB2_Driver_Common extends PEAR
             'debug_handler' => 'MDB2_defaultDebugOutput',
             'lob_buffer_length' => 8192,
             'log_line_break' => "\n",
+            'idxname_format' => '%s_idx',
             'seqname_format' => '%s_seq',
             'seqcol_name' => 'sequence',
+            'quote_identifier' => false,
             'use_transactions' => false,
             'decimal_places' => 2,
             'portability' => MDB2_PORTABILITY_ALL,
@@ -1003,6 +1013,7 @@ class MDB2_Driver_Common extends PEAR
                 'mg' => 'Manager',
                 'rv' => 'Reverse',
                 'na' => 'Native',
+                'fc' => 'Function',
             ),
         );
 
@@ -1124,15 +1135,7 @@ class MDB2_Driver_Common extends PEAR
      */
     function __destruct()
     {
-        if ($this->connection) {
-            if ($this->opened_persistent) {
-                if ($this->in_transaction) {
-                    $this->rollback();
-                }
-            } else {
-                $this->disconnect();
-            }
-        }
+        $this->disconnect(false);
     }
 
     // }}}
@@ -1379,7 +1382,7 @@ class MDB2_Driver_Common extends PEAR
     }
 
     // }}}
-    // {{{ debugOutput()
+    // {{{ getDebugOutput()
 
     /**
      * output debug info
@@ -1387,7 +1390,7 @@ class MDB2_Driver_Common extends PEAR
      * @return string content of the debug_output class variable
      * @access public
      */
-    function debugOutput()
+    function getDebugOutput()
     {
         return $this->debug_output;
     }
@@ -1445,14 +1448,37 @@ class MDB2_Driver_Common extends PEAR
      * via PHP 4.  They work fine under PHP 5.
      *
      * @param string $str  identifier name to be quoted
+     * @param bool   $check_option  check the 'quote_identifier' option
      *
      * @return string  quoted identifier string
      *
      * @access public
      */
-    function quoteIdentifier($str)
+    function quoteIdentifier($str, $check_option = false)
     {
+        if ($check_option && !$this->options['quote_identifier']) {
+            return $str;
+        }
         return '"' . str_replace('"', '""', $str) . '"';
+    }
+
+    // }}}
+    // {{{ getConnection()
+
+    /**
+     * Returns a native connection
+     *
+     * @return  mixed   a valid MDB2 connection object,
+     *                  or a MDB2 error object on error
+     * @access  public
+     */
+    function getConnection()
+    {
+        $result = $this->connect();
+        if (PEAR::isError($result)) {
+            return $result;
+        }
+        return $this->connection;
     }
 
     // }}}
@@ -1535,34 +1561,40 @@ class MDB2_Driver_Common extends PEAR
      * @param string $module name of the module that should be loaded
      *      (only used for error messages)
      * @param string $property name of the property into which the class will be loaded
+     * @param boolean $phptype_specific if the class to load for the module
+                                        is specific to the phptype
      * @return object on success a reference to the given module is returned
      *                and on failure a PEAR error
      * @access public
      */
-    function &loadModule($module, $property = null)
+    function &loadModule($module, $property = null, $phptype_specific = null)
     {
         if (!$property) {
             $property = strtolower($module);
         }
 
         if (!isset($this->{$property})) {
-            $version = false;
-            $class_name = 'MDB2_'.$module;
-            $file_name = str_replace('_', DIRECTORY_SEPARATOR, $class_name).'.php';
-            if (!class_exists($class_name) && !MDB2::fileExists($file_name)) {
+            if ($phptype_specific !== false) {
                 $class_name = 'MDB2_Driver_'.$module.'_'.$this->phptype;
                 $file_name = str_replace('_', DIRECTORY_SEPARATOR, $class_name).'.php';
                 $version = true;
+            }
+            if ($phptype_specific === false
+                || (!class_exists($class_name) && !MDB2::fileExists($file_name))
+            ) {
+                $version = false;
+                $class_name = 'MDB2_'.$module;
+                $file_name = str_replace('_', DIRECTORY_SEPARATOR, $class_name).'.php';
                 if (!class_exists($class_name) && !MDB2::fileExists($file_name)) {
                     $err =& $this->raiseError(MDB2_ERROR_LOADMODULE, null, null,
-                        'unable to find module: '.$file_name);
+                        "unable to find module '$module' file '$file_name'");
                     return $err;
                 }
             }
 
             if (!class_exists($class_name) && !include_once($file_name)) {
                 $err =& $this->raiseError(MDB2_ERROR_LOADMODULE, null, null,
-                    'unable to load manager driver class: '.$file_name);
+                    "unable to load '$module' driver class from file '$file_name'");
                 return $err;
             }
 
@@ -1573,14 +1605,13 @@ class MDB2_Driver_Common extends PEAR
                     if ($class_name != $class_name_new) {
                         $class_name = $class_name_new;
                         $file_name = str_replace('_', DIRECTORY_SEPARATOR, $class_name).'.php';
-                        if (!MDB2::fileExists($file_name)) {
-                            $err =& $this->raiseError(MDB2_ERROR_LOADMODULE, null, null,
-                                'unable to find module: '.$file_name);
-                            return $err;
-                        }
                         if (!include_once($file_name)) {
-                            $err =& $this->raiseError(MDB2_ERROR_LOADMODULE, null, null,
-                                'unable to load manager driver class: '.$file_name);
+                            if (!MDB2::fileExists($file_name)) {
+                                $msg = "unable to find module '$module' file '$file_name'";
+                            } else {
+                                $msg = "unable to load '$module' driver class from file '$file_name'";
+                            }
+                            $err =& $this->raiseError(MDB2_ERROR_LOADMODULE, null, null, $msg);
                             return $err;
                         }
                     }
@@ -1589,7 +1620,7 @@ class MDB2_Driver_Common extends PEAR
 
             if (!class_exists($class_name)) {
                 $err =& $this->raiseError(MDB2_ERROR_LOADMODULE, null, null,
-                    'unable to load module: '.$module.' into property: '.$property);
+                    "unable to load module '$module' into property '$property'");
                 return $err;
             }
             $this->{$property} =& new $class_name($this->db_index);
@@ -1807,31 +1838,31 @@ class MDB2_Driver_Common extends PEAR
      * @param string $query the SQL query
      * @param mixed   $types  array that contains the types of the columns in
      *                        the result set
+     * @param boolean $is_manip  if the query is a manipulation query
      * @return mixed MDB2_OK on success, a MDB2 error on failure
      * @access public
      */
-    function &standaloneQuery($query, $types = null)
+    function &standaloneQuery($query, $types = null, $is_manip = false)
     {
-        $isManip = MDB2::isManip($query);
         $offset = $this->row_offset;
         $limit = $this->row_limit;
         $this->row_offset = $this->row_limit = 0;
-        $query = $this->_modifyQuery($query, $isManip, $limit, $offset);
+        $query = $this->_modifyQuery($query, $is_manip, $limit, $offset);
 
-        $connected = $this->connect();
-        if (PEAR::isError($connected)) {
-            return $connected;
+        $connection = $this->getConnection();
+        if (PEAR::isError($connection)) {
+            return $connection;
         }
 
-        $result = $this->_doQuery($query, $isManip, $this->connection, false);
+        $result = $this->_doQuery($query, $is_manip, $connection, false);
         if (PEAR::isError($result)) {
             return $result;
         }
 
-        if ($isManip) {
-            return $result;
+        if ($is_manip) {
+            $affected_rows =  $this->_affectedRows($connection, $result);
+            return $affected_rows;
         }
-
         $result =& $this->_wrapResult($result, $types, true, false, $limit, $offset);
         return $result;
     }
@@ -1857,18 +1888,65 @@ class MDB2_Driver_Common extends PEAR
     /**
      * Execute a query
      * @param string $query  query
-     * @param boolean $isManip  if the query is a manipulation query
+     * @param boolean $is_manip  if the query is a manipulation query
      * @param resource $connection
      * @param string $database_name
      * @return result or error object
      * @access protected
      */
-    function _doQuery($query, $isManip = false, $connection = null, $database_name = null)
+    function _doQuery($query, $is_manip = false, $connection = null, $database_name = null)
     {
         $this->last_query = $query;
         $this->debug($query, 'query');
         return $this->raiseError(MDB2_ERROR_UNSUPPORTED, null, null,
-            'query: method not implemented');
+            '_doQuery: method not implemented');
+    }
+
+    // }}}
+    // {{{ _affectedRows()
+
+    /**
+     * returns the number of rows affected
+     *
+     * @param resource $result
+     * @param resource $connection
+     * @return mixed MDB2 Error Object or the number of rows affected
+     * @access private
+     */
+    function _affectedRows($connection, $result = null)
+    {
+        return $this->raiseError(MDB2_ERROR_UNSUPPORTED, null, null,
+            '_affectedRows: method not implemented');
+    }
+
+    // }}}
+    // {{{ exec()
+
+    /**
+     * Execute a manipulation query to the database and return any the affected rows
+     *
+     * @param string $query the SQL query
+     * @return mixed affected rows on success, a MDB2 error on failure
+     * @access public
+     */
+    function exec($query)
+    {
+        $offset = $this->row_offset;
+        $limit = $this->row_limit;
+        $this->row_offset = $this->row_limit = 0;
+        $query = $this->_modifyQuery($query, true, $limit, $offset);
+
+        $connection = $this->getConnection();
+        if (PEAR::isError($connection)) {
+            return $connection;
+        }
+
+        $result = $this->_doQuery($query, true, $connection, $this->database_name);
+        if (PEAR::isError($result)) {
+            return $result;
+        }
+
+        return $this->_affectedRows($connection, $result);
     }
 
     // }}}
@@ -1882,30 +1960,23 @@ class MDB2_Driver_Common extends PEAR
      *                        the result set
      * @param mixed $result_class string which specifies which result class to use
      * @param mixed $result_wrap_class string which specifies which class to wrap results in
-     * @return mixed a result handle or MDB2_OK on success, a MDB2 error on failure
+     * @return object a result handle on success, a MDB2 error on failure
      * @access public
      */
     function &query($query, $types = null, $result_class = true, $result_wrap_class = false)
     {
-        $isManip = MDB2::isManip($query);
         $offset = $this->row_offset;
         $limit = $this->row_limit;
         $this->row_offset = $this->row_limit = 0;
-        $query = $this->_modifyQuery($query, $isManip, $limit, $offset);
+        $query = $this->_modifyQuery($query, false, $limit, $offset);
 
-        $connected = $this->connect();
-        if (PEAR::isError($connected)) {
-            return $connected;
+        $connection = $this->getConnection();
+        if (PEAR::isError($connection)) {
+            return $connection;
         }
 
-        $result = $this->_doQuery($query, $isManip, $this->connection, $this->database_name);
+        $result = $this->_doQuery($query, false, $connection, $this->database_name);
         if (PEAR::isError($result)) {
-            return $result;
-        }
-
-        // check for integers instead of manip since drivers may do some
-        // custom checks not covered by MDB2::isManip()
-        if (is_int($result)) {
             return $result;
         }
 
@@ -1932,6 +2003,15 @@ class MDB2_Driver_Common extends PEAR
     function &_wrapResult($result, $types = array(), $result_class = true,
         $result_wrap_class = false, $limit = null, $offset = null)
     {
+        if ($types === true) {
+            $this->loadModule('Reverse');
+            $tableInfo = $this->reverse->tableInfo($result);
+            $types = array();
+            foreach ($tableInfo as $field) {
+                $types[] = $field['mdb2type'];
+            }
+        }
+
         if ($result_class === true) {
             $result_class = $this->options['result_buffering']
                 ? $this->options['buffered_result_class'] : $this->options['result_class'];
@@ -1970,6 +2050,22 @@ class MDB2_Driver_Common extends PEAR
             $result =& new $result_wrap_class($result, $this->fetchmode);
         }
         return $result;
+    }
+
+    // }}}
+    // {{{ getServerVersion()
+
+    /**
+     * return version information about the server
+     *
+     * @param string     $native  determines if the raw version string should be returned
+     * @return mixed array with versoin information or row string
+     * @access public
+     */
+    function getServerVersion($native = false)
+    {
+        return $this->raiseError(MDB2_ERROR_UNSUPPORTED, null, null,
+            'getServerVersion: method not implemented');
     }
 
     // }}}
@@ -2149,16 +2245,22 @@ class MDB2_Driver_Common extends PEAR
             return $result;
         }
 
+        $connection = $this->getConnection();
+        if (PEAR::isError($connection)) {
+            return $connection;
+        }
+
         $condition = ' WHERE '.implode(' AND ', $condition);
         $query = "DELETE FROM $table$condition";
-        $affected_rows = $result = $this->_doQuery($query, true);
+        $result = $this->_doQuery($query, true, $connection);
         if (!PEAR::isError($result)) {
+            $affected_rows = $this->_affectedRows($connection, $result);
             $insert = implode(', ', array_keys($values));
             $values = implode(', ', $values);
             $query = "INSERT INTO $table ($insert) VALUES ($values)";
-            $result = $this->_doQuery($query, true);
+            $result = $this->_doQuery($query, true, $connection);
             if (!PEAR::isError($result)) {
-                $affected_rows += $result;
+                $affected_rows += $this->_affectedRows($connection, $result);;
             }
         }
 
@@ -2192,7 +2294,8 @@ class MDB2_Driver_Common extends PEAR
      * @param string $query the query to prepare
      * @param mixed   $types  array that contains the types of the placeholders
      * @param mixed   $result_types  array that contains the types of the columns in
-     *                        the result set
+     *                        the result set, if set to MDB2_PREPARE_MANIP the
+                              query is handled as a manipulation query
      * @return mixed resource handle for the prepared query on success, a MDB2
      *        error on failure
      * @access public
@@ -2200,6 +2303,7 @@ class MDB2_Driver_Common extends PEAR
      */
     function &prepare($query, $types = null, $result_types = null)
     {
+        $is_manip = ($result_types === MDB2_PREPARE_MANIP);
         $this->debug($query, 'prepare');
         $positions = array();
         $placeholder_type_guess = $placeholder_type = null;
@@ -2267,7 +2371,7 @@ class MDB2_Driver_Common extends PEAR
             }
         }
         $class_name = 'MDB2_Statement_'.$this->phptype;
-        $obj =& new $class_name($this, $positions, $query, $types, $result_types);
+        $obj =& new $class_name($this, $positions, $query, $types, $result_types, $is_manip, $this->row_limit, $this->row_offset);
         return $obj;
     }
 
@@ -2361,7 +2465,7 @@ class MDB2_Driver_Common extends PEAR
     // {{{ getSequenceName()
 
     /**
-     * adds sequence name formating to a sequence name
+     * adds sequence name formatting to a sequence name
      *
      * @param string $sqn name of the sequence
      * @return string formatted sequence name
@@ -2371,6 +2475,22 @@ class MDB2_Driver_Common extends PEAR
     {
         return sprintf($this->options['seqname_format'],
             preg_replace('/[^a-z0-9_]/i', '_', $sqn));
+    }
+
+    // }}}
+    // {{{ getIndexName()
+
+    /**
+     * adds index name formatting to a index name
+     *
+     * @param string $idx name of the index
+     * @return string formatted index name
+     * @access public
+     */
+    function getIndexName($idx)
+    {
+        return sprintf($this->options['idxname_format'],
+            preg_replace('/[^a-z0-9_]/i', '_', $idx));
     }
 
     // }}}
@@ -3025,13 +3145,14 @@ class MDB2_Statement_Common
     var $values;
     var $row_limit;
     var $row_offset;
+    var $is_manip;
 
     // {{{ constructor
 
     /**
      * Constructor
      */
-    function __construct(&$db, &$statement, $query, $types, $result_types, $limit = null, $offset = null)
+    function __construct(&$db, &$statement, $query, $types, $result_types, $is_manip = false, $limit = null, $offset = null)
     {
         $this->db =& $db;
         $this->statement =& $statement;
@@ -3039,12 +3160,13 @@ class MDB2_Statement_Common
         $this->types = (array)$types;
         $this->result_types = (array)$result_types;
         $this->row_limit = $limit;
+        $this->is_manip = $is_manip;
         $this->row_offset = $offset;
     }
 
-    function MDB2_Statement_Common(&$db, &$statement, $query, $types, $result_types, $limit = null, $offset = null)
+    function MDB2_Statement_Common(&$db, &$statement, $query, $types, $result_types, $is_manip = false, $limit = null, $offset = null)
     {
-        $this->__construct($db, $statement, $query, $types, $result_types, $limit, $offset);
+        $this->__construct($db, $statement, $query, $types, $result_types, $is_manip, $limit, $offset);
     }
 
     // }}}
@@ -3158,7 +3280,11 @@ class MDB2_Statement_Common
 
         $this->db->row_offset = $this->row_offset;
         $this->db->row_limit = $this->row_limit;
-        $result =& $this->db->query($query, $this->result_types, $result_class, $result_wrap_class);
+        if ($this->is_manip) {
+            $result = $this->db->exec($query);
+        } else {
+            $result =& $this->db->query($query, $this->result_types, $result_class, $result_wrap_class);
+        }
         return $result;
     }
 
@@ -3202,7 +3328,6 @@ class MDB2_Module_Common
     {
         $this->__construct($db_index);
     }
-
 
     // }}}
     // {{{ getDBInstance()

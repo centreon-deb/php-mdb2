@@ -41,107 +41,11 @@
 // | Author: Paul Cooper <pgc@ucecom.com>                                 |
 // +----------------------------------------------------------------------+
 //
-// $Id: MDB2_usage_testcase.php,v 1.43 2005/10/05 12:40:29 lsmith Exp $
+// $Id: MDB2_usage_testcase.php,v 1.47 2005/12/14 12:10:20 dufuz Exp $
 
-class MDB2_Usage_TestCase extends PHPUnit_TestCase {
-    //contains the dsn of the database we are testing
-    var $dsn;
-    //contains the options that should be used during testing
-    var $options;
-    //contains the name of the database we are testing
-    var $database;
-    //contains the MDB2 object of the db once we have connected
-    var $db;
-    // contains field names from the test table
-    var $fields;
-    // contains the types of the fields from the test table
-    var $types;
+require_once 'MDB2_testcase.php';
 
-    function MDB2_Usage_TestCase($name) {
-        $this->PHPUnit_TestCase($name);
-    }
-
-    function setUp() {
-        $this->dsn = $GLOBALS['dsn'];
-        $this->options  = $GLOBALS['options'];
-        $this->database = $GLOBALS['database'];
-        $this->db =& MDB2::factory($this->dsn, $this->options);
-
-        if (PEAR::isError($this->db)) {
-            $this->assertTrue(false, 'Could not connect to database in setUp');
-            exit;
-        }
-        $this->db->setDatabase($this->database);
-        $this->fields = array(
-            'user_name' => 'text',
-            'user_password' => 'text',
-            'subscribed' => 'boolean',
-            'user_id' => 'integer',
-            'quota' => 'decimal',
-            'weight' => 'float',
-            'access_date' => 'date',
-            'access_time' => 'time',
-            'approved' => 'timestamp',
-        );
-        $this->clearTables();
-    }
-
-    function tearDown() {
-        $this->clearTables();
-        unset($this->dsn);
-        if (!PEAR::isError($this->db)) {
-            $this->db->disconnect();
-        }
-        unset($this->db);
-    }
-
-    function clearTables() {
-        if (PEAR::isError($this->db->query('DELETE FROM users'))) {
-            $this->assertTrue(false, 'Error deleting from table users');
-        }
-        if (PEAR::isError($this->db->query('DELETE FROM files'))) {
-            $this->assertTrue(false, 'Error deleting from table users');
-        }
-    }
-
-    function supported($feature) {
-        if (!$this->db->supports($feature)) {
-            $this->assertTrue(false, 'This database does not support '.$feature);
-            return false;
-        }
-        return true;
-    }
-
-    function verifyFetchedValues(&$result, $rownum, &$data) {
-        $row = $result->fetchRow(MDB2_FETCHMODE_DEFAULT, $rownum);
-        reset($row);
-        foreach ($this->fields as $field => $type) {
-            $value = current($row);
-            if ($type == 'float') {
-                $delta = 0.0000000001;
-            } else {
-                $delta = 0;
-            }
-
-            $this->assertEquals($data[$field], $value, "the value retrieved for field \"$field\" doesn't match what was stored into the row $rownum", $delta);
-            next($row);
-        }
-    }
-
-    function getSampleData($row) {
-        $data = array();
-        $data['user_name']     = 'user_' . $row;
-        $data['user_password'] = 'somepassword';
-        $data['subscribed']    = $row % 2 ? true : false;
-        $data['user_id']       = $row;
-        $data['quota']         = strval($row/100);
-        $data['weight']        = sqrt($row);
-        $data['access_date']   = MDB2_Date::mdbToday();
-        $data['access_time']   = MDB2_Date::mdbTime();
-        $data['approved']      = MDB2_Date::mdbNow();
-        return $data;
-    }
-
+class MDB2_Usage_TestCase extends MDB2_TestCase {
     /**
      * Test typed data storage and retrieval
      *
@@ -152,7 +56,7 @@ class MDB2_Usage_TestCase extends PHPUnit_TestCase {
     function testStorage() {
         $data = $this->getSampleData(1234);
 
-        $stmt = $this->db->prepare('INSERT INTO users (' . implode(', ', array_keys($this->fields)) . ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', array_values($this->fields));
+        $stmt = $this->db->prepare('INSERT INTO users (' . implode(', ', array_keys($this->fields)) . ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', array_values($this->fields), false);
         $result = $stmt->execute(array_values($data));
         $stmt->free();
 
@@ -180,7 +84,7 @@ class MDB2_Usage_TestCase extends PHPUnit_TestCase {
         $data = array();
         $total_rows = 5;
 
-        $stmt = $this->db->prepare('INSERT INTO users (' . implode(', ', array_keys($this->fields)) . ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', array_values($this->fields));
+        $stmt = $this->db->prepare('INSERT INTO users (' . implode(', ', array_keys($this->fields)) . ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', array_values($this->fields), false);
 
         for ($row = 0; $row < $total_rows; $row++) {
             $data[$row] = $this->getSampleData($row);
@@ -216,7 +120,7 @@ class MDB2_Usage_TestCase extends PHPUnit_TestCase {
         $data = array();
         $total_rows = 5;
 
-        $stmt = $this->db->prepare('INSERT INTO users (' . implode(', ', array_keys($this->fields)) . ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', array_values($this->fields));
+        $stmt = $this->db->prepare('INSERT INTO users (' . implode(', ', array_keys($this->fields)) . ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', array_values($this->fields), false);
 
         for ($row = 0; $row < $total_rows; $row++) {
             $data[$row] = $this->getSampleData($row);
@@ -273,7 +177,7 @@ class MDB2_Usage_TestCase extends PHPUnit_TestCase {
         $data = array();
         $total_rows = 5;
 
-        $stmt = $this->db->prepare('INSERT INTO users (' . implode(', ', array_keys($this->fields)) . ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', array_values($this->fields));
+        $stmt = $this->db->prepare('INSERT INTO users (' . implode(', ', array_keys($this->fields)) . ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', array_values($this->fields), false);
 
         for ($row = 0; $row < $total_rows; $row++) {
             $data[$row] = $this->getSampleData($row);
@@ -317,7 +221,7 @@ class MDB2_Usage_TestCase extends PHPUnit_TestCase {
         $data = array();
         $total_rows = 5;
 
-        $stmt = $this->db->prepare('INSERT INTO users (' . implode(', ', array_keys($this->fields)) . ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', array_values($this->fields));
+        $stmt = $this->db->prepare('INSERT INTO users (' . implode(', ', array_keys($this->fields)) . ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', array_values($this->fields), false);
 
         for ($row = 0; $row < $total_rows; $row++) {
             $data[$row] = $this->getSampleData($row);
@@ -347,7 +251,7 @@ class MDB2_Usage_TestCase extends PHPUnit_TestCase {
     function testPreparedQueries() {
         $question_value = $this->db->quote('Does this work?', 'text');
 
-        $stmt = $this->db->prepare("INSERT INTO users (user_name, user_password, user_id) VALUES (?, $question_value, 1)", array('text'));
+        $stmt = $this->db->prepare("INSERT INTO users (user_name, user_password, user_id) VALUES (?, $question_value, 1)", array('text'), false);
 
         $value = 'Sure!';
         $stmt->bindParam(0, $value);
@@ -364,7 +268,7 @@ class MDB2_Usage_TestCase extends PHPUnit_TestCase {
 
         $question_value = $this->db->quote("Wouldn't it be great if this worked too?", 'text');
 
-        $stmt = $this->db->prepare("INSERT INTO users (user_name, user_password, user_id) VALUES (:text, $question_value, 2)", array('text'));
+        $stmt = $this->db->prepare("INSERT INTO users (user_name, user_password, user_id) VALUES (:text, $question_value, 2)", array('text'), false);
 
         $value = 'For Sure!';
         $stmt->bindParam('text', $value);
@@ -391,7 +295,7 @@ class MDB2_Usage_TestCase extends PHPUnit_TestCase {
     function testMetadata() {
         $data = $this->getSampleData(1234);
 
-        $stmt = $this->db->prepare('INSERT INTO users (' . implode(', ', array_keys($this->fields)) . ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', array_values($this->fields));
+        $stmt = $this->db->prepare('INSERT INTO users (' . implode(', ', array_keys($this->fields)) . ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', array_values($this->fields), false);
         $result = $stmt->execute(array_values($data));
         $stmt->free();
 
@@ -449,7 +353,7 @@ class MDB2_Usage_TestCase extends PHPUnit_TestCase {
 
             $this->clearTables();
 
-            $result =& $this->db->query("INSERT INTO users (user_name,user_password,user_id) VALUES ($value,$value,0)");
+            $result = $this->db->exec("INSERT INTO users (user_name,user_password,user_id) VALUES ($value,$value,0)");
 
             if (PEAR::isError($result)) {
                 $this->assertTrue(false, 'Error executing insert query'.$result->getMessage());
@@ -500,7 +404,7 @@ class MDB2_Usage_TestCase extends PHPUnit_TestCase {
 
             $value = $this->db->quote($test_strings[$string], 'text');
 
-            $result =& $this->db->query("INSERT INTO users (user_name,user_password,user_id) VALUES ($value,$value,0)");
+            $result = $this->db->exec("INSERT INTO users (user_name,user_password,user_id) VALUES ($value,$value,0)");
 
             if (PEAR::isError($result)) {
                 $this->assertTrue(false, 'Error executing insert query'.$result->getMessage());
@@ -534,7 +438,7 @@ class MDB2_Usage_TestCase extends PHPUnit_TestCase {
         $data = array();
         $total_rows = 5;
 
-        $stmt = $this->db->prepare('INSERT INTO users (' . implode(', ', array_keys($this->fields)) . ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', array_values($this->fields));
+        $stmt = $this->db->prepare('INSERT INTO users (' . implode(', ', array_keys($this->fields)) . ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', array_values($this->fields), false);
 
         for ($row = 0; $row < $total_rows; $row++) {
             $data[$row] = $this->getSampleData($row);
@@ -781,7 +685,7 @@ class MDB2_Usage_TestCase extends PHPUnit_TestCase {
         $data = array();
         $total_rows = 7;
 
-        $stmt = $this->db->prepare('INSERT INTO users (' . implode(', ', array_keys($this->fields)) . ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', array_values($this->fields));
+        $stmt = $this->db->prepare('INSERT INTO users (' . implode(', ', array_keys($this->fields)) . ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', array_values($this->fields), false);
 
         for ($row = 0; $row < $total_rows; $row++) {
             $data[$row] = $this->getSampleData($row);
@@ -796,7 +700,7 @@ class MDB2_Usage_TestCase extends PHPUnit_TestCase {
 
         $stmt->free();
 
-        $stmt = $this->db->prepare('UPDATE users SET user_password=? WHERE user_id < ?', array('text', 'integer'));
+        $stmt = $this->db->prepare('UPDATE users SET user_password=? WHERE user_id < ?', array('text', 'integer'), false);
 
         for ($row = 0; $row < $total_rows; $row++) {
             $password = "another_password_$row";
@@ -816,7 +720,7 @@ class MDB2_Usage_TestCase extends PHPUnit_TestCase {
 
         $stmt->free();
 
-        $stmt = $this->db->prepare('DELETE FROM users WHERE user_id >= ?', array('integer'));
+        $stmt = $this->db->prepare('DELETE FROM users WHERE user_id >= ?', array('integer'), false);
 
         $row = intval($total_rows / 2);
         $stmt->bindParam(0, $row);
@@ -847,7 +751,7 @@ class MDB2_Usage_TestCase extends PHPUnit_TestCase {
         $data = $this->getSampleData(0);
 
         $this->db->beginTransaction();
-        $stmt = $this->db->prepare('INSERT INTO users (' . implode(', ', array_keys($this->fields)) . ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', array_values($this->fields));
+        $stmt = $this->db->prepare('INSERT INTO users (' . implode(', ', array_keys($this->fields)) . ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', array_values($this->fields), false);
         $result = $stmt->execute(array_values($data));
         $this->db->rollback();
         $stmt->free();
@@ -871,7 +775,7 @@ class MDB2_Usage_TestCase extends PHPUnit_TestCase {
         $data = $this->getSampleData(1);
 
         $this->db->beginTransaction();
-        $stmt = $this->db->prepare('INSERT INTO users (' . implode(', ', array_keys($this->fields)) . ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', array_values($this->fields));
+        $stmt = $this->db->prepare('INSERT INTO users (' . implode(', ', array_keys($this->fields)) . ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', array_values($this->fields), false);
         $result = $stmt->execute(array_values($data));
         $this->db->commit();
         $stmt->free();
@@ -895,7 +799,7 @@ class MDB2_Usage_TestCase extends PHPUnit_TestCase {
         $data = $this->getSampleData(0);
 
         $this->db->beginTransaction();
-        $result =& $this->db->query('DELETE FROM users');
+        $result = $this->db->exec('DELETE FROM users');
         if (PEAR::isError($result)) {
             $this->assertTrue(false, 'Error deleting from users'.$result->getMessage());
             $this->db->rollback();
@@ -921,7 +825,7 @@ class MDB2_Usage_TestCase extends PHPUnit_TestCase {
         }
 
         $query = 'INSERT INTO files (ID, document, picture) VALUES (1, :document, :picture)';
-        $stmt = $this->db->prepare($query, array('document' => 'clob', 'picture' => 'blob'));
+        $stmt = $this->db->prepare($query, array('document' => 'clob', 'picture' => 'blob'), false);
 
         $character_lob = '';
         $binary_lob = '';
@@ -994,7 +898,7 @@ class MDB2_Usage_TestCase extends PHPUnit_TestCase {
         }
 
         $query = 'INSERT INTO files (ID, document, picture) VALUES (1, :document, :picture)';
-        $stmt = $this->db->prepare($query, array('document' => 'clob', 'picture' => 'blob'));
+        $stmt = $this->db->prepare($query, array('document' => 'clob', 'picture' => 'blob'), false);
 
         $character_data_file = 'character_data';
         if (($file = fopen($character_data_file, 'w'))) {
@@ -1088,7 +992,7 @@ class MDB2_Usage_TestCase extends PHPUnit_TestCase {
         }
 
         $query = 'INSERT INTO files (ID, document, picture) VALUES (1, :document, :picture)';
-        $stmt = $this->db->prepare($query, array('document' => 'clob', 'picture' => 'blob'));
+        $stmt = $this->db->prepare($query, array('document' => 'clob', 'picture' => 'blob'), false);
 
         $null = null;
         $stmt->bindParam('document', $null);
@@ -1126,7 +1030,7 @@ class MDB2_Usage_TestCase extends PHPUnit_TestCase {
         $data = $this->getSampleData(1234);
         $data['user_password'] = '';
 
-        $stmt = $this->db->prepare('INSERT INTO users (' . implode(', ', array_keys($this->fields)) . ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', array_values($this->fields));
+        $stmt = $this->db->prepare('INSERT INTO users (' . implode(', ', array_keys($this->fields)) . ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', array_values($this->fields), false);
         $result = $stmt->execute(array_values($data));
         $stmt->free();
 

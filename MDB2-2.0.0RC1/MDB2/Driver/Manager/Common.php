@@ -42,7 +42,7 @@
 // | Author: Lukas Smith <smith@pooteeweet.org>                           |
 // +----------------------------------------------------------------------+
 //
-// $Id: Common.php,v 1.22 2005/10/06 08:52:03 lsmith Exp $
+// $Id: Common.php,v 1.39 2005/12/15 22:52:56 lsmith Exp $
 //
 
 /**
@@ -97,7 +97,7 @@ class MDB2_Driver_Manager_Common extends MDB2_Module_Common
                 }
                 $query_fields[] = $query;
             }
-            return implode(',', $query_fields);
+            return implode(', ', $query_fields);
         }
         return $db->raiseError(MDB2_ERROR_NEED_MORE_DATA, null, null,
             'getFieldDeclarationList: the definition of the table "'.$table_name.'" does not contain any fields');
@@ -107,7 +107,7 @@ class MDB2_Driver_Manager_Common extends MDB2_Module_Common
     // {{{ _isSequenceName()
 
     /**
-     * list all tables in the current database
+     * Checks if the sequence name is valid and formats it
      *
      * @param string $sqn string that containts name of a potential sequence
      * @return mixed name of the sequence if $sqn is a name of a sequence, else false
@@ -122,8 +122,33 @@ class MDB2_Driver_Manager_Common extends MDB2_Module_Common
 
         $seq_pattern = '/^'.preg_replace('/%s/', '([a-z0-9_]+)', $db->options['seqname_format']).'$/i';
         $seq_name = preg_replace($seq_pattern, '\\1', $sqn);
-        if ($seq_name && $sqn == $db->getSequenceName($seq_name)) {
+        if ($seq_name && !strcasecmp($sqn, $db->getSequenceName($seq_name))) {
             return $seq_name;
+        }
+        return false;
+    }
+
+    // }}}
+    // {{{ _isIndexName()
+
+    /**
+     * Checks if the index name is valid and formats it
+     *
+     * @param string $idx string that containts name of a potential index
+     * @return mixed name of the index if $idx is a name of a index, else false
+     * @access protected
+     */
+    function _isIndexName($idx)
+    {
+        $db =& $this->getDBInstance();
+        if (PEAR::isError($db)) {
+            return $db;
+        }
+
+        $idx_pattern = '/^'.preg_replace('/%s/', '([a-z0-9_]+)', $db->options['idxname_format']).'$/i';
+        $idx_name = preg_replace($idx_pattern, '\\1', $idx);
+        if ($idx_name && !strcasecmp($idx, $db->getIndexName($idx_name))) {
+            return $idx_name;
         }
         return false;
     }
@@ -223,8 +248,10 @@ class MDB2_Driver_Manager_Common extends MDB2_Module_Common
             return $db->raiseError(MDB2_ERROR_CANNOT_CREATE, null, null,
                 'createTable: unkown error');
         }
+
+        $name = $db->quoteIdentifier($name, true);
         $query = "CREATE TABLE $name ($query_fields)";
-        return $db->query($query);
+        return $db->exec($query);
     }
 
     // }}}
@@ -244,7 +271,8 @@ class MDB2_Driver_Manager_Common extends MDB2_Module_Common
             return $db;
         }
 
-        return $db->query("DROP TABLE $name");
+        $name = $db->quoteIdentifier($name, true);
+        return $db->exec("DROP TABLE $name");
     }
 
     // }}}
@@ -311,23 +339,34 @@ class MDB2_Driver_Manager_Common extends MDB2_Module_Common
      *                                    'remove' => array(
      *                                        'file_limit' => array(),
      *                                        'time_limit' => array()
-     *                                        ),
+     *                                    ),
      *                                    'change' => array(
-     *                                        'gender' => array(
-     *                                            'default' => 'M',
+     *                                        'name' => array(
+     *                                            'length' => '20',
+     *                                            'definition' => array(
+     *                                                'type' => 'text',
+     *                                                'length' => 20,
+     *                                            ),
      *                                        )
      *                                    ),
      *                                    'rename' => array(
      *                                        'sex' => array(
      *                                            'name' => 'gender',
+     *                                            'definition' => array(
+     *                                                'type' => 'text',
+     *                                                'length' => 1,
+     *                                                'default' => 'M',
+     *                                            ),
      *                                        )
      *                                    )
      *                                )
+     *
      * @param boolean $check     indicates whether the function should just check if the DBMS driver
      *                             can perform the requested table alterations if the value is true or
      *                             actually perform them otherwise.
-     * @return mixed MDB2_OK on success, a MDB2 error on failure
      * @access public
+     *
+      * @return mixed MDB2_OK on success, a MDB2 error on failure
      */
     function alterTable($name, $changes, $check)
     {
@@ -503,8 +542,15 @@ class MDB2_Driver_Manager_Common extends MDB2_Module_Common
             return $db;
         }
 
-        return $db->raiseError(MDB2_ERROR_UNSUPPORTED, null, null,
-            'createIndex: Creating Indexes is not supported');
+        $table = $db->quoteIdentifier($table, true);
+        $name = $db->quoteIdentifier($db->getIndexName($name), true);
+        $query = "CREATE INDEX $name ON $table";
+        $fields = array();
+        foreach (array_keys($definition['fields']) as $field) {
+            $fields[] = $db->quoteIdentifier($field, true);
+        }
+        $query .= ' ('. implode(', ', $fields) . ')';
+        return $db->exec($query);
     }
 
     // }}}
@@ -525,7 +571,8 @@ class MDB2_Driver_Manager_Common extends MDB2_Module_Common
             return $db;
         }
 
-        return $db->query("DROP INDEX $name");
+        $name = $db->quoteIdentifier($db->getIndexName($name), true);
+        return $db->exec("DROP INDEX $name");
     }
 
     // }}}
@@ -547,6 +594,97 @@ class MDB2_Driver_Manager_Common extends MDB2_Module_Common
 
         return $db->raiseError(MDB2_ERROR_UNSUPPORTED, null, null,
             'listTableIndexes: List Indexes is not supported');
+    }
+
+    // }}}
+    // {{{ createConstraint()
+
+    /**
+     * create a constraint on a table
+     *
+     * @param string    $table         name of the table on which the constraint is to be created
+     * @param string    $name         name of the constraint to be created
+     * @param array     $definition        associative array that defines properties of the constraint to be created.
+     *                                 Currently, only one property named FIELDS is supported. This property
+     *                                 is also an associative with the names of the constraint fields as array
+     *                                 constraints. Each entry of this array is set to another type of associative
+     *                                 array that specifies properties of the constraint that are specific to
+     *                                 each field.
+     *
+     *                                 Example
+     *                                    array(
+     *                                        'fields' => array(
+     *                                            'user_name' => array(),
+     *                                            'last_login' => array()
+     *                                        )
+     *                                    )
+     * @return mixed MDB2_OK on success, a MDB2 error on failure
+     * @access public
+     */
+    function createConstraint($table, $name, $definition)
+    {
+        $db =& $this->getDBInstance();
+        if (PEAR::isError($db)) {
+            return $db;
+        }
+        $table = $db->quoteIdentifier($table, true);
+        $name = $db->quoteIdentifier($db->getIndexName($name), true);
+        $query = "ALTER TABLE $table ADD CONSTRAINT $name";
+        if (array_key_exists('primary', $definition) && $definition['primary']) {
+            $query.= ' PRIMARY KEY';
+        } elseif (array_key_exists('unique', $definition) && $definition['unique']) {
+            $query.= ' UNIQUE';
+        }
+        $fields = array();
+        foreach (array_keys($definition['fields']) as $field) {
+            $fields[] = $db->quoteIdentifier($field, true);
+        }
+        $query .= ' ('. implode(', ', $fields) . ')';
+        return $db->exec($query);
+    }
+
+    // }}}
+    // {{{ dropConstraint()
+
+    /**
+     * drop existing constraint
+     *
+     * @param string    $table         name of table that should be used in method
+     * @param string    $name         name of the constraint to be dropped
+     * @return mixed MDB2_OK on success, a MDB2 error on failure
+     * @access public
+     */
+    function dropConstraint($table, $name)
+    {
+        $db =& $this->getDBInstance();
+        if (PEAR::isError($db)) {
+            return $db;
+        }
+
+        $table = $db->quoteIdentifier($table, true);
+        $name = $db->quoteIdentifier($db->getIndexName($name), true);
+        return $db->exec("ALTER TABLE $table DROP CONSTRAINT $name");
+    }
+
+    // }}}
+    // {{{ listTableConstraints()
+
+    /**
+     * list all sonstraints in a table
+     *
+     * @param string    $table      name of table that should be used in method
+     * @return mixed data array on success, a MDB2 error on failure
+     * @access public
+     */
+    function listTableConstraints($table)
+    {
+        $db =& $this->getDBInstance();
+        if (PEAR::isError($db)) {
+            return $db;
+        }
+
+        return $db->raiseError(MDB2_ERROR_UNSUPPORTED, null, null,
+            'listTableConstraints: List Constraints is not supported');
     }
 
     // }}}

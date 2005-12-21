@@ -42,7 +42,7 @@
 // | Author: Lukas Smith <smith@pooteeweet.org>                           |
 // +----------------------------------------------------------------------+
 //
-// $Id: Common.php,v 1.44 2005/10/10 07:41:25 lsmith Exp $
+// $Id: Common.php,v 1.48 2005/12/08 15:50:50 lsmith Exp $
 
 require_once 'MDB2/LOB.php';
 
@@ -62,16 +62,16 @@ require_once 'MDB2/LOB.php';
 class MDB2_Driver_Datatype_Common extends MDB2_Module_Common
 {
     var $valid_types = array(
-        'text'      => true,
+        'text'      => '',
         'boolean'   => true,
-        'integer'   => true,
-        'decimal'   => true,
-        'float'     => true,
-        'date'      => true,
-        'time'      => true,
-        'timestamp' => true,
-        'clob'      => true,
-        'blob'      => true,
+        'integer'   => 0,
+        'decimal'   => 0.0,
+        'float'     => 0.0,
+        'date'      => '0000-00-00 00:00:00',
+        'time'      => '00:00:00',
+        'timestamp' => '0000-00-00',
+        'clob'      => '',
+        'blob'      => '',
     );
 
     /**
@@ -254,6 +254,112 @@ class MDB2_Driver_Datatype_Common extends MDB2_Module_Common
     }
 
     // }}}
+    // {{{ getTypeDeclaration()
+
+    /**
+     * Obtain DBMS specific SQL code portion needed to declare an text type
+     * field to be used in statements like CREATE TABLE.
+     *
+     * @param array $field  associative array with the name of the properties
+     *      of the field being declared as array indexes. Currently, the types
+     *      of supported field properties are as follows:
+     *
+     *      length
+     *          Integer value that determines the maximum length of the text
+     *          field. If this argument is missing the field should be
+     *          declared to have the longest length allowed by the DBMS.
+     *
+     *      default
+     *          Text value to be used as default for this field.
+     *
+     *      notnull
+     *          Boolean flag that indicates whether this field is constrained
+     *          to not be set to null.
+     * @return string  DBMS specific SQL code portion that should be used to
+     *      declare the specified field.
+     * @access public
+     */
+    function getTypeDeclaration($field)
+    {
+        $db =& $this->getDBInstance();
+        if (PEAR::isError($db)) {
+            return $db;
+        }
+
+        switch ($field['type']) {
+        case 'text':
+            return array_key_exists('length', $field) ? 'CHAR ('.$field['length'].')' : 'TEXT';
+        case 'clob':
+            return 'TEXT';
+        case 'blob':
+            return 'TEXT';
+        case 'integer':
+            return 'INT';
+        case 'boolean':
+            return 'CHAR (1)';
+        case 'date':
+            return 'CHAR ('.strlen('YYYY-MM-DD').')';
+        case 'time':
+            return 'CHAR ('.strlen('HH:MM:SS').')';
+        case 'timestamp':
+            return 'CHAR ('.strlen('YYYY-MM-DD HH:MM:SS').')';
+        case 'float':
+            return 'TEXT';
+        case 'decimal':
+            return 'TEXT';
+        }
+        return '';
+    }
+
+    // }}}
+    // {{{ _getDeclaration()
+
+    /**
+     * Obtain DBMS specific SQL code portion needed to declare a generic type
+     * field to be used in statements like CREATE TABLE.
+     *
+     * @param string $name   name the field to be declared.
+     * @param array  $field  associative array with the name of the properties
+     *      of the field being declared as array indexes. Currently, the types
+     *      of supported field properties are as follows:
+     *
+     *      length
+     *          Integer value that determines the maximum length of the text
+     *          field. If this argument is missing the field should be
+     *          declared to have the longest length allowed by the DBMS.
+     *
+     *      default
+     *          Text value to be used as default for this field.
+     *
+     *      notnull
+     *          Boolean flag that indicates whether this field is constrained
+     *          to not be set to null.
+     * @return string  DBMS specific SQL code portion that should be used to
+     *      declare the specified field.
+     * @access protected
+     */
+    function _getDeclaration($name, $field)
+    {
+        $db =& $this->getDBInstance();
+        if (PEAR::isError($db)) {
+            return $db;
+        }
+
+        $default = '';
+        if (array_key_exists('default', $field)) {
+            if ($field['default'] === '') {
+                $field['default'] = (array_key_exists('notnull', $field) && $field['notnull'])
+                    ? $this->valid_types[$field['type']] : null;
+            }
+            $default = ' DEFAULT '.$this->quote($field['default'], $field['type']);
+        }
+
+        $notnull = (array_key_exists('notnull', $field) && $field['notnull']) ? ' NOT NULL' : '';
+        $name = $db->quoteIdentifier($name, true);
+        return $name.' '.$this->getTypeDeclaration($field).$default.$notnull;
+    }
+
+    // }}}
     // {{{ _getIntegerDeclaration()
 
     /**
@@ -289,10 +395,7 @@ class MDB2_Driver_Datatype_Common extends MDB2_Module_Common
 
             $db->warnings[] = "unsigned integer field \"$name\" is being declared as signed integer";
         }
-        $default = array_key_exists('default', $field) ? ' DEFAULT '.
-            $this->quote($field['default'], 'integer') : '';
-        $notnull = (array_key_exists('notnull', $field) && $field['notnull']) ? ' NOT NULL' : '';
-        return $name.' INT'.$default.$notnull;
+        return $this->_getDeclaration($name, $field);
     }
 
     // }}}
@@ -324,11 +427,7 @@ class MDB2_Driver_Datatype_Common extends MDB2_Module_Common
      */
     function _getTextDeclaration($name, $field)
     {
-        $default = array_key_exists('default', $field) ? ' DEFAULT '.
-            $this->quote($field['default'], 'text') : '';
-        $notnull = (array_key_exists('notnull', $field) && $field['notnull']) ? ' NOT NULL' : '';
-        $type = array_key_exists('length', $field) ? 'CHAR ('.$field['length'].')' : 'TEXT';
-        return $name.' '.$type.$default.$notnull;
+        return $this->_getDeclaration($name, $field);
     }
 
     // }}}
@@ -340,26 +439,31 @@ class MDB2_Driver_Datatype_Common extends MDB2_Module_Common
      *
      * @param string $name name the field to be declared.
      * @param array $field associative array with the name of the properties
-     *       of the field being declared as array indexes. Currently, the types
-     *       of supported field properties are as follows:
+     *        of the field being declared as array indexes. Currently, the types
+     *        of supported field properties are as follows:
      *
-     *       length
-     *           Integer value that determines the maximum length of the large
-     *           object field. If this argument is missing the field should be
-     *           declared to have the longest length allowed by the DBMS.
+     *        length
+     *            Integer value that determines the maximum length of the large
+     *            object field. If this argument is missing the field should be
+     *            declared to have the longest length allowed by the DBMS.
      *
-     *       notnull
-     *           Boolean flag that indicates whether this field is constrained
-     *           to not be set to null.
+     *        notnull
+     *            Boolean flag that indicates whether this field is constrained
+     *            to not be set to null.
      * @return string DBMS specific SQL code portion that should be used to
-     *       declare the specified field.
-     * @access protected
+     *        declare the specified field.
+     * @access public
      */
     function _getCLOBDeclaration($name, $field)
     {
+        $db =& $this->getDBInstance();
+        if (PEAR::isError($db)) {
+            return $db;
+        }
+
         $notnull = (array_key_exists('notnull', $field) && $field['notnull']) ? ' NOT NULL' : '';
-        $type = array_key_exists('length', $field) ? 'CHAR ('.$field['length'].')' : 'TEXT';
-        return $name.' '.$type.$notnull;
+        $name = $db->quoteIdentifier($name, true);
+        return $name.' '.$this->getTypeDeclaration($field).$notnull;
     }
 
     // }}}
@@ -371,26 +475,31 @@ class MDB2_Driver_Datatype_Common extends MDB2_Module_Common
      *
      * @param string $name name the field to be declared.
      * @param array $field associative array with the name of the properties
-     *       of the field being declared as array indexes. Currently, the types
-     *       of supported field properties are as follows:
+     *        of the field being declared as array indexes. Currently, the types
+     *        of supported field properties are as follows:
      *
-     *       length
-     *           Integer value that determines the maximum length of the large
-     *           object field. If this argument is missing the field should be
-     *           declared to have the longest length allowed by the DBMS.
+     *        length
+     *            Integer value that determines the maximum length of the large
+     *            object field. If this argument is missing the field should be
+     *            declared to have the longest length allowed by the DBMS.
      *
-     *       notnull
-     *           Boolean flag that indicates whether this field is constrained
-     *           to not be set to null.
+     *        notnull
+     *            Boolean flag that indicates whether this field is constrained
+     *            to not be set to null.
      * @return string DBMS specific SQL code portion that should be used to
-     *       declare the specified field.
+     *        declare the specified field.
      * @access protected
      */
     function _getBLOBDeclaration($name, $field)
     {
+        $db =& $this->getDBInstance();
+        if (PEAR::isError($db)) {
+            return $db;
+        }
+
         $notnull = (array_key_exists('notnull', $field) && $field['notnull']) ? ' NOT NULL' : '';
-        $type = array_key_exists('length', $field) ? 'CHAR ('.$field['length'].')' : 'TEXT';
-        return $name.' '.$type.$notnull;
+        $name = $db->quoteIdentifier($name, true);
+        return $name.' '.$this->getTypeDeclaration($field).$notnull;
     }
 
     // }}}
@@ -417,10 +526,7 @@ class MDB2_Driver_Datatype_Common extends MDB2_Module_Common
      */
     function _getBooleanDeclaration($name, $field)
     {
-        $default = array_key_exists('default', $field) ? ' DEFAULT '.
-            $this->quote($field['default'], 'boolean') : '';
-        $notnull = (array_key_exists('notnull', $field) && $field['notnull']) ? ' NOT NULL' : '';
-        return $name.' CHAR (1)'.$default.$notnull;
+        return $this->_getDeclaration($name, $field);
     }
 
     // }}}
@@ -447,10 +553,7 @@ class MDB2_Driver_Datatype_Common extends MDB2_Module_Common
      */
     function _getDateDeclaration($name, $field)
     {
-        $default = array_key_exists('default', $field) ? ' DEFAULT '.
-            $this->quote($field['default'], 'date') : '';
-        $notnull = (array_key_exists('notnull', $field) && $field['notnull']) ? ' NOT NULL' : '';
-        return $name.' CHAR ('.strlen('YYYY-MM-DD').')'.$default.$notnull;
+        return $this->_getDeclaration($name, $field);
     }
 
     // }}}
@@ -477,10 +580,7 @@ class MDB2_Driver_Datatype_Common extends MDB2_Module_Common
      */
     function _getTimestampDeclaration($name, $field)
     {
-        $default = array_key_exists('default', $field) ? ' DEFAULT '.
-            $this->quote($field['default'], 'timestamp') : '';
-        $notnull = (array_key_exists('notnull', $field) && $field['notnull']) ? ' NOT NULL' : '';
-        return $name.' CHAR ('.strlen('YYYY-MM-DD HH:MM:SS').')'.$default.$notnull;
+        return $this->_getDeclaration($name, $field);
     }
 
     // }}}
@@ -507,10 +607,7 @@ class MDB2_Driver_Datatype_Common extends MDB2_Module_Common
      */
     function _getTimeDeclaration($name, $field)
     {
-        $default = array_key_exists('default', $field) ? ' DEFAULT '.
-            $this->quote($field['default'], 'time') : '';
-        $notnull = (array_key_exists('notnull', $field) && $field['notnull']) ? ' NOT NULL' : '';
-        return $name.' CHAR ('.strlen('HH:MM:SS').')'.$default.$notnull;
+        return $this->_getDeclaration($name, $field);
     }
 
     // }}}
@@ -537,10 +634,7 @@ class MDB2_Driver_Datatype_Common extends MDB2_Module_Common
      */
     function _getFloatDeclaration($name, $field)
     {
-        $default = array_key_exists('default', $field) ? ' DEFAULT '.
-            $this->quote($field['default'], 'float') : '';
-        $notnull = (array_key_exists('notnull', $field) && $field['notnull']) ? ' NOT NULL' : '';
-        return $name.' TEXT'.$default.$notnull;
+        return $this->_getDeclaration($name, $field);
     }
 
     // }}}
@@ -567,10 +661,7 @@ class MDB2_Driver_Datatype_Common extends MDB2_Module_Common
      */
     function _getDecimalDeclaration($name, $field)
     {
-        $default = array_key_exists('default', $field) ? ' DEFAULT '.
-            $this->quote($field['default'], 'decimal') : '';
-        $notnull = (array_key_exists('notnull', $field) && $field['notnull']) ? ' NOT NULL' : '';
-        return $name.' TEXT'.$default.$notnull;
+        return $this->_getDeclaration($name, $field);
     }
 
     // }}}
@@ -603,6 +694,10 @@ class MDB2_Driver_Datatype_Common extends MDB2_Module_Common
         }
 
         $change = $this->{"_compare{$type}Definition"}($current, $previous);
+
+        if ($previous['type'] != $type) {
+            $change['type'] = true;
+        }
 
         $previous_notnull = array_key_exists('notnull', $previous) ? $previous['notnull'] : false;
         $notnull = array_key_exists('notnull', $current) ? $current['notnull'] : false;

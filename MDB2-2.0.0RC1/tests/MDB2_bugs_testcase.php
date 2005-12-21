@@ -41,91 +41,18 @@
 // | Author: Paul Cooper <pgc@ucecom.com>                                 |
 // +----------------------------------------------------------------------+
 //
-// $Id:
+// $Id: MDB2_bugs_testcase.php,v 1.25 2005/12/14 12:10:20 dufuz Exp $
 
-class MDB2_Bugs_TestCase extends PHPUnit_TestCase {
-    //contains the dsn of the database we are testing
-    var $dsn;
-    //contains the options that should be used during testing
-    var $options;
-    //contains the name of the database we are testing
-    var $database;
-    //contains the MDB2 object of the db once we have connected
-    var $db;
-    // contains field names from the test table
-    var $fields;
-    // contains the types of the fields from the test table
-    var $types;
+require_once 'MDB2_testcase.php';
 
-    function MDB2_Bugs_TestCase($name) {
-        $this->PHPUnit_TestCase($name);
-    }
-
-    function setUp() {
-        $this->dsn = $GLOBALS['dsn'];
-        $this->options = $GLOBALS['options'];
-        $this->database = $GLOBALS['database'];
-        $this->db =& MDB2::factory($this->dsn, $this->options);
-        if (PEAR::isError($this->db)) {
-            $this->assertTrue(false, 'Could not connect to database in setUp');
-            exit;
-        }
-        $this->db->setDatabase($this->database);
-        $this->fields = array(
-            'user_name' => 'text',
-            'user_password' => 'text',
-            'subscribed' => 'boolean',
-            'user_id' => 'integer',
-            'quota' => 'decimal',
-            'weight' => 'float',
-            'access_date' => 'date',
-            'access_time' => 'time',
-            'approved' => 'timestamp',
-        );
-        $this->clearTables();
-    }
-
-    function tearDown() {
-        $this->clearTables();
-        unset($this->dsn);
-        if (!PEAR::isError($this->db)) {
-            $this->db->disconnect();
-        }
-        unset($this->db);
-    }
-
-    function clearTables() {
-        if (PEAR::isError($this->db->query('DELETE FROM users'))) {
-            $this->assertTrue(false, 'Error deleting from table users');
-        }
-        if (PEAR::isError($this->db->query('DELETE FROM files'))) {
-            $this->assertTrue(false, 'Error deleting from table users');
-        }
-    }
-
-    function verifyFetchedValues(&$result, $rownum, &$data) {
-        $row = $result->fetchRow(MDB2_FETCHMODE_DEFAULT, $rownum);
-        reset($row);
-        foreach ($this->fields as $field => $type) {
-            $value = current($row);
-            if ($type == 'float') {
-                $delta = 0.0000000001;
-            } else {
-                $delta = 0;
-            }
-
-            $this->assertEquals($data[$field], $value, "the value retrieved for field \"$field\" doesn't match what was stored into the row $rownum", $delta);
-            next($row);
-        }
-    }
-
+class MDB2_Bugs_TestCase extends MDB2_TestCase {
     /**
      *
      */
     function testFetchModeBug() {
         $data = array();
 
-        $stmt = $this->db->prepare('INSERT INTO users (' . implode(', ', array_keys($this->fields)) . ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', array_values($this->fields));
+        $stmt = $this->db->prepare('INSERT INTO users (' . implode(', ', array_keys($this->fields)) . ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', array_values($this->fields), false);
 
         $data['user_name'] = 'user_=';
         $data['user_password'] = 'somepassword';
@@ -194,7 +121,7 @@ class MDB2_Bugs_TestCase extends PHPUnit_TestCase {
         $data['access_time'] = MDB2_Date::mdbTime();
         $data['approved'] = MDB2_Date::mdbNow();
 
-        $stmt = $this->db->prepare('INSERT INTO users (' . implode(', ', array_keys($this->fields)) . ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', array_values($this->fields));
+        $stmt = $this->db->prepare('INSERT INTO users (' . implode(', ', array_keys($this->fields)) . ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', array_values($this->fields), false);
         $result = $stmt->execute(array_values($data));
 
         $result = $this->db->query('SELECT user_name FROM users');
@@ -238,7 +165,7 @@ class MDB2_Bugs_TestCase extends PHPUnit_TestCase {
         $data['access_time'] = MDB2_Date::mdbTime();
         $data['approved'] = MDB2_Date::mdbNow();
 
-        $stmt = $this->db->prepare('INSERT INTO users (' . implode(', ', array_keys($this->fields)) . ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', array_values($this->fields));
+        $stmt = $this->db->prepare('INSERT INTO users (' . implode(', ', array_keys($this->fields)) . ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', array_values($this->fields), false);
         $result = $stmt->execute(array_values($data));
 
         $result = $this->db->query('SELECT * FROM users');
@@ -262,7 +189,7 @@ class MDB2_Bugs_TestCase extends PHPUnit_TestCase {
         $data['access_time'] = MDB2_Date::mdbTime();
         $data['approved'] = MDB2_Date::mdbNow();
 
-        $stmt = $this->db->prepare('INSERT INTO users (' . implode(', ', array_keys($this->fields)) . ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', array_values($this->fields));
+        $stmt = $this->db->prepare('INSERT INTO users (' . implode(', ', array_keys($this->fields)) . ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', array_values($this->fields), false);
         $result = $stmt->execute(array_values($data));
 
         $row = $this->db->queryRow('SELECT a.user_id, b.user_id FROM users a, users b where a.user_id = b.user_id', array('integer', 'integer'), MDB2_FETCHMODE_ORDERED);
@@ -278,7 +205,7 @@ class MDB2_Bugs_TestCase extends PHPUnit_TestCase {
         $data = array();
         $total_rows = 5;
 
-        $stmt = $this->db->prepare('INSERT INTO users (' . implode(', ', array_keys($this->fields)) . ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', array_values($this->fields));
+        $stmt = $this->db->prepare('INSERT INTO users (' . implode(', ', array_keys($this->fields)) . ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', array_values($this->fields), false);
 
         for ($row = 0; $row < $total_rows; $row++) {
             $data[$row]['user_name'] = "user_$row";
@@ -326,7 +253,7 @@ class MDB2_Bugs_TestCase extends PHPUnit_TestCase {
         $data = array();
         $total_rows = 5;
 
-        $stmt = $this->db->prepare('INSERT INTO users (' . implode(', ', array_keys($this->fields)) . ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', array_values($this->fields));
+        $stmt = $this->db->prepare('INSERT INTO users (' . implode(', ', array_keys($this->fields)) . ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', array_values($this->fields), false);
 
         for ($row = 0; $row < $total_rows; $row++) {
             $data[$row]['user_name'] = "user_$row";

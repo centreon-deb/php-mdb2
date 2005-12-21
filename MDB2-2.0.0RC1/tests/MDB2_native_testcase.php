@@ -41,92 +41,12 @@
 // | Author: Lorenzo Alberton <l dot alberton at quipo dot it>            |
 // +----------------------------------------------------------------------+
 //
-// $Id: MDB2_reverse_testcase.php,v 1.10 2005/08/25 08:48:46 lsmith Exp $
+// $Id: MDB2_native_testcase.php,v 1.11 2005/12/14 12:10:20 dufuz Exp $
 
-class MDB2_Reverse_TestCase extends PHPUnit_TestCase
+require_once 'MDB2_testcase.php';
+
+class MDB2_Native_TestCase extends MDB2_TestCase
 {
-    //contains the dsn of the database we are testing
-    var $dsn;
-    //contains the options that should be used during testing
-    var $options;
-    //contains the name of the database we are testing
-    var $database;
-    //contains the MDB2 object of the db once we have connected
-    var $db;
-    // contains field names from the test table
-    var $fields;
-    // contains the types of the fields from the test table
-    var $types;
-
-    function MDB2_Reverse_Test($name) {
-        $this->PHPUnit_TestCase($name);
-    }
-
-    function setUp() {
-        $this->dsn = $GLOBALS['dsn'];
-        $this->options = $GLOBALS['options'];
-        $this->database = $GLOBALS['database'];
-        $this->db =& MDB2::factory($this->dsn, $this->options);
-        if (PEAR::isError($this->db)) {
-            $this->assertTrue(false, 'Could not connect to database in setUp - ' .$this->db->getMessage() . ' - ' .$this->db->getUserInfo());
-            exit;
-        }
-        $this->db->setDatabase($this->database);
-        $this->db->loadModule('Reverse');
-        $this->fields = array(
-            'user_name' => 'text',
-            'user_password' => 'text',
-            'subscribed' => 'boolean',
-            'user_id' => 'integer',
-            'quota' => 'decimal',
-            'weight' => 'float',
-            'access_date' => 'date',
-            'access_time' => 'time',
-            'approved' => 'timestamp',
-        );
-    }
-
-    function tearDown() {
-        unset($this->dsn);
-        if (!PEAR::isError($this->db)) {
-            $this->db->disconnect();
-        }
-        unset($this->db);
-    }
-
-    function methodExists(&$class, $name) {
-        if (is_object($class)
-            && array_key_exists(strtolower($name), array_change_key_case(array_flip(get_class_methods($class)), CASE_LOWER))
-        ) {
-            return true;
-        }
-        $this->assertTrue(false, 'method '. $name.' not implemented in '.get_class($class));
-        return false;
-    }
-
-    /**
-     * Test tableInfo('table_name')
-     */
-    function testTableInfo()
-    {
-        if (!$this->methodExists($this->db->reverse, 'tableInfo')) {
-            return;
-        }
-
-        $table_info = $this->db->reverse->tableInfo('users');
-        if (PEAR::isError($table_info)) {
-            $this->assertTrue(false, 'Error in tableInfo(): '.$table_info->getMessage());
-        } else {
-            $this->assertEquals(count($this->fields), count($table_info), 'The number of fields retrieved is different from the expected one');
-            foreach ($table_info as $field_info) {
-                $this->assertEquals('users', $field_info['table'], "the table name is not correct");
-                if (!array_key_exists(strtolower($field_info['name']), $this->fields)) {
-                    $this->assertTrue(false, 'Field names do not match ('.$field_info['name'].' is unknown)');
-                }
-                //expand test, for instance adding a check on types...
-            }
-        }
-    }
 }
 
 ?>

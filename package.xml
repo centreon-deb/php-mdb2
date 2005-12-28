@@ -69,37 +69,19 @@ portability. Among other things MDB2 features:
   </maintainer>
   </maintainers>
  <release>
-  <version>2.0.0RC1</version>
-  <date>2005-12-21</date>
+  <version>2.0.0RC2</version>
+  <date>2005-12-28</date>
   <license>BSD License</license>
   <state>beta</state>
-  <notes>- added numerous testcases in the manager and reverse module
-- unified case fixing in the list*() methods
-- case-insensitive comparison in _isSequenceName()
-- added getConnection() to fetch a native connection resource
-- split index and constraint handling
-- quote identifiers where possible inside the manager methods depending on
-  the new &apos;quote_identifier&apos; option (defaults to off)
-- refactored get*Declaration() methods to use getTypeDeclaration()
-- setting in_transaction to false on disconnect
-- store if type has changed in compareDefinition()
-- added new Function modules to handle difference in SQL functions
-- added verious new test cases
-- refactored test cases to use an MDB2_testcase base class
-- allow empty field parameter in get*ID() methods (bug #5791)
-- tweaked error messages for file loads
-- split off manipulation queries into exec() method from the query() method *BC BREAK*
-- only if result_types is set to false in prepare() method the query will be
-  handled as a DML statement *BC BREAK*
-- use a proper default value if a field is set to not null in _getDeclaration*() (bug #5930)
-- added getServerVersion()
-- renamed defaultOutput() to getDefaultOutput() *BC BREAK*
-- use tableInfo() to automatically determine the result types if type is set to true
-- reworked file loading to work around issues in safe_mode with MDB2::fileExists() (bug #6226)
-- no need to return by reference in getConnection() (it even seems to work for
-  mysqli that has objects and not resource connections)
-- added &quot;idxname_format&quot; as option similar to &quot;seqname_format&quot;
-- fixed bug in API calls inside autoExecute() (bug #6286)
+  <notes>- fixed testNow() to use the datatype abstraction
+- fixed testGetTableFieldDefinition() to use a blob column instead of a clob
+  since we default to blob when we cannot differntiate between blob and clob
+- split up alterTable() testing into two separate test methods
+- removed errorNative() was never implemented, use errorInfo() instead
+- fixed major bug in _fixResultArrayValues() that would lead to performance or
+  incorrect application of portability features
+- phpdoc fixes in LOB.php, Iterator.php, Date.php and Extended.php
+- removed not required prev() and hasPrev() from the SeekableIterator implementation
   </notes>
   <deps>
    <dep type="php" rel="ge" version="4.3.0" optional="no"/>
@@ -249,9 +231,7 @@ portability. Among other things MDB2 features:
   <provides type="function" name="MDB2_Iterator::rewind" />
   <provides type="function" name="MDB2_BufferedIterator::valid" />
   <provides type="function" name="MDB2_BufferedIterator::count" />
-  <provides type="function" name="MDB2_BufferedIterator::hasPrev" />
   <provides type="function" name="MDB2_BufferedIterator::rewind" />
-  <provides type="function" name="MDB2_BufferedIterator::prev" />
   <provides type="class" name="MDB2_LOB" />
   <provides type="function" name="MDB2_LOB::stream_open" />
   <provides type="function" name="MDB2_LOB::stream_read" />
@@ -287,7 +267,6 @@ portability. Among other things MDB2 features:
   <provides type="function" name="MDB2_Driver_Common::free" />
   <provides type="function" name="MDB2_Driver_Common::errorInfo" />
   <provides type="function" name="MDB2_Driver_Common::raiseError" />
-  <provides type="function" name="MDB2_Driver_Common::errorNative" />
   <provides type="function" name="MDB2_Driver_Common::resetWarnings" />
   <provides type="function" name="MDB2_Driver_Common::getWarnings" />
   <provides type="function" name="MDB2_Driver_Common::setFetchMode" />
@@ -377,7 +356,7 @@ portability. Among other things MDB2 features:
    <file role="doc" baseinstalldir="/" md5sum="35add1a9ff4f0a3b9a3ff7b60ac7efba" name="docs/Driver_Reverse_skeleton.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="doc" baseinstalldir="/" md5sum="29393a4eb7ef44fa247a7384466f33ec" name="docs/Driver_skeleton.php">
+   <file role="doc" baseinstalldir="/" md5sum="9b45ab0bd4e851c366ffa083026c90c8" name="docs/Driver_skeleton.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
    <file role="doc" baseinstalldir="/" md5sum="c1fe9863db1ef4da67e4be7c549b0290" name="docs/MAINTAINERS">
@@ -389,7 +368,7 @@ portability. Among other things MDB2 features:
    <file role="doc" baseinstalldir="/" md5sum="ec0c4383ddfd3af69d577344d0d5b4dd" name="docs/TODO">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="php" baseinstalldir="/" md5sum="a56d9b01fa1c9659c6cb0e4e3bb32967" name="MDB2/Driver/Datatype/Common.php">
+   <file role="php" baseinstalldir="/" md5sum="615ce4ff6b653532864a59d1219ff82e" name="MDB2/Driver/Datatype/Common.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
    <file role="php" baseinstalldir="/" md5sum="daab60fe2929bbaacb39674e1afa8227" name="MDB2/Driver/Function/Common.php">
@@ -401,19 +380,19 @@ portability. Among other things MDB2 features:
    <file role="php" baseinstalldir="/" md5sum="bc50c45be3a60712f142f4fa681cf3ae" name="MDB2/Driver/Reverse/Common.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="php" baseinstalldir="/" md5sum="ac41568f9c7a86d8257dcb8564c5df36" name="MDB2/Wrapper/peardb.php">
+   <file role="php" baseinstalldir="/" md5sum="41cfafec53aad3893ded693734e8f0c3" name="MDB2/Wrapper/peardb.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="php" baseinstalldir="/" md5sum="c4e68ee3dfe75e5d021b0b8d1b6c861c" name="MDB2/Date.php">
+   <file role="php" baseinstalldir="/" md5sum="b5e017bc099f3ed4f7c872f5d358ccda" name="MDB2/Date.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="php" baseinstalldir="/" md5sum="ca34d719aee5c4aa7944374a3cca1027" name="MDB2/Extended.php">
+   <file role="php" baseinstalldir="/" md5sum="fbd795790ede4831a8fde7bc2e799206" name="MDB2/Extended.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="php" baseinstalldir="/" md5sum="a0c9d67ab88b4fe76605341734fc5af4" name="MDB2/Iterator.php">
+   <file role="php" baseinstalldir="/" md5sum="076535df91665e8d7a5a1108162761c6" name="MDB2/Iterator.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="php" baseinstalldir="/" md5sum="7b3274ffd3669ccbb8d23a6ccfec5cc6" name="MDB2/LOB.php">
+   <file role="php" baseinstalldir="/" md5sum="fe72b90c0b1799f4c0e6920fdfc2d2a8" name="MDB2/LOB.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
    <file role="test" baseinstalldir="/" md5sum="01d41e566bdb62c7bcb432c8039dda9a" name="tests/basic.phpt">
@@ -437,25 +416,25 @@ portability. Among other things MDB2 features:
    <file role="test" baseinstalldir="/" md5sum="7a7b386b309a992a99235785668e826d" name="tests/MDB2_bugs_testcase.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="test" baseinstalldir="/" md5sum="1849e822630a1bacdaf26d611cd4cbda" name="tests/MDB2_Connect_Test.php">
+   <file role="test" baseinstalldir="/" md5sum="f8534befe37efc7f35beb0897b75f951" name="tests/MDB2_Connect_Test.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="test" baseinstalldir="/" md5sum="fd357abc44908ca872ef0d1ef3907a1d" name="tests/MDB2_function_testcase.php">
+   <file role="test" baseinstalldir="/" md5sum="561d7301134ce35bfb856a3bbe11e859" name="tests/MDB2_function_testcase.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="test" baseinstalldir="/" md5sum="044c7fcd19aaa21a2bf842d80f57dc6f" name="tests/MDB2_manager_testcase.php">
+   <file role="test" baseinstalldir="/" md5sum="a20f80ff3f450af7909bd8ebe9373da4" name="tests/MDB2_manager_testcase.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
    <file role="test" baseinstalldir="/" md5sum="a31cb39fbc5e5c4bd9f573e0d00f04dc" name="tests/MDB2_native_testcase.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="test" baseinstalldir="/" md5sum="8ca334d3a705c5149ae86f8e2f79b576" name="tests/MDB2_reverse_testcase.php">
+   <file role="test" baseinstalldir="/" md5sum="3e318bd0f01fefd2e1887a190b3aaae0" name="tests/MDB2_reverse_testcase.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="test" baseinstalldir="/" md5sum="08cc178b7457137e433a0b546d8e0b4b" name="tests/MDB2_testcase.php">
+   <file role="test" baseinstalldir="/" md5sum="88c3c1acb94349631686e01eea69a14a" name="tests/MDB2_testcase.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="test" baseinstalldir="/" md5sum="d8592826938d2726cac14758d1784b08" name="tests/MDB2_usage_testcase.php">
+   <file role="test" baseinstalldir="/" md5sum="8896938fb5fcda8a27df7e89612f61dc" name="tests/MDB2_usage_testcase.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
    <file role="test" baseinstalldir="/" md5sum="ef00970fb47030044f29790dc9087203" name="tests/README">
@@ -470,18 +449,34 @@ portability. Among other things MDB2 features:
    <file role="test" baseinstalldir="/" md5sum="3c4d2c9d89398c5692d36299d98f9c6e" name="tests/tests.css">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="test" baseinstalldir="/" md5sum="fc624785ab567f03ac1e05e886942eb7" name="tests/testUtils.php">
+   <file role="test" baseinstalldir="/" md5sum="e53402583e7c24e43f2653fbfdf94677" name="tests/testUtils.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
    <file role="test" baseinstalldir="/" md5sum="e2fb7209eb44f463f6b2426e0d56248d" name="tests/test_setup.php.dist">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="php" baseinstalldir="/" md5sum="b04bc61ce39428bac38e7abd27b7be62" name="MDB2.php">
+   <file role="php" baseinstalldir="/" md5sum="b3edf56cc2b9c5471995ab00c7094a90" name="MDB2.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
   </filelist>
  </release>
  <changelog>
+   <release>
+    <version>2.0.0RC2</version>
+    <date>2005-12-28</date>
+    <license>BSD License</license>
+    <state>beta</state>
+    <notes>- fixed testNow() to use the datatype abstraction
+- fixed testGetTableFieldDefinition() to use a blob column instead of a clob
+  since we default to blob when we cannot differntiate between blob and clob
+- split up alterTable() testing into two separate test methods
+- removed errorNative() was never implemented, use errorInfo() instead
+- fixed major bug in _fixResultArrayValues() that would lead to performance or
+  incorrect application of portability features
+- phpdoc fixes in LOB.php, Iterator.php, Date.php and Extended.php
+- removed not required prev() and hasPrev() from the SeekableIterator implementation
+    </notes>
+   </release>
    <release>
     <version>2.0.0RC1</version>
     <date>2005-12-21</date>

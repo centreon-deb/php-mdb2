@@ -1,6 +1,6 @@
 <?php
 // +----------------------------------------------------------------------+
-// | PHP versions 4 and 5                                                 |
+// | PHP version 5                                                        |
 // +----------------------------------------------------------------------+
 // | Copyright (c) 1998-2004 Manuel Lemos, Tomas V.V.Cox,                 |
 // | Stig. S. Bakken, Lukas Smith                                         |
@@ -42,138 +42,208 @@
 // | Author: Lukas Smith <smith@pooteeweet.org>                           |
 // +----------------------------------------------------------------------+
 //
-// $Id: Date.php,v 1.5 2005/08/14 08:35:02 lsmith Exp $
-//
+// $Id: Iterator.php,v 1.18 2005/12/27 15:28:43 lsmith Exp $
 
 /**
  * @package  MDB2
  * @category Database
  * @author   Lukas Smith <smith@pooteeweet.org>
  */
-
-/**
- * Several methods to convert the MDB2 native timestamp format (ISO based)
- * to and from data structures that are convienient to worth with in side of php.
- * For more complex date arithmetic please take a look at the Date package in PEAR
- *
- * @package MDB2
- * @category Database
- * @author  Lukas Smith <smith@pooteeweet.org>
- */
-class MDB2_Date
+class MDB2_Iterator implements Iterator
 {
-    // {{{ mdbNow()
+    protected $fetchmode;
+    protected $result;
+    protected $row;
+
+    // {{{ constructor
 
     /**
-     * return the current datetime
-     *
-     * @return string current datetime in the MDB2 format
-     * @access public
+     * Constructor
      */
-    function mdbNow()
+    public function __construct($result, $fetchmode = MDB2_FETCHMODE_DEFAULT)
     {
-        return date('Y-m-d H:i:s');
+        $this->result = $result;
+        $this->fetchmode = $fetchmode;
     }
-
     // }}}
-    // {{{ mdbToday()
+
+    // {{{ seek()
 
     /**
-     * return the current date
+     * seek forward to a specific row in a result set
      *
-     * @return string current date in the MDB2 format
+     * @param int number of the row where the data can be found
+     *
+     * @return void
      * @access public
      */
-    function mdbToday()
+    public function seek($rownum)
     {
-        return date('Y-m-d');
-    }
-
-    // }}}
-    // {{{ mdbTime()
-
-    /**
-     * return the current time
-     *
-     * @return string current time in the MDB2 format
-     * @access public
-     */
-    function mdbTime()
-    {
-        return date('H:i:s');
-    }
-
-    // }}}
-    // {{{ date2Mdbstamp()
-
-    /**
-     * convert a date into a MDB2 timestamp
-     *
-     * @param integer $hour hour of the date
-     * @param integer $minute minute of the date
-     * @param integer $second second of the date
-     * @param integer $month month of the date
-     * @param integer $day day of the date
-     * @param integer $year year of the date
-     * @return string a valid MDB2 timestamp
-     * @access public
-     */
-    function date2Mdbstamp($hour = null, $minute = null, $second = null,
-        $month = null, $day = null, $year = null)
-    {
-        return MDB2_Date::unix2Mdbstamp(mktime($hour, $minute, $second, $month, $day, $year, -1));
-    }
-
-    // }}}
-    // {{{ unix2Mdbstamp()
-
-    /**
-     * convert a unix timestamp into a MDB2 timestamp
-     *
-     * @param integer $unix_timestamp a valid unix timestamp
-     * @return string a valid MDB2 timestamp
-     * @access public
-     */
-    function unix2Mdbstamp($unix_timestamp)
-    {
-        return date('Y-m-d H:i:s', $unix_timestamp);
-    }
-
-    // }}}
-    // {{{ mdbstamp2Unix()
-
-    /**
-     * convert a MDB2 timestamp into a unix timestamp
-     *
-     * @param integer $mdb_timestamp a valid MDB2 timestamp
-     * @return string unix timestamp with the time stored in the MDB2 format
-     * @access public
-     */
-    function mdbstamp2Unix($mdb_timestamp)
-    {
-        $arr = MDB2_Date::mdbstamp2Date($mdb_timestamp);
-
-        return mktime($arr['hour'], $arr['minute'], $arr['second'], $arr['month'], $arr['day'], $arr['year'], -1);
+        $this->row = null;
+        if ($this->result) {
+            $this->result->seek($rownum);
         }
-
+    }
     // }}}
-    // {{{ mdbstamp2Date()
+
+    // {{{ next()
 
     /**
-     * convert a MDB2 timestamp into an array containing all
-     * values necessary to pass to php's date() function
+     * Fetch next row of data
      *
-     * @param integer $mdb_timestamp a valid MDB2 timestamp
-     * @return array with the time split
+     * @return void
      * @access public
      */
-    function mdbstamp2Date($mdb_timestamp)
+    public function next()
     {
-        list($arr['year'], $arr['month'], $arr['day'], $arr['hour'], $arr['minute'], $arr['second']) =
-            sscanf($mdb_timestamp, "%04u-%02u-%02u %02u:%02u:%02u");
-        return $arr;
+        $this->row = null;
     }
+    // }}}
 
+    // {{{ current()
+
+    /**
+     * return a row of data
+     *
+     * @return void
+     * @access public
+     */
+    public function current()
+    {
+        if (is_null($this->row)) {
+            $row = $this->result->fetchRow($this->fetchmode);
+            if (PEAR::isError($row)) {
+                $row = false;
+            }
+            $this->row = $row;
+        }
+        return $this->row;
+    }
+    // }}}
+
+    // {{{ valid()
+
+    /**
+     * check if the end of the result set has been reached
+     *
+     * @return bool true/false, false is also returned on failure
+     * @access public
+     */
+    public function valid()
+    {
+        return (bool)$this->current();
+    }
+    // }}}
+
+    // {{{ free()
+
+    /**
+     * Free the internal resources associated with result.
+     *
+     * @return bool|MDB2_Error true on success, false|MDB2_Error if result is invalid
+     * @access public
+     */
+    public function free()
+    {
+        if ($this->result) {
+            return $this->result->free();
+        }
+        $this->result = null;
+        $this->row = null;
+        return false;
+    }
+    // }}}
+
+    // {{{ key()
+
+    /**
+     * returns the row number
+     *
+     * @return int|bool|MDB2_Error true on success, false|MDB2_Error if result is invalid
+     * @access public
+     */
+    public function key()
+    {
+        if ($this->result) {
+            return $this->result->rowCount();
+        }
+        return false;
+    }
+    // }}}
+
+    // {{{ rewind()
+
+    /**
+     * seek to the first row in a result set
+     *
+     * @return void
+     * @access public
+     */
+    public function rewind()
+    {
+    }
+    // }}}
+
+    // {{{ destructor
+
+    /**
+     * Destructor
+     */
+    public function __destruct()
+    {
+        $this->free();
+    }
+    // }}}
+}
+
+class MDB2_BufferedIterator extends MDB2_Iterator implements SeekableIterator
+{
+    // {{{ valid()
+
+    /**
+     * check if the end of the result set has been reached
+     *
+     * @return bool|MDB2_Error true on success, false|MDB2_Error if result is invalid
+     * @access public
+     */
+    public function valid()
+    {
+        if ($this->result) {
+            return $this->result->valid();
+        }
+        return false;
+    }
+    // }}}
+
+    // {{{count()
+
+    /**
+     * returns the number of rows in a result object
+     *
+     * @return int|MDB2_Error number of rows, false|MDB2_Error if result is invalid
+     * @access public
+     */
+    public function count()
+    {
+        if ($this->result) {
+            return $this->result->numRows();
+        }
+        return false;
+    }
+    // }}}
+
+    // {{{ rewind()
+
+    /**
+     * seek to the first row in a result set
+     *
+     * @return void
+     * @access public
+     */
+    public function rewind()
+    {
+        $this->seek(0);
+    }
     // }}}
 }
 

@@ -42,7 +42,7 @@
 // |          Lorenzo Alberton <l dot alberton at quipo dot it>           |
 // +----------------------------------------------------------------------+
 //
-// $Id: MDB2_manager_testcase.php,v 1.36 2005/12/15 22:52:56 lsmith Exp $
+// $Id: MDB2_manager_testcase.php,v 1.38 2005/12/27 10:27:47 lsmith Exp $
 
 require_once 'MDB2_testcase.php';
 
@@ -362,24 +362,20 @@ class MDB2_Manager_TestCase extends MDB2_TestCase {
         if (!$this->methodExists($this->db->manager, 'alterTable')) {
             return;
         }
+        $newer = 'newertable';
+        if ($this->tableExists($newer)) {
+            $this->db->manager->dropTable($newer);
+        }
         $changes = array(
             'add' => array(
                 'quota' => array(
                     'type' => 'integer',
                     'unsigned' => 1,
                 ),
-            ),
-            'remove' => array(
-                'somedescription' => array(),
-            ),
-            'change' => array(
-                'somename' => array(
+                'note' => array(
+                    'type' => 'text',
                     'length' => '20',
-                    'definition' => array(
-                        'type' => 'text',
-                        'length' => 20,
-                    ),
-                )
+                ),
             ),
             'rename' => array(
                 'sex' => array(
@@ -391,31 +387,132 @@ class MDB2_Manager_TestCase extends MDB2_TestCase {
                     ),
                 ),
             ),
+            'change' => array(
+                'id' => array(
+                    'unsigned' => false,
+                    'definition' => array(
+                        'type'     => 'integer',
+                        'notnull'  => false,
+                        'default'  => 0,
+                    ),
+                ),
+                'somename' => array(
+                    'length' => '20',
+                    'definition' => array(
+                        'type' => 'text',
+                        'length' => 20,
+                    ),
+                )
+            ),
+            'remove' => array(
+                'somedescription' => array(),
+            ),
+            'name' => $newer,
         );
 
-        $result = $this->db->manager->alterTable($this->table, $changes, false);
-        $this->assertFalse(PEAR::isError($result), 'Error altering table');
+        $this->db->expectError(MDB2_ERROR_CANNOT_ALTER);
+        $result = $this->db->manager->alterTable($this->table, $changes, true);
+        $this->db->popExpect();
+        if (PEAR::isError($result)) {
+            $this->assertTrue(false, 'Cannot alter table');
+        } else {
+            $result = $this->db->manager->alterTable($this->table, $changes, false);
+            if (PEAR::isError($result)) {
+                $this->assertTrue(true, 'Error altering table');
+            } else {
+                $this->db->manager->dropTable($newer);
+            }
+        }
+    }
 
-        $altered_table_fields = $this->db->manager->listTableFields($this->table);
-        foreach ($changes['add'] as $newfield => $dummy) {
-            $this->assertTrue(in_array($newfield, $altered_table_fields), 'Error: new field "'.$newfield.'"not added');
+    /**
+     *
+     */
+    function testAlterTable2() {
+        if (!$this->methodExists($this->db->manager, 'alterTable')) {
+            return;
         }
-        foreach ($changes['remove'] as $newfield => $dummy) {
-            $this->assertFalse(in_array($newfield, $altered_table_fields), 'Error: field "'.$newfield.'"not removed');
+        $newer = 'newertable2';
+        if ($this->tableExists($newer)) {
+            $this->db->manager->dropTable($newer);
         }
-        foreach ($changes['rename'] as $oldfield => $newfield) {
-            $this->assertFalse(in_array($oldfield, $altered_table_fields), 'Error: field "'.$oldfield.'"not renamed');
-            $this->assertTrue(in_array($newfield['name'], $altered_table_fields), 'Error: field "'.$oldfield.'"not renamed correctly');
-        }
+        $changes_all = array(
+            'add' => array(
+                'quota' => array(
+                    'type' => 'integer',
+                    'unsigned' => 1,
+                ),
+            ),
+            'rename' => array(
+                'sex' => array(
+                    'name' => 'gender',
+                    'definition' => array(
+                        'type' => 'text',
+                        'length' => 1,
+                        'default' => 'M',
+                    ),
+                ),
+            ),
+            'change' => array(
+                'somename' => array(
+                    'length' => '20',
+                    'definition' => array(
+                        'type' => 'text',
+                        'length' => 20,
+                    ),
+                )
+            ),
+            'remove' => array(
+                'somedescription' => array(),
+            ),
+            'name' => $newer,
+        );
 
-        /*
-        //ideally, get the new table definition, and check all field properties
-        $this->db->loadModule('Reverse');
-        $altered_table = $this->db->reverse->tableInfo($this->table);
-        $this->assertFalse(PEAR::isError($altered_table), 'Error getting table info');
-        //echo '<pre>';var_dump($altered_table);echo '</pre>';
-        //check field properties
-        */
+        foreach ($changes_all as $type => $change) {
+            $changes = array($type => $change);
+            $this->db->expectError(MDB2_ERROR_CANNOT_ALTER);
+            $result = $this->db->manager->alterTable($this->table, $changes, true);
+            $this->db->popExpect();
+            if (PEAR::isError($result)) {
+                $this->assertTrue(false, 'Cannot alter table: '.$type);
+            } else {
+                $result = $this->db->manager->alterTable($this->table, $changes, false);
+                if (PEAR::isError($result)) {
+                    $this->assertTrue(true, 'Error altering table: '.$type);
+                } else {
+                    switch ($type) {
+                    case 'add':
+                        $altered_table_fields = $this->db->manager->listTableFields($this->table);
+                        foreach ($change as $newfield => $dummy) {
+                            $this->assertTrue(in_array($newfield, $altered_table_fields), 'Error: new field "'.$newfield.'" not added');
+                        }
+                        break;
+                    case 'rename':
+                        $altered_table_fields = $this->db->manager->listTableFields($this->table);
+                        foreach ($change as $oldfield => $newfield) {
+                            $this->assertFalse(in_array($oldfield, $altered_table_fields), 'Error: field "'.$oldfield.'" not renamed');
+                            $this->assertTrue(in_array($newfield['name'], $altered_table_fields), 'Error: field "'.$oldfield.'" not renamed correctly');
+                        }
+                        break;
+                    case 'change':
+                        break;
+                    case 'remove':
+                        $altered_table_fields = $this->db->manager->listTableFields($this->table);
+                        foreach ($change as $newfield => $dummy) {
+                            $this->assertFalse(in_array($newfield, $altered_table_fields), 'Error: field "'.$newfield.'" not removed');
+                        }
+                        break;
+                    case 'name':
+                        if ($this->tableExists($newer)) {
+                            $this->db->manager->dropTable($newer);
+                        } else {
+                            $this->assertTrue(true, 'Error: table "'.$this->table.'" not renamed');
+                        }
+                        break;
+                    }
+                }
+            }
+        }
     }
 
     /**

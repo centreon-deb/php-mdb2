@@ -42,7 +42,7 @@
 // | Author: Lukas Smith <smith@pooteeweet.org>                           |
 // +----------------------------------------------------------------------+
 //
-// $Id: peardb.php,v 1.37 2005/12/08 15:50:57 lsmith Exp $
+// $Id: peardb.php,v 1.38 2005/12/23 11:50:16 lsmith Exp $
 //
 
 /**
@@ -647,10 +647,10 @@ class MDB2_PEARProxy extends PEAR
         return $this->db_object->affectedRows();
     }
 
-    // remove?
     function errorNative()
     {
-        return $this->db_object->errorNative();
+        $infos = $this->db_object->errorInfo();
+        return $infos[2];
     }
 
     function nextId($seq_name, $ondemand = true)

@@ -42,7 +42,7 @@
 // | Author: YOUR NAME <YOUR EMAIL>                                       |
 // +----------------------------------------------------------------------+
 //
-// $Id: Driver_skeleton.php,v 1.18 2005/10/05 10:55:10 lsmith Exp $
+// $Id: Driver_skeleton.php,v 1.19 2005/12/23 12:03:41 lsmith Exp $
 //
 
 // This is just a skeleton MDB2 driver.
@@ -115,7 +115,7 @@ class MDB2_xxx extends MDB2_Driver_Common
      */
     function errorInfo($error = null)
     {
-        // take this method from the corresponding PEAR DB driver: xxxRaiseError(), errorCode() and errorNative()
+        // take this method from the corresponding PEAR DB driver: xxxRaiseError(), errorCode()
         // the error code maps from corresponding PEAR DB driver constructor
     }
 

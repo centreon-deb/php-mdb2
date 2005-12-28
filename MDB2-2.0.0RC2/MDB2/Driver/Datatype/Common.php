@@ -42,7 +42,7 @@
 // | Author: Lukas Smith <smith@pooteeweet.org>                           |
 // +----------------------------------------------------------------------+
 //
-// $Id: Common.php,v 1.48 2005/12/08 15:50:50 lsmith Exp $
+// $Id: Common.php,v 1.49 2005/12/26 20:02:34 lsmith Exp $
 
 require_once 'MDB2/LOB.php';
 
@@ -76,9 +76,9 @@ class MDB2_Driver_Datatype_Common extends MDB2_Module_Common
 
     /**
      * contains all LOB objects created with this MDB2 instance
-    * @var array
-    * @access protected
-    */
+     * @var array
+     * @access protected
+     */
     var $lobs = array();
 
     // }}}

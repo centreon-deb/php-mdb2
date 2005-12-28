@@ -41,7 +41,7 @@
 // | Author: Paul Cooper <pgc@ucecom.com>                                 |
 // +----------------------------------------------------------------------+
 //
-// $Id: MDB2_testcase.php,v 1.4 2005/11/06 17:06:53 lsmith Exp $
+// $Id: MDB2_testcase.php,v 1.5 2005/12/24 13:36:41 lsmith Exp $
 
 class MDB2_TestCase extends PHPUnit_TestCase {
     //contains the dsn of the database we are testing
@@ -93,10 +93,10 @@ class MDB2_TestCase extends PHPUnit_TestCase {
     }
 
     function clearTables() {
-        if (PEAR::isError($this->db->exec('DELETE FROM users'))) {
+        if ($this->tableExists('users') && PEAR::isError($this->db->exec('DELETE FROM users'))) {
             $this->assertTrue(false, 'Error deleting from table users');
         }
-        if (PEAR::isError($this->db->exec('DELETE FROM files'))) {
+        if ($this->tableExists('files') && PEAR::isError($this->db->exec('DELETE FROM files'))) {
             $this->assertTrue(false, 'Error deleting from table users');
         }
     }
@@ -150,6 +150,7 @@ class MDB2_TestCase extends PHPUnit_TestCase {
     }
 
     function tableExists($table) {
+        $this->db->loadModule('Manager');
         $tables = $this->db->manager->listTables();
         return in_array(strtolower($table), array_map('strtolower', $tables));
     }

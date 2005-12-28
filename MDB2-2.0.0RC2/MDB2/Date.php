@@ -1,6 +1,6 @@
 <?php
 // +----------------------------------------------------------------------+
-// | PHP version 5                                                        |
+// | PHP versions 4 and 5                                                 |
 // +----------------------------------------------------------------------+
 // | Copyright (c) 1998-2004 Manuel Lemos, Tomas V.V.Cox,                 |
 // | Stig. S. Bakken, Lukas Smith                                         |
@@ -42,7 +42,8 @@
 // | Author: Lukas Smith <smith@pooteeweet.org>                           |
 // +----------------------------------------------------------------------+
 //
-// $Id: LOB.php,v 1.21 2005/09/29 14:37:44 lsmith Exp $
+// $Id: Date.php,v 1.9 2005/12/27 15:28:29 lsmith Exp $
+//
 
 /**
  * @package  MDB2
@@ -50,97 +51,133 @@
  * @author   Lukas Smith <smith@pooteeweet.org>
  */
 
-require_once 'MDB2.php';
-
-class MDB2_LOB
+/**
+ * Several methods to convert the MDB2 native timestamp format (ISO based)
+ * to and from data structures that are convenient to worth with in side of php.
+ * For more complex date arithmetic please take a look at the Date package in PEAR
+ *
+ * @package MDB2
+ * @category Database
+ * @author  Lukas Smith <smith@pooteeweet.org>
+ */
+class MDB2_Date
 {
-    var $db_index;
-    var $lob_index;
-    var $lob;
+    // {{{ mdbNow()
 
-    function stream_open($path, $mode, $options, &$opened_path)
+    /**
+     * return the current datetime
+     *
+     * @return string current datetime in the MDB2 format
+     * @access public
+     */
+    function mdbNow()
     {
-        if (!preg_match('/^rb?\+?$/', $mode)) {
-            return false;
-        }
-        $url = parse_url($path);
-        if (!array_key_exists('host', $url) && !array_key_exists('user', $url)) {
-            return false;
-        }
-        $this->db_index = $url['host'];
-        if (!isset($GLOBALS['_MDB2_databases'][$this->db_index])) {
-            return false;
-        }
-        $db =& $GLOBALS['_MDB2_databases'][$this->db_index];
-        $this->lob_index = $url['user'];
-        if (!isset($db->datatype->lobs[$this->lob_index])) {
-            return false;
-        }
-        $this->lob =& $db->datatype->lobs[$this->lob_index];
-        $db->datatype->_retrieveLOB($this->lob);
-        return true;
+        return date('Y-m-d H:i:s');
     }
+    // }}}
 
-    function stream_read($count)
+    // {{{ mdbToday()
+
+    /**
+     * return the current date
+     *
+     * @return string current date in the MDB2 format
+     * @access public
+     */
+    function mdbToday()
     {
-        if (isset($GLOBALS['_MDB2_databases'][$this->db_index])) {
-            $db =& $GLOBALS['_MDB2_databases'][$this->db_index];
-
-            $data = $db->datatype->_readLOB($this->lob, $count);
-            $length = strlen($data);
-            if ($length == 0) {
-                $this->lob['endOfLOB'] = true;
-            }
-            $this->lob['position'] += $length;
-            return $data;
-        }
-   }
-
-    function stream_write($data)
-    {
-        return 0;
+        return date('Y-m-d');
     }
+    // }}}
 
-    function stream_tell()
+    // {{{ mdbTime()
+
+    /**
+     * return the current time
+     *
+     * @return string current time in the MDB2 format
+     * @access public
+     */
+    function mdbTime()
     {
-        return $this->lob['position'];
+        return date('H:i:s');
     }
+    // }}}
 
-    function stream_eof()
+    // {{{ date2Mdbstamp()
+
+    /**
+     * convert a date into a MDB2 timestamp
+     *
+     * @param int hour of the date
+     * @param int minute of the date
+     * @param int second of the date
+     * @param int month of the date
+     * @param int day of the date
+     * @param int year of the date
+     *
+     * @return string a valid MDB2 timestamp
+     * @access public
+     */
+    function date2Mdbstamp($hour = null, $minute = null, $second = null,
+        $month = null, $day = null, $year = null)
     {
-        if (!isset($GLOBALS['_MDB2_databases'][$this->db_index])) {
-            return true;
-        }
-        $db =& $GLOBALS['_MDB2_databases'][$this->db_index];
-        $result = $db->datatype->_endOfLOB($this->lob);
-        if (version_compare(phpversion(), "5.0", ">=")
-            && version_compare(phpversion(), "5.1", "<")
-        ) {
-            return !$result;
-        }
-        return $result;
+        return MDB2_Date::unix2Mdbstamp(mktime($hour, $minute, $second, $month, $day, $year, -1));
     }
+    // }}}
 
-    function stream_seek($offset, $whence)
+    // {{{ unix2Mdbstamp()
+
+    /**
+     * convert a unix timestamp into a MDB2 timestamp
+     *
+     * @param int a valid unix timestamp
+     *
+     * @return string a valid MDB2 timestamp
+     * @access public
+     */
+    function unix2Mdbstamp($unix_timestamp)
     {
-        return false;
+        return date('Y-m-d H:i:s', $unix_timestamp);
     }
+    // }}}
 
-    function stream_close()
+    // {{{ mdbstamp2Unix()
+
+    /**
+     * convert a MDB2 timestamp into a unix timestamp
+     *
+     * @param int a valid MDB2 timestamp
+     * @return string unix timestamp with the time stored in the MDB2 format
+     *
+     * @access public
+     */
+    function mdbstamp2Unix($mdb_timestamp)
     {
-        if (isset($GLOBALS['_MDB2_databases'][$this->db_index])) {
-            $db =& $GLOBALS['_MDB2_databases'][$this->db_index];
-            if (isset($db->datatype->lobs[$this->lob_index])) {
-                $db->datatype->_destroyLOB($this->lob_index);
-                unset($db->datatype->lobs[$this->lob_index]);
-            }
-        }
-    }
-}
+        $arr = MDB2_Date::mdbstamp2Date($mdb_timestamp);
 
-if (!stream_wrapper_register("MDB2LOB", "MDB2_LOB")) {
-    MDB2::raiseError();
-    return false;
+        return mktime($arr['hour'], $arr['minute'], $arr['second'], $arr['month'], $arr['day'], $arr['year'], -1);
+    }
+    // }}}
+
+    // {{{ mdbstamp2Date()
+
+    /**
+     * convert a MDB2 timestamp into an array containing all
+     * values necessary to pass to php's date() function
+     *
+     * @param int a valid MDB2 timestamp
+     *
+     * @return array with the time split
+     * @access public
+     */
+    function mdbstamp2Date($mdb_timestamp)
+    {
+        list($arr['year'], $arr['month'], $arr['day'], $arr['hour'], $arr['minute'], $arr['second']) =
+            sscanf($mdb_timestamp, "%04u-%02u-%02u %02u:%02u:%02u");
+        return $arr;
+    }
+    // }}}
 }
 
 ?>

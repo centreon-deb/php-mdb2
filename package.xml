@@ -69,26 +69,26 @@ portability. Among other things MDB2 features:
   </maintainer>
   </maintainers>
  <release>
-  <version>2.0.0RC2</version>
-  <date>2005-12-28</date>
+  <version>2.0.0RC3</version>
+  <date>2005-12-30</date>
   <license>BSD License</license>
   <state>beta</state>
-  <notes>- fixed testNow() to use the datatype abstraction
-- fixed testGetTableFieldDefinition() to use a blob column instead of a clob
-  since we default to blob when we cannot differntiate between blob and clob
-- split up alterTable() testing into two separate test methods
-- removed errorNative() was never implemented, use errorInfo() instead
-- fixed major bug in _fixResultArrayValues() that would lead to performance or
-  incorrect application of portability features
-- phpdoc fixes in LOB.php, Iterator.php, Date.php and Extended.php
-- removed not required prev() and hasPrev() from the SeekableIterator implementation
+  <notes>- added error handling when result set introspection is not supported in _wrapResult()
+- fixed example
+- removed peardb wrapper (its broken, unmaintained and probably unused)
+- added new example using php5 only features
+- MDB2_OK is now a boolean true, instead of integer 1
+- types can now always be keyed by name or by order
+- renamed setResultTypes() in the datatype module to checkResultTypes()
+  and modified the signature accordingly
+- removed no longer used MDB2::isManip()
   </notes>
   <deps>
    <dep type="php" rel="ge" version="4.3.0" optional="no"/>
    <dep type="pkg" rel="ge" version="1.3.6" optional="no">PEAR</dep>
   </deps>
   <provides type="class" name="MDB2_Driver_Datatype_Common" extends="MDB2_Module_Common" />
-  <provides type="function" name="MDB2_Driver_Datatype_Common::setResultTypes" />
+  <provides type="function" name="MDB2_Driver_Datatype_Common::checkResultTypes" />
   <provides type="function" name="MDB2_Driver_Datatype_Common::convertResult" />
   <provides type="function" name="MDB2_Driver_Datatype_Common::convertResultRow" />
   <provides type="function" name="MDB2_Driver_Datatype_Common::getDeclaration" />
@@ -132,73 +132,6 @@ portability. Among other things MDB2 features:
   <provides type="function" name="MDB2_Driver_Reverse_Common::getTableConstraintDefinition" />
   <provides type="function" name="MDB2_Driver_Reverse_Common::getSequenceDefinition" />
   <provides type="function" name="MDB2_Driver_Reverse_Common::tableInfo" />
-  <provides type="class" name="DB" />
-  <provides type="class" name="DB_Error" extends="PEAR_Error" />
-  <provides type="class" name="DB_result" extends="MDB2_Result_Common" />
-  <provides type="class" name="DB_row" />
-  <provides type="class" name="MDB2_PEARProxy" extends="PEAR" />
-  <provides type="function" name="DB::factory" />
-  <provides type="function" name="DB::connect" />
-  <provides type="function" name="DB::apiVersion" />
-  <provides type="function" name="DB::isError" />
-  <provides type="function" name="DB::isManip" />
-  <provides type="function" name="DB::errorMessage" />
-  <provides type="function" name="DB::parseDSN" />
-  <provides type="function" name="DB::assertExtension" />
-  <provides type="function" name="DB_result::fetchRow" />
-  <provides type="function" name="DB_result::fetchInto" />
-  <provides type="function" name="DB_result::numCols" />
-  <provides type="function" name="DB_result::numRows" />
-  <provides type="function" name="DB_result::nextResult" />
-  <provides type="function" name="DB_result::free" />
-  <provides type="function" name="DB_result::tableInfo" />
-  <provides type="function" name="DB_result::getRowCounter" />
-  <provides type="function" name="MDB2_PEARProxy::connect" />
-  <provides type="function" name="MDB2_PEARProxy::disconnect" />
-  <provides type="function" name="MDB2_PEARProxy::toString" />
-  <provides type="function" name="MDB2_PEARProxy::quoteString" />
-  <provides type="function" name="MDB2_PEARProxy::quote" />
-  <provides type="function" name="MDB2_PEARProxy::escapeSimple" />
-  <provides type="function" name="MDB2_PEARProxy::quoteSmart" />
-  <provides type="function" name="MDB2_PEARProxy::quoteIdentifier" />
-  <provides type="function" name="MDB2_PEARProxy::provides" />
-  <provides type="function" name="MDB2_PEARProxy::errorCode" />
-  <provides type="function" name="MDB2_PEARProxy::errorMessage" />
-  <provides type="function" name="MDB2_PEARProxy::raiseError" />
-  <provides type="function" name="MDB2_PEARProxy::setFetchMode" />
-  <provides type="function" name="MDB2_PEARProxy::setOption" />
-  <provides type="function" name="MDB2_PEARProxy::getOption" />
-  <provides type="function" name="MDB2_PEARProxy::prepare" />
-  <provides type="function" name="MDB2_PEARProxy::autoPrepare" />
-  <provides type="function" name="MDB2_PEARProxy::autoExecute" />
-  <provides type="function" name="MDB2_PEARProxy::buildManipSQL" />
-  <provides type="function" name="MDB2_PEARProxy::execute" />
-  <provides type="function" name="MDB2_PEARProxy::executeMultiple" />
-  <provides type="function" name="MDB2_PEARProxy::query" />
-  <provides type="function" name="MDB2_PEARProxy::simpleQuery" />
-  <provides type="function" name="MDB2_PEARProxy::limitQuery" />
-  <provides type="function" name="MDB2_PEARProxy::getOne" />
-  <provides type="function" name="MDB2_PEARProxy::getRow" />
-  <provides type="function" name="MDB2_PEARProxy::getCol" />
-  <provides type="function" name="MDB2_PEARProxy::getAssoc" />
-  <provides type="function" name="MDB2_PEARProxy::getAll" />
-  <provides type="function" name="MDB2_PEARProxy::autoCommit" />
-  <provides type="function" name="MDB2_PEARProxy::commit" />
-  <provides type="function" name="MDB2_PEARProxy::rollback" />
-  <provides type="function" name="MDB2_PEARProxy::affectedRows" />
-  <provides type="function" name="MDB2_PEARProxy::errorNative" />
-  <provides type="function" name="MDB2_PEARProxy::nextId" />
-  <provides type="function" name="MDB2_PEARProxy::createSequence" />
-  <provides type="function" name="MDB2_PEARProxy::dropSequence" />
-  <provides type="function" name="MDB2_PEARProxy::fetchInto" />
-  <provides type="function" name="MDB2_PEARProxy::freePrepared" />
-  <provides type="function" name="MDB2_PEARProxy::freeResult" />
-  <provides type="function" name="MDB2_PEARProxy::numCols" />
-  <provides type="function" name="MDB2_PEARProxy::numRows" />
-  <provides type="function" name="MDB2_PEARProxy::nextResult" />
-  <provides type="function" name="MDB2_PEARProxy::tableInfo" />
-  <provides type="function" name="MDB2_PEARProxy::getTables" />
-  <provides type="function" name="MDB2_PEARProxy::getListOf" />
   <provides type="class" name="MDB2_Date" />
   <provides type="function" name="MDB2_Date::mdbNow" />
   <provides type="function" name="MDB2_Date::mdbToday" />
@@ -260,7 +193,6 @@ portability. Among other things MDB2 features:
   <provides type="function" name="MDB2::isResult" />
   <provides type="function" name="MDB2::isResultCommon" />
   <provides type="function" name="MDB2::isStatement" />
-  <provides type="function" name="MDB2::isManip" />
   <provides type="function" name="MDB2::errorMessage" />
   <provides type="function" name="MDB2::parseDSN" />
   <provides type="function" name="MDB2::fileExists" />
@@ -329,13 +261,13 @@ portability. Among other things MDB2 features:
   <provides type="function" name="MDB2_closeOpenTransactions" />
   <provides type="function" name="MDB2_defaultDebugOutput" />
   <filelist>
-   <file role="doc" baseinstalldir="/" md5sum="66cab1196eb82cec698f5b4f350b989d" name="docs/examples/example.php">
+   <file role="doc" baseinstalldir="/" md5sum="83af4e70aff5b16745637c1ad79e0413" name="docs/examples/example.php">
+    <replace type="package-info" from="@package_version@" to="version"/>
+   </file>
+   <file role="doc" baseinstalldir="/" md5sum="b4b8a7f406fe72dded95ab226a12330a" name="docs/examples/example_php5.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
    <file role="doc" baseinstalldir="/" md5sum="74b2bb45de61eccbffed7d75d5268af9" name="docs/examples/metapear_test_db.schema">
-    <replace type="package-info" from="@package_version@" to="version"/>
-   </file>
-   <file role="doc" baseinstalldir="/" md5sum="09ad0256806b19646d6fa10ecb1bb6c8" name="docs/examples/peardb_wrapper_example.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
    <file role="doc" baseinstalldir="/" md5sum="a253b37e185622112acfef6c94b79aef" name="docs/CONTRIBUTORS">
@@ -368,7 +300,7 @@ portability. Among other things MDB2 features:
    <file role="doc" baseinstalldir="/" md5sum="ec0c4383ddfd3af69d577344d0d5b4dd" name="docs/TODO">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="php" baseinstalldir="/" md5sum="615ce4ff6b653532864a59d1219ff82e" name="MDB2/Driver/Datatype/Common.php">
+   <file role="php" baseinstalldir="/" md5sum="f87b377d525f69c880681c48604cd036" name="MDB2/Driver/Datatype/Common.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
    <file role="php" baseinstalldir="/" md5sum="daab60fe2929bbaacb39674e1afa8227" name="MDB2/Driver/Function/Common.php">
@@ -378,9 +310,6 @@ portability. Among other things MDB2 features:
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
    <file role="php" baseinstalldir="/" md5sum="bc50c45be3a60712f142f4fa681cf3ae" name="MDB2/Driver/Reverse/Common.php">
-    <replace type="package-info" from="@package_version@" to="version"/>
-   </file>
-   <file role="php" baseinstalldir="/" md5sum="41cfafec53aad3893ded693734e8f0c3" name="MDB2/Wrapper/peardb.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
    <file role="php" baseinstalldir="/" md5sum="b5e017bc099f3ed4f7c872f5d358ccda" name="MDB2/Date.php">
@@ -419,7 +348,7 @@ portability. Among other things MDB2 features:
    <file role="test" baseinstalldir="/" md5sum="f8534befe37efc7f35beb0897b75f951" name="tests/MDB2_Connect_Test.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="test" baseinstalldir="/" md5sum="561d7301134ce35bfb856a3bbe11e859" name="tests/MDB2_function_testcase.php">
+   <file role="test" baseinstalldir="/" md5sum="0568236fd3fa2829d11fd9c6663368a3" name="tests/MDB2_function_testcase.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
    <file role="test" baseinstalldir="/" md5sum="a20f80ff3f450af7909bd8ebe9373da4" name="tests/MDB2_manager_testcase.php">
@@ -431,7 +360,7 @@ portability. Among other things MDB2 features:
    <file role="test" baseinstalldir="/" md5sum="3e318bd0f01fefd2e1887a190b3aaae0" name="tests/MDB2_reverse_testcase.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="test" baseinstalldir="/" md5sum="88c3c1acb94349631686e01eea69a14a" name="tests/MDB2_testcase.php">
+   <file role="test" baseinstalldir="/" md5sum="b395f7552a3a3eb2a98fcdd23d2ec37f" name="tests/MDB2_testcase.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
    <file role="test" baseinstalldir="/" md5sum="8896938fb5fcda8a27df7e89612f61dc" name="tests/MDB2_usage_testcase.php">
@@ -455,12 +384,28 @@ portability. Among other things MDB2 features:
    <file role="test" baseinstalldir="/" md5sum="e2fb7209eb44f463f6b2426e0d56248d" name="tests/test_setup.php.dist">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="php" baseinstalldir="/" md5sum="b3edf56cc2b9c5471995ab00c7094a90" name="MDB2.php">
+   <file role="php" baseinstalldir="/" md5sum="43722a69f9cca6052e7dd834ef7e9564" name="MDB2.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
   </filelist>
  </release>
  <changelog>
+   <release>
+    <version>2.0.0RC3</version>
+    <date>2005-12-30</date>
+    <license>BSD License</license>
+    <state>beta</state>
+    <notes>- added error handling when result set introspection is not supported in _wrapResult()
+- fixed example
+- removed peardb wrapper (its broken, unmaintained and probably unused)
+- added new example using php5 only features
+- MDB2_OK is now a boolean true, instead of integer 1
+- types can now always be keyed by name or by order
+- renamed setResultTypes() in the datatype module to checkResultTypes()
+  and modified the signature accordingly
+- removed no longer used MDB2::isManip()
+    </notes>
+   </release>
    <release>
     <version>2.0.0RC2</version>
     <date>2005-12-28</date>

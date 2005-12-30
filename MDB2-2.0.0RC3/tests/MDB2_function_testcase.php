@@ -41,7 +41,7 @@
 // | Author: Lorenzo Alberton <l dot alberton at quipo dot it>            |
 // +----------------------------------------------------------------------+
 //
-// $Id: MDB2_function_testcase.php,v 1.10 2005/12/24 09:29:22 lsmith Exp $
+// $Id: MDB2_function_testcase.php,v 1.11 2005/12/29 22:12:37 lsmith Exp $
 
 class MDB2_Function_TestCase extends MDB2_TestCase
 {
@@ -123,7 +123,7 @@ class MDB2_Function_TestCase extends MDB2_TestCase
         } else {
             $this->assertEquals('user', $result, 'Error: substrings not equals');
         }
-        
+
         $substring_clause = $this->db->function->substring('user_name', 5, 1);
         $query = 'SELECT '.$substring_clause .' FROM users';
         $result = $this->db->queryOne($query);
@@ -132,7 +132,7 @@ class MDB2_Function_TestCase extends MDB2_TestCase
         } else {
             $this->assertEquals('_', $result, 'Error: substrings not equals');
         }
-        
+
         //test NULL 2nd parameter
         $substring_clause = $this->db->function->substring('user_name', 6);
         $query = 'SELECT '.$substring_clause .' FROM users';

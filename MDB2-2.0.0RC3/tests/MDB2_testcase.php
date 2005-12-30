@@ -41,7 +41,7 @@
 // | Author: Paul Cooper <pgc@ucecom.com>                                 |
 // +----------------------------------------------------------------------+
 //
-// $Id: MDB2_testcase.php,v 1.5 2005/12/24 13:36:41 lsmith Exp $
+// $Id: MDB2_testcase.php,v 1.6 2005/12/29 18:23:40 lsmith Exp $
 
 class MDB2_TestCase extends PHPUnit_TestCase {
     //contains the dsn of the database we are testing
@@ -120,7 +120,7 @@ class MDB2_TestCase extends PHPUnit_TestCase {
                 $delta = 0;
             }
 
-            $this->assertEquals($data[$field], $value, "the value retrieved for field \"$field\" doesn't match what was stored into the row $rownum", $delta);
+            $this->assertEquals($value, $data[$field], "the value retrieved for field \"$field\" doesn't match what was stored into the row $rownum", $delta);
             next($row);
         }
     }

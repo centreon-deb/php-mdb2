@@ -42,7 +42,7 @@
 // | Author: Lukas Smith <smith@pooteeweet.org>                           |
 // +----------------------------------------------------------------------+
 //
-// $Id: Common.php,v 1.6 2005/10/17 20:21:09 lsmith Exp $
+// $Id: Common.php,v 1.7 2006/01/12 16:47:15 lsmith Exp $
 //
 
 /**
@@ -74,7 +74,7 @@ class MDB2_Driver_Function_Common extends MDB2_Module_Common
      * @return mixed a result handle or MDB2_OK on success, a MDB2 error on failure
      * @access public
      */
-    function &executeStoredProc($name, $params = null, $types = null, $result_class = false, $result_wrap_class = false)
+    function &executeStoredProc($name, $params = null, $types = null, $result_class = true, $result_wrap_class = false)
     {
         $db =& $this->getDBInstance();
         if (PEAR::isError($db)) {

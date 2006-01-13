@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE package SYSTEM "http://pear.php.net/dtd/package-1.0">
-<package version="1.0" packagerversion="1.4.5">
+<package version="1.0" packagerversion="1.4.6">
  <name>MDB2</name>
  <summary>database abstraction layer</summary>
  <description>PEAR MDB2 is a merge of the PEAR DB and Metabase php database abstraction layers.
@@ -69,19 +69,23 @@ portability. Among other things MDB2 features:
   </maintainer>
   </maintainers>
  <release>
-  <version>2.0.0RC3</version>
-  <date>2005-12-30</date>
+  <version>2.0.0RC4</version>
+  <date>2006-01-13</date>
   <license>BSD License</license>
   <state>beta</state>
-  <notes>- added error handling when result set introspection is not supported in _wrapResult()
-- fixed example
-- removed peardb wrapper (its broken, unmaintained and probably unused)
-- added new example using php5 only features
-- MDB2_OK is now a boolean true, instead of integer 1
-- types can now always be keyed by name or by order
-- renamed setResultTypes() in the datatype module to checkResultTypes()
-  and modified the signature accordingly
-- removed no longer used MDB2::isManip()
+  <notes>- explicitly pass if the module is phptype specific in all loadModule calls (bug #6226)
+- some cleanups in loadModule()
+- eliminate possible warnings in execute() and _assignBindColumns()
+- do not silence includes when debug option is enabled
+- fixed serious bug in autoincrement test
+- added dbsyntax to getDSN() string output (feature request #6463)
+- fixed signature of executeStoredProc()
+- nextResult() returns false if there are no more result sets to read
+- renamed _isIndexName() to _fixIndexName()
+- _fixIndexName() now just attempts to remove possible formatting
+- renamed _isSequenceName() to _fixSequenceName()
+- _fixSequenceName() now just attempts to remove possible formatting, and only
+  returns a boolean if no formatting was applied when the new &quot;check&quot; parameter is set to true
   </notes>
   <deps>
    <dep type="php" rel="ge" version="4.3.0" optional="no"/>
@@ -261,10 +265,10 @@ portability. Among other things MDB2 features:
   <provides type="function" name="MDB2_closeOpenTransactions" />
   <provides type="function" name="MDB2_defaultDebugOutput" />
   <filelist>
-   <file role="doc" baseinstalldir="/" md5sum="83af4e70aff5b16745637c1ad79e0413" name="docs/examples/example.php">
+   <file role="doc" baseinstalldir="/" md5sum="b17d2a5c1011f8debfd051ba7d0fd84f" name="docs/examples/example.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="doc" baseinstalldir="/" md5sum="b4b8a7f406fe72dded95ab226a12330a" name="docs/examples/example_php5.php">
+   <file role="doc" baseinstalldir="/" md5sum="8a9781f9ef115b18c0d12a6bb2c7c9cb" name="docs/examples/example_php5.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
    <file role="doc" baseinstalldir="/" md5sum="74b2bb45de61eccbffed7d75d5268af9" name="docs/examples/metapear_test_db.schema">
@@ -288,7 +292,7 @@ portability. Among other things MDB2 features:
    <file role="doc" baseinstalldir="/" md5sum="35add1a9ff4f0a3b9a3ff7b60ac7efba" name="docs/Driver_Reverse_skeleton.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="doc" baseinstalldir="/" md5sum="9b45ab0bd4e851c366ffa083026c90c8" name="docs/Driver_skeleton.php">
+   <file role="doc" baseinstalldir="/" md5sum="a9ab7e3c50166ab88242800d97aa4005" name="docs/Driver_skeleton.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
    <file role="doc" baseinstalldir="/" md5sum="c1fe9863db1ef4da67e4be7c549b0290" name="docs/MAINTAINERS">
@@ -303,10 +307,10 @@ portability. Among other things MDB2 features:
    <file role="php" baseinstalldir="/" md5sum="f87b377d525f69c880681c48604cd036" name="MDB2/Driver/Datatype/Common.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="php" baseinstalldir="/" md5sum="daab60fe2929bbaacb39674e1afa8227" name="MDB2/Driver/Function/Common.php">
+   <file role="php" baseinstalldir="/" md5sum="b81fd434c3bec5b83acf060a825b629a" name="MDB2/Driver/Function/Common.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="php" baseinstalldir="/" md5sum="cb8fa369ef41de755644acbe4141b574" name="MDB2/Driver/Manager/Common.php">
+   <file role="php" baseinstalldir="/" md5sum="fe4ae57eee91f0700b282e46e3646bd6" name="MDB2/Driver/Manager/Common.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
    <file role="php" baseinstalldir="/" md5sum="bc50c45be3a60712f142f4fa681cf3ae" name="MDB2/Driver/Reverse/Common.php">
@@ -330,7 +334,7 @@ portability. Among other things MDB2 features:
    <file role="test" baseinstalldir="/" md5sum="81e37fdc47113dae6eae8c9541dc4611" name="tests/clitest.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="test" baseinstalldir="/" md5sum="9d91b99a7a8f5d1e0ab644ce77d274ca" name="tests/config.php">
+   <file role="test" baseinstalldir="/" md5sum="764f0965a4c837694c5aa9ba17ff5e89" name="tests/config.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
    <file role="test" baseinstalldir="/" md5sum="2a2c534ab4afb0c05ca9d7ca47815bf5" name="tests/Console_TestListener.php">
@@ -339,7 +343,7 @@ portability. Among other things MDB2 features:
    <file role="test" baseinstalldir="/" md5sum="d46a8f267dbd54f0c7ff55e479d33e7e" name="tests/HTML_TestListener.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="test" baseinstalldir="/" md5sum="b7f20d949f5c7433ca8adc1f528e922e" name="tests/MDB2_api_testcase.php">
+   <file role="test" baseinstalldir="/" md5sum="28e12c65c1a8a70dff8c07bcb8bc8cf5" name="tests/MDB2_api_testcase.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
    <file role="test" baseinstalldir="/" md5sum="7a7b386b309a992a99235785668e826d" name="tests/MDB2_bugs_testcase.php">
@@ -348,22 +352,22 @@ portability. Among other things MDB2 features:
    <file role="test" baseinstalldir="/" md5sum="f8534befe37efc7f35beb0897b75f951" name="tests/MDB2_Connect_Test.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="test" baseinstalldir="/" md5sum="0568236fd3fa2829d11fd9c6663368a3" name="tests/MDB2_function_testcase.php">
+   <file role="test" baseinstalldir="/" md5sum="18a21503beb87e1f9b603a374c93ef22" name="tests/MDB2_function_testcase.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="test" baseinstalldir="/" md5sum="a20f80ff3f450af7909bd8ebe9373da4" name="tests/MDB2_manager_testcase.php">
+   <file role="test" baseinstalldir="/" md5sum="971a6ba8ffe6952f509d079a3948ff0a" name="tests/MDB2_manager_testcase.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
    <file role="test" baseinstalldir="/" md5sum="a31cb39fbc5e5c4bd9f573e0d00f04dc" name="tests/MDB2_native_testcase.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="test" baseinstalldir="/" md5sum="3e318bd0f01fefd2e1887a190b3aaae0" name="tests/MDB2_reverse_testcase.php">
+   <file role="test" baseinstalldir="/" md5sum="445ad0d6f3af88a4ad871d7f43a77638" name="tests/MDB2_reverse_testcase.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="test" baseinstalldir="/" md5sum="b395f7552a3a3eb2a98fcdd23d2ec37f" name="tests/MDB2_testcase.php">
+   <file role="test" baseinstalldir="/" md5sum="e21c541cc12e48756e4e673fc93266cd" name="tests/MDB2_testcase.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="test" baseinstalldir="/" md5sum="8896938fb5fcda8a27df7e89612f61dc" name="tests/MDB2_usage_testcase.php">
+   <file role="test" baseinstalldir="/" md5sum="2d18a2c5ca6755a8a456fc1e2e18bd37" name="tests/MDB2_usage_testcase.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
    <file role="test" baseinstalldir="/" md5sum="ef00970fb47030044f29790dc9087203" name="tests/README">
@@ -384,12 +388,32 @@ portability. Among other things MDB2 features:
    <file role="test" baseinstalldir="/" md5sum="e2fb7209eb44f463f6b2426e0d56248d" name="tests/test_setup.php.dist">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="php" baseinstalldir="/" md5sum="43722a69f9cca6052e7dd834ef7e9564" name="MDB2.php">
+   <file role="php" baseinstalldir="/" md5sum="4f613b7385334d0abd567c1ecac89ba8" name="MDB2.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
   </filelist>
  </release>
  <changelog>
+   <release>
+    <version>2.0.0RC4</version>
+    <date>2006-01-13</date>
+    <license>BSD License</license>
+    <state>beta</state>
+    <notes>- explicitly pass if the module is phptype specific in all loadModule calls (bug #6226)
+- some cleanups in loadModule()
+- eliminate possible warnings in execute() and _assignBindColumns()
+- do not silence includes when debug option is enabled
+- fixed serious bug in autoincrement test
+- added dbsyntax to getDSN() string output (feature request #6463)
+- fixed signature of executeStoredProc()
+- nextResult() returns false if there are no more result sets to read
+- renamed _isIndexName() to _fixIndexName()
+- _fixIndexName() now just attempts to remove possible formatting
+- renamed _isSequenceName() to _fixSequenceName()
+- _fixSequenceName() now just attempts to remove possible formatting, and only
+  returns a boolean if no formatting was applied when the new &quot;check&quot; parameter is set to true
+    </notes>
+   </release>
    <release>
     <version>2.0.0RC3</version>
     <date>2005-12-30</date>

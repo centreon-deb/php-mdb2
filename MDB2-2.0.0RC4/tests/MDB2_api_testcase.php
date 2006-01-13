@@ -41,7 +41,7 @@
 // | Author: Paul Cooper <pgc@ucecom.com>                                 |
 // +----------------------------------------------------------------------+
 //
-// $Id: MDB2_api_testcase.php,v 1.15 2005/12/14 12:10:20 dufuz Exp $
+// $Id: MDB2_api_testcase.php,v 1.16 2006/01/02 15:54:05 lsmith Exp $
 
 require_once 'MDB2_testcase.php';
 
@@ -79,7 +79,7 @@ class MDB2_Api_TestCase extends MDB2_TestCase {
         if (!$this->methodExists($this->db, 'loadModule')) {
             return;
         }
-        $this->assertTrue(!PEAR::isError($this->db->loadModule('Manager')));
+        $this->assertTrue(!PEAR::isError($this->db->loadModule('Manager', null, true)));
     }
 
     // test of the driver

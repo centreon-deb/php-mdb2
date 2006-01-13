@@ -43,7 +43,7 @@
 // | Author: Lukas Smith <smith@pooteeweet.org>                           |
 // +----------------------------------------------------------------------+
 //
-// $Id: MDB2.php,v 1.153 2005/12/29 22:12:23 lsmith Exp $
+// $Id: MDB2.php,v 1.158 2006/01/12 17:58:45 lsmith Exp $
 //
 
 /**
@@ -326,7 +326,12 @@ class MDB2
 
         if (!class_exists($class_name)) {
             $file_name = str_replace('_', DIRECTORY_SEPARATOR, $class_name).'.php';
-            if (!include_once($file_name)) {
+            if (is_array($options) && array_key_exists('debug', $options) && $options['debug']) {
+                $include = include_once($file_name);
+            } else {
+                $include = @include_once($file_name);
+            }
+            if (!$include) {
                 if (!MDB2::fileExists($file_name)) {
                     $msg = "unable to find package '$class_name' file '$file_name'";
                 } else {
@@ -1548,10 +1553,11 @@ class MDB2_Driver_Common extends PEAR
         }
 
         if (!isset($this->{$property})) {
+            $version = $phptype_specific;
             if ($phptype_specific !== false) {
+                $version = true;
                 $class_name = 'MDB2_Driver_'.$module.'_'.$this->phptype;
                 $file_name = str_replace('_', DIRECTORY_SEPARATOR, $class_name).'.php';
-                $version = true;
             }
             if ($phptype_specific === false
                 || (!class_exists($class_name) && !MDB2::fileExists($file_name))
@@ -1559,17 +1565,23 @@ class MDB2_Driver_Common extends PEAR
                 $version = false;
                 $class_name = 'MDB2_'.$module;
                 $file_name = str_replace('_', DIRECTORY_SEPARATOR, $class_name).'.php';
-                if (!class_exists($class_name) && !MDB2::fileExists($file_name)) {
-                    $err =& $this->raiseError(MDB2_ERROR_LOADMODULE, null, null,
-                        "unable to find module '$module' file '$file_name'");
-                    return $err;
-                }
             }
 
-            if (!class_exists($class_name) && !include_once($file_name)) {
-                $err =& $this->raiseError(MDB2_ERROR_LOADMODULE, null, null,
-                    "unable to load '$module' driver class from file '$file_name'");
-                return $err;
+            if (!class_exists($class_name)) {
+                if ($this->options['debug']) {
+                    $include = include_once($file_name);
+                } else {
+                    $include = @include_once($file_name);
+                }
+                if (!$include) {
+                    if (!MDB2::fileExists($file_name)) {
+                        $msg = "unable to find module '$module' file '$file_name'";
+                    } else {
+                        $msg = "unable to load '$module' driver class from file '$file_name'";
+                    }
+                    $err =& $this->raiseError(MDB2_ERROR_LOADMODULE, null, null, $msg);
+                    return $err;
+                }
             }
 
             // load modul in a specific version
@@ -1579,7 +1591,12 @@ class MDB2_Driver_Common extends PEAR
                     if ($class_name != $class_name_new) {
                         $class_name = $class_name_new;
                         $file_name = str_replace('_', DIRECTORY_SEPARATOR, $class_name).'.php';
-                        if (!include_once($file_name)) {
+                        if ($this->options['debug']) {
+                            $include = include_once($file_name);
+                        } else {
+                            $include = @include_once($file_name);
+                        }
+                        if (!$include) {
                             if (!MDB2::fileExists($file_name)) {
                                 $msg = "unable to find module '$module' file '$file_name'";
                             } else {
@@ -1791,7 +1808,9 @@ class MDB2_Driver_Common extends PEAR
         switch ($type) {
         // expand to include all possible options
         case 'string':
-            $dsn = $dsn['phptype'].'://'.$dsn['username'].':'.
+           $dsn = $dsn['phptype'].
+               ($dsn['dbsyntax'] ? ('('.$dsn['dbsyntax'].')') : '').
+               '://'.$dsn['username'].':'.
                 $dsn['password'].'@'.$dsn['hostspec'].
                 ($dsn['port'] ? (':'.$dsn['port']) : '').
                 '/'.$dsn['database'];
@@ -1978,7 +1997,7 @@ class MDB2_Driver_Common extends PEAR
         $result_wrap_class = false, $limit = null, $offset = null)
     {
         if ($types === true) {
-            $this->loadModule('Reverse');
+            $this->loadModule('Reverse', null, true);
             $tableInfo = $this->reverse->tableInfo($result);
             if (PEAR::isError($tableInfo)) {
                 return $tableInfo;
@@ -2113,7 +2132,7 @@ class MDB2_Driver_Common extends PEAR
             return 'NULL';
         }
         if ($type) {
-            $this->loadModule('Datatype');
+            $this->loadModule('Datatype', null, true);
             return $this->datatype->implodeArray($col, $type);
         }
         return implode(', ', $col);
@@ -2382,7 +2401,7 @@ class MDB2_Driver_Common extends PEAR
      */
     function quote($value, $type = null, $quote = true)
     {
-        $result = $this->loadModule('Datatype');
+        $result = $this->loadModule('Datatype', null, true);
         if (PEAR::isError($result)) {
             return $result;
         }
@@ -2405,7 +2424,7 @@ class MDB2_Driver_Common extends PEAR
      */
     function getDeclaration($type, $name, $field)
     {
-        $result = $this->loadModule('Datatype');
+        $result = $this->loadModule('Datatype', null, true);
         if (PEAR::isError($result)) {
             return $result;
         }
@@ -2425,7 +2444,7 @@ class MDB2_Driver_Common extends PEAR
      */
     function compareDefinition($current, $previous)
     {
-        $result = $this->loadModule('Datatype');
+        $result = $this->loadModule('Datatype', null, true);
         if (PEAR::isError($result)) {
             return $result;
         }
@@ -2672,7 +2691,7 @@ class MDB2_Result_Common extends MDB2_Result
     var $result;
     var $rownum = -1;
     var $types;
-    var $values;
+    var $values = array();
     var $offset;
     var $offset_count = 0;
     var $limit;
@@ -2720,7 +2739,7 @@ class MDB2_Result_Common extends MDB2_Result
      */
     function setResultTypes($types)
     {
-        $load = $this->db->loadModule('Datatype');
+        $load = $this->db->loadModule('Datatype', null, true);
         if (PEAR::isError($load)) {
             return $load;
         }
@@ -2945,7 +2964,7 @@ class MDB2_Result_Common extends MDB2_Result
      * Move the internal result pointer to the next available result
      *
      * @param a valid result resource
-     * @return true on success or an error object on failure
+     * @return true on success, false if there is no more result set or an error object on failure
      * @access public
      */
     function nextResult()
@@ -3138,7 +3157,7 @@ class MDB2_Statement_Common
     var $query;
     var $result_types;
     var $types;
-    var $values;
+    var $values = array();
     var $row_limit;
     var $row_offset;
     var $is_manip;

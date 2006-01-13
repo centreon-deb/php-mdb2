@@ -41,7 +41,7 @@
 // | Author: Paul Cooper <pgc@ucecom.com>                                 |
 // +----------------------------------------------------------------------+
 //
-// $Id: MDB2_usage_testcase.php,v 1.48 2005/12/26 16:33:26 lsmith Exp $
+// $Id: MDB2_usage_testcase.php,v 1.49 2006/01/02 15:54:05 lsmith Exp $
 
 require_once 'MDB2_testcase.php';
 
@@ -521,7 +521,7 @@ class MDB2_Usage_TestCase extends MDB2_TestCase {
             return;
         }
 
-        $this->db->loadModule('Manager');
+        $this->db->loadModule('Manager', null, true);
 
         for ($start_value = 1; $start_value < 4; $start_value++) {
             $sequence_name = "test_sequence_$start_value";

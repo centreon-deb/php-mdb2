@@ -42,7 +42,7 @@
 // | Author: YOUR NAME <YOUR EMAIL>                                       |
 // +----------------------------------------------------------------------+
 //
-// $Id: Driver_skeleton.php,v 1.19 2005/12/23 12:03:41 lsmith Exp $
+// $Id: Driver_skeleton.php,v 1.20 2006/01/12 17:58:44 lsmith Exp $
 //
 
 // This is just a skeleton MDB2 driver.
@@ -418,7 +418,7 @@ class MDB2_Result_xxx extends MDB2_Result_Common
      * Move the internal mysql result pointer to the next available result
      * Currently not supported
      *
-     * @return true if a result is available otherwise return false
+     * @return true on success, false if there is no more result set or an error object on failure
      * @access public
      */
     function nextResult()

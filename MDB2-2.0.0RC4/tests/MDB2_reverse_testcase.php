@@ -41,7 +41,7 @@
 // | Author: Lorenzo Alberton <l dot alberton at quipo dot it>            |
 // +----------------------------------------------------------------------+
 //
-// $Id: MDB2_reverse_testcase.php,v 1.22 2005/12/24 09:56:12 lsmith Exp $
+// $Id: MDB2_reverse_testcase.php,v 1.23 2006/01/02 15:54:05 lsmith Exp $
 
 require_once 'MDB2_testcase.php';
 
@@ -49,7 +49,7 @@ class MDB2_Reverse_TestCase extends MDB2_TestCase
 {
     function setUp() {
         parent::setUp();
-        $this->db->loadModule('Reverse');
+        $this->db->loadModule('Reverse', null, true);
     }
 
     /**
@@ -131,7 +131,7 @@ class MDB2_Reverse_TestCase extends MDB2_TestCase
         }
 
         //setup
-        $this->db->loadModule('Manager');
+        $this->db->loadModule('Manager', null, true);
         $fields = array(
             'id' => array(
                 'type'     => 'integer',
@@ -208,7 +208,7 @@ class MDB2_Reverse_TestCase extends MDB2_TestCase
      */
     function testGetSequenceDefinition() {
         //setup
-        $this->db->loadModule('Manager');
+        $this->db->loadModule('Manager', null, true);
         $sequence = 'test_sequence';
         $sequences = $this->db->manager->listSequences();
         if (!in_array($sequence, $sequences)) {

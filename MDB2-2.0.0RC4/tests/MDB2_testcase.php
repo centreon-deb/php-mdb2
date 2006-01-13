@@ -41,7 +41,7 @@
 // | Author: Paul Cooper <pgc@ucecom.com>                                 |
 // +----------------------------------------------------------------------+
 //
-// $Id: MDB2_testcase.php,v 1.6 2005/12/29 18:23:40 lsmith Exp $
+// $Id: MDB2_testcase.php,v 1.7 2006/01/02 15:54:05 lsmith Exp $
 
 class MDB2_TestCase extends PHPUnit_TestCase {
     //contains the dsn of the database we are testing
@@ -150,7 +150,7 @@ class MDB2_TestCase extends PHPUnit_TestCase {
     }
 
     function tableExists($table) {
-        $this->db->loadModule('Manager');
+        $this->db->loadModule('Manager', null, true);
         $tables = $this->db->manager->listTables();
         return in_array(strtolower($table), array_map('strtolower', $tables));
     }

@@ -41,13 +41,13 @@
 // | Author: Lorenzo Alberton <l dot alberton at quipo dot it>            |
 // +----------------------------------------------------------------------+
 //
-// $Id: MDB2_function_testcase.php,v 1.11 2005/12/29 22:12:37 lsmith Exp $
+// $Id: MDB2_function_testcase.php,v 1.12 2006/01/02 15:54:05 lsmith Exp $
 
 class MDB2_Function_TestCase extends MDB2_TestCase
 {
     function setUp() {
         parent::setUp();
-        $this->db->loadModule('Function');
+        $this->db->loadModule('Function', null, true);
     }
 
     /**

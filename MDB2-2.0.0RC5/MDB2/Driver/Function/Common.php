@@ -42,7 +42,7 @@
 // | Author: Lukas Smith <smith@pooteeweet.org>                           |
 // +----------------------------------------------------------------------+
 //
-// $Id: Common.php,v 1.7 2006/01/12 16:47:15 lsmith Exp $
+// $Id: Common.php,v 1.9 2006/02/05 15:57:32 lsmith Exp $
 //
 
 /**
@@ -147,14 +147,18 @@ class MDB2_Driver_Function_Common extends MDB2_Module_Common
     // {{{ concat()
 
     /**
-     * return string to caoncatenate two strings
+     * returns string to concatenate two or more string parameters
      *
+     * @param string $value1
+     * @param string $value2
+     * @param string $values...
      * @return string to caoncatenate two strings
      * @access public
      */
     function concat($value1, $value2)
     {
-        return "$value1 || $value2";
+        $args = func_get_args();
+        return "(".implode(' || ', $args).")";
     }
 
     // }}}

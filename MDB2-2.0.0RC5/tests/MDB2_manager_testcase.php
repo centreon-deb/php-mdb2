@@ -42,7 +42,7 @@
 // |          Lorenzo Alberton <l dot alberton at quipo dot it>           |
 // +----------------------------------------------------------------------+
 //
-// $Id: MDB2_manager_testcase.php,v 1.40 2006/01/06 10:58:56 lsmith Exp $
+// $Id: MDB2_manager_testcase.php,v 1.42 2006/01/16 16:26:01 quipo Exp $
 
 require_once 'MDB2_testcase.php';
 
@@ -125,8 +125,8 @@ class MDB2_Manager_TestCase extends MDB2_TestCase {
         $query.= ' (somename, somedescription)';
         $query.= ' VALUES (:somename, :somedescription)';
         $stmt =& $this->db->prepare($query, array('text', 'text'), false);
-        if (PEAR::isError($result)) {
-            $this->assertTrue(true, 'Prepareing insert');
+        if (PEAR::isError($stmt)) {
+            $this->assertTrue(true, 'Preparing insert');
             return;
         }
         $values = array(

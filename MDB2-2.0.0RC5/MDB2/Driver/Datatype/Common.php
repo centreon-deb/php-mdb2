@@ -42,7 +42,7 @@
 // | Author: Lukas Smith <smith@pooteeweet.org>                           |
 // +----------------------------------------------------------------------+
 //
-// $Id: Common.php,v 1.50 2005/12/29 18:24:49 lsmith Exp $
+// $Id: Common.php,v 1.52 2006/01/18 15:18:14 quipo Exp $
 
 require_once 'MDB2/LOB.php';
 
@@ -139,7 +139,7 @@ class MDB2_Driver_Datatype_Common extends MDB2_Module_Common
         case 'integer':
             return intval($value);
         case 'boolean':
-            return $value == 'Y';
+            return !empty($value);
         case 'decimal':
             return $value;
         case 'float':
@@ -305,7 +305,7 @@ class MDB2_Driver_Datatype_Common extends MDB2_Module_Common
         case 'integer':
             return 'INT';
         case 'boolean':
-            return 'CHAR (1)';
+            return 'INT';
         case 'date':
             return 'CHAR ('.strlen('YYYY-MM-DD').')';
         case 'time':
@@ -911,6 +911,7 @@ class MDB2_Driver_Datatype_Common extends MDB2_Module_Common
      *
      * @param string $value text string value that is intended to be converted.
      * @param string $type type to which the value should be converted to
+     * @param bool $quote determines if the value should be quoted and escaped
      * @return string text string that represents the given argument value in
      *       a DBMS specific format.
      * @access public
@@ -965,12 +966,7 @@ class MDB2_Driver_Datatype_Common extends MDB2_Module_Common
         if (!method_exists($this, "_quote{$type}")) {
             return $db->raiseError('type not defined: '.$type);
         }
-        $value = $this->{"_quote{$type}"}($value);
-
-        // ugly hack to remove single quotes
-        if (!$quote && isset($value[0]) && $value[0] === "'") {
-            $value = substr($value, 1, -1);
-        }
+        $value = $this->{"_quote{$type}"}($value, $quote);
 
         return $value;
     }
@@ -983,11 +979,12 @@ class MDB2_Driver_Datatype_Common extends MDB2_Module_Common
      * compose query statements.
      *
      * @param string $value text string value that is intended to be converted.
+     * @param bool $quote determines if the value should be quoted and escaped
      * @return string text string that represents the given argument value in
      *       a DBMS specific format.
      * @access protected
      */
-    function _quoteInteger($value)
+    function _quoteInteger($value, $quote)
     {
         return (int)$value;
     }
@@ -1000,12 +997,16 @@ class MDB2_Driver_Datatype_Common extends MDB2_Module_Common
      * compose query statements.
      *
      * @param string $value text string value that is intended to be converted.
+     * @param bool $quote determines if the value should be quoted and escaped
      * @return string text string that already contains any DBMS specific
      *       escaped character sequences.
      * @access protected
      */
-    function _quoteText($value)
+    function _quoteText($value, $quote)
     {
+        if (!$quote) {
+            return $value;
+        }
         $db =& $this->getDBInstance();
         if (PEAR::isError($db)) {
             return $db;
@@ -1021,7 +1022,7 @@ class MDB2_Driver_Datatype_Common extends MDB2_Module_Common
      * Convert a text value into a DBMS specific format that is suitable to
      * compose query statements.
      *
-     * @param  $value
+     * @param string $value text string value that is intended to be converted.
      * @return string text string that represents the given argument value in
      *       a DBMS specific format.
      * @access protected
@@ -1063,15 +1064,16 @@ class MDB2_Driver_Datatype_Common extends MDB2_Module_Common
      * Convert a text value into a DBMS specific format that is suitable to
      * compose query statements.
      *
-     * @param  $value
+     * @param string $value text string value that is intended to be converted.
+     * @param bool $quote determines if the value should be quoted and escaped
      * @return string text string that represents the given argument value in
      *       a DBMS specific format.
      * @access protected
      */
-    function _quoteLOB($value)
+    function _quoteLOB($value, $quote)
     {
         $value = $this->_readFile($value);
-        return $this->_quoteText($value);
+        return $this->_quoteText($value, $quote);
     }
 
     // }}}
@@ -1081,14 +1083,15 @@ class MDB2_Driver_Datatype_Common extends MDB2_Module_Common
      * Convert a text value into a DBMS specific format that is suitable to
      * compose query statements.
      *
-     * @param  $value
+     * @param string $value text string value that is intended to be converted.
+     * @param bool $quote determines if the value should be quoted and escaped
      * @return string text string that represents the given argument value in
      *       a DBMS specific format.
      * @access protected
      */
-    function _quoteCLOB($value)
+    function _quoteCLOB($value, $quote)
     {
-        return $this->_quoteLOB($value);
+        return $this->_quoteLOB($value, $quote);
     }
 
     // }}}
@@ -1098,14 +1101,15 @@ class MDB2_Driver_Datatype_Common extends MDB2_Module_Common
      * Convert a text value into a DBMS specific format that is suitable to
      * compose query statements.
      *
-     * @param  $value
+     * @param string $value text string value that is intended to be converted.
+     * @param bool $quote determines if the value should be quoted and escaped
      * @return string text string that represents the given argument value in
      *       a DBMS specific format.
      * @access protected
      */
-    function _quoteBLOB($value)
+    function _quoteBLOB($value, $quote)
     {
-        return $this->_quoteLOB($value);
+        return $this->_quoteLOB($value, $quote);
     }
 
     // }}}
@@ -1116,13 +1120,14 @@ class MDB2_Driver_Datatype_Common extends MDB2_Module_Common
      * compose query statements.
      *
      * @param string $value text string value that is intended to be converted.
+     * @param bool $quote determines if the value should be quoted and escaped
      * @return string text string that represents the given argument value in
      *       a DBMS specific format.
      * @access protected
      */
-    function _quoteBoolean($value)
+    function _quoteBoolean($value, $quote)
     {
-        return ($value ? "'Y'" : "'N'");
+        return ($value ? 1 : 0);
     }
 
     // }}}
@@ -1133,13 +1138,14 @@ class MDB2_Driver_Datatype_Common extends MDB2_Module_Common
      * compose query statements.
      *
      * @param string $value text string value that is intended to be converted.
+     * @param bool $quote determines if the value should be quoted and escaped
      * @return string text string that represents the given argument value in
      *       a DBMS specific format.
      * @access protected
      */
-    function _quoteDate($value)
+    function _quoteDate($value, $quote)
     {
-       return $this->_quoteText($value);
+       return $this->_quoteText($value, $quote);
     }
 
     // }}}
@@ -1150,13 +1156,14 @@ class MDB2_Driver_Datatype_Common extends MDB2_Module_Common
      * compose query statements.
      *
      * @param string $value text string value that is intended to be converted.
+     * @param bool $quote determines if the value should be quoted and escaped
      * @return string text string that represents the given argument value in
      *       a DBMS specific format.
      * @access protected
      */
-    function _quoteTimestamp($value)
+    function _quoteTimestamp($value, $quote)
     {
-       return $this->_quoteText($value);
+       return $this->_quoteText($value, $quote);
     }
 
     // }}}
@@ -1167,13 +1174,14 @@ class MDB2_Driver_Datatype_Common extends MDB2_Module_Common
      *       compose query statements.
      *
      * @param string $value text string value that is intended to be converted.
+     * @param bool $quote determines if the value should be quoted and escaped
      * @return string text string that represents the given argument value in
      *       a DBMS specific format.
      * @access protected
      */
-    function _quoteTime($value)
+    function _quoteTime($value, $quote)
     {
-       return $this->_quoteText($value);
+       return $this->_quoteText($value, $quote);
     }
 
     // }}}
@@ -1184,13 +1192,22 @@ class MDB2_Driver_Datatype_Common extends MDB2_Module_Common
      * compose query statements.
      *
      * @param string $value text string value that is intended to be converted.
+     * @param bool $quote determines if the value should be quoted and escaped
      * @return string text string that represents the given argument value in
      *       a DBMS specific format.
      * @access protected
      */
-    function _quoteFloat($value)
+    function _quoteFloat($value, $quote)
     {
-       return $this->_quoteText($value);
+        if (!$quote) {
+            return $value;
+        }
+        $db =& $this->getDBInstance();
+        if (PEAR::isError($db)) {
+            return $db;
+        }
+
+        return $db->escape($value);
     }
 
     // }}}
@@ -1201,13 +1218,22 @@ class MDB2_Driver_Datatype_Common extends MDB2_Module_Common
      * compose query statements.
      *
      * @param string $value text string value that is intended to be converted.
+     * @param bool $quote determines if the value should be quoted and escaped
      * @return string text string that represents the given argument value in
      *       a DBMS specific format.
      * @access protected
      */
-    function _quoteDecimal($value)
+    function _quoteDecimal($value, $quote)
     {
-       return $this->_quoteText($value);
+        if (!$quote) {
+            return $value;
+        }
+        $db =& $this->getDBInstance();
+        if (PEAR::isError($db)) {
+            return $db;
+        }
+
+        return $db->escape($value);
     }
 
     // }}}

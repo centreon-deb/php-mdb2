@@ -69,23 +69,24 @@ portability. Among other things MDB2 features:
   </maintainer>
   </maintainers>
  <release>
-  <version>2.0.0RC4</version>
-  <date>2006-01-13</date>
+  <version>2.0.0RC5</version>
+  <date>2006-02-05</date>
   <license>BSD License</license>
   <state>beta</state>
-  <notes>- explicitly pass if the module is phptype specific in all loadModule calls (bug #6226)
-- some cleanups in loadModule()
-- eliminate possible warnings in execute() and _assignBindColumns()
-- do not silence includes when debug option is enabled
-- fixed serious bug in autoincrement test
-- added dbsyntax to getDSN() string output (feature request #6463)
-- fixed signature of executeStoredProc()
-- nextResult() returns false if there are no more result sets to read
-- renamed _isIndexName() to _fixIndexName()
-- _fixIndexName() now just attempts to remove possible formatting
-- renamed _isSequenceName() to _fixSequenceName()
-- _fixSequenceName() now just attempts to remove possible formatting, and only
-  returns a boolean if no formatting was applied when the new &quot;check&quot; parameter is set to true
+  <notes>- expanded testing of prepared queries (out of order binding, escape characters
+  inside the string, lobs without named parameters that match the field name)
+- removed ugly hack for quote parameter in quote() since it was insufficient
+  (escaping also needs to be prevented)
+- added support for out of order parameter binding in prepared queries
+- expanded testing of prepared queries (out of order binding, escape characters
+  inside the string, lobs without named parameters that match the field name)
+- reset row_limit and row_offset after calling prepare() just like we do for query() and exec()
+- cosmetic fix (removed &quot;row_&quot; prefix from &quot;row_limit&quot; and &quot;row_offset&quot;)
+- now using INT/TINYINT/SMALLINT by default instead of CHAR(1) for the boolean datatype
+  (BC BREAK!)
+- added MDB2_datatype_testcase to test suite
+- support an arbitrary number of arguments in concat()
+- add property phpdoc comments to LOB.php
   </notes>
   <deps>
    <dep type="php" rel="ge" version="4.3.0" optional="no"/>
@@ -304,10 +305,10 @@ portability. Among other things MDB2 features:
    <file role="doc" baseinstalldir="/" md5sum="ec0c4383ddfd3af69d577344d0d5b4dd" name="docs/TODO">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="php" baseinstalldir="/" md5sum="f87b377d525f69c880681c48604cd036" name="MDB2/Driver/Datatype/Common.php">
+   <file role="php" baseinstalldir="/" md5sum="2bde4c66ef9fe271107239d09c76d8a3" name="MDB2/Driver/Datatype/Common.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="php" baseinstalldir="/" md5sum="b81fd434c3bec5b83acf060a825b629a" name="MDB2/Driver/Function/Common.php">
+   <file role="php" baseinstalldir="/" md5sum="92d8129cf784b63bf6615310b742008b" name="MDB2/Driver/Function/Common.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
    <file role="php" baseinstalldir="/" md5sum="fe4ae57eee91f0700b282e46e3646bd6" name="MDB2/Driver/Manager/Common.php">
@@ -325,7 +326,7 @@ portability. Among other things MDB2 features:
    <file role="php" baseinstalldir="/" md5sum="076535df91665e8d7a5a1108162761c6" name="MDB2/Iterator.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="php" baseinstalldir="/" md5sum="fe72b90c0b1799f4c0e6920fdfc2d2a8" name="MDB2/LOB.php">
+   <file role="php" baseinstalldir="/" md5sum="be8bfdab90d088d0cddd6a2ee511677e" name="MDB2/LOB.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
    <file role="test" baseinstalldir="/" md5sum="01d41e566bdb62c7bcb432c8039dda9a" name="tests/basic.phpt">
@@ -352,10 +353,13 @@ portability. Among other things MDB2 features:
    <file role="test" baseinstalldir="/" md5sum="f8534befe37efc7f35beb0897b75f951" name="tests/MDB2_Connect_Test.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
+   <file role="test" baseinstalldir="/" md5sum="8e3bd2231bb2c4ca9d5554ee69858437" name="tests/MDB2_datatype_testcase.php">
+    <replace type="package-info" from="@package_version@" to="version"/>
+   </file>
    <file role="test" baseinstalldir="/" md5sum="18a21503beb87e1f9b603a374c93ef22" name="tests/MDB2_function_testcase.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="test" baseinstalldir="/" md5sum="971a6ba8ffe6952f509d079a3948ff0a" name="tests/MDB2_manager_testcase.php">
+   <file role="test" baseinstalldir="/" md5sum="12cce3efc5c6e4dc36b8c2197e83dd3c" name="tests/MDB2_manager_testcase.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
    <file role="test" baseinstalldir="/" md5sum="a31cb39fbc5e5c4bd9f573e0d00f04dc" name="tests/MDB2_native_testcase.php">
@@ -367,7 +371,7 @@ portability. Among other things MDB2 features:
    <file role="test" baseinstalldir="/" md5sum="e21c541cc12e48756e4e673fc93266cd" name="tests/MDB2_testcase.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="test" baseinstalldir="/" md5sum="2d18a2c5ca6755a8a456fc1e2e18bd37" name="tests/MDB2_usage_testcase.php">
+   <file role="test" baseinstalldir="/" md5sum="72429cd2d4b206d7da3d83677ec3438f" name="tests/MDB2_usage_testcase.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
    <file role="test" baseinstalldir="/" md5sum="ef00970fb47030044f29790dc9087203" name="tests/README">
@@ -385,15 +389,36 @@ portability. Among other things MDB2 features:
    <file role="test" baseinstalldir="/" md5sum="e53402583e7c24e43f2653fbfdf94677" name="tests/testUtils.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="test" baseinstalldir="/" md5sum="e2fb7209eb44f463f6b2426e0d56248d" name="tests/test_setup.php.dist">
+   <file role="test" baseinstalldir="/" md5sum="dd039333c49feddf1c05294475d8c7df" name="tests/test_setup.php.dist">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="php" baseinstalldir="/" md5sum="4f613b7385334d0abd567c1ecac89ba8" name="MDB2.php">
+   <file role="php" baseinstalldir="/" md5sum="fd712d11d18e0221505d2b93780ea0f7" name="MDB2.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
   </filelist>
  </release>
  <changelog>
+   <release>
+    <version>2.0.0RC5</version>
+    <date>2006-02-05</date>
+    <license>BSD License</license>
+    <state>beta</state>
+    <notes>- expanded testing of prepared queries (out of order binding, escape characters
+  inside the string, lobs without named parameters that match the field name)
+- removed ugly hack for quote parameter in quote() since it was insufficient
+  (escaping also needs to be prevented)
+- added support for out of order parameter binding in prepared queries
+- expanded testing of prepared queries (out of order binding, escape characters
+  inside the string, lobs without named parameters that match the field name)
+- reset row_limit and row_offset after calling prepare() just like we do for query() and exec()
+- cosmetic fix (removed &quot;row_&quot; prefix from &quot;row_limit&quot; and &quot;row_offset&quot;)
+- now using INT/TINYINT/SMALLINT by default instead of CHAR(1) for the boolean datatype
+  (BC BREAK!)
+- added MDB2_datatype_testcase to test suite
+- support an arbitrary number of arguments in concat()
+- add property phpdoc comments to LOB.php
+    </notes>
+   </release>
    <release>
     <version>2.0.0RC4</version>
     <date>2006-01-13</date>

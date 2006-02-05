@@ -42,7 +42,7 @@
 // | Author: Lukas Smith <smith@pooteeweet.org>                           |
 // +----------------------------------------------------------------------+
 //
-// $Id: LOB.php,v 1.23 2005/12/27 15:28:29 lsmith Exp $
+// $Id: LOB.php,v 1.24 2006/02/03 19:13:04 lsmith Exp $
 
 /**
  * @package  MDB2
@@ -61,8 +61,30 @@ require_once 'MDB2.php';
  */
 class MDB2_LOB
 {
+    /**
+     * contains the key to the global MDB2 instance array of the associated
+     * MDB2 instance
+     *
+     * @var integer
+     * @access protected
+     */
     var $db_index;
+
+    /**
+     * contains the key to the global MDB2_LOB instance array of the associated
+     * MDB2_LOB instance
+     *
+     * @var integer
+     * @access protected
+     */
     var $lob_index;
+
+    /**
+     * LOB data
+     *
+     * @var string
+     * @access protected
+     */
     var $lob;
 
     // {{{ stream_open()

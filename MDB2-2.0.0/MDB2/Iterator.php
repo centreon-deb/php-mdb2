@@ -42,7 +42,7 @@
 // | Author: Lukas Smith <smith@pooteeweet.org>                           |
 // +----------------------------------------------------------------------+
 //
-// $Id: Iterator.php,v 1.18 2005/12/27 15:28:43 lsmith Exp $
+// $Id: Iterator.php,v 1.19 2006/02/08 15:42:04 lsmith Exp $
 
 /**
  * @package  MDB2
@@ -148,7 +148,7 @@ class MDB2_Iterator implements Iterator
         if ($this->result) {
             return $this->result->free();
         }
-        $this->result = null;
+        $this->result = false;
         $this->row = null;
         return false;
     }

@@ -69,24 +69,11 @@ portability. Among other things MDB2 features:
   </maintainer>
   </maintainers>
  <release>
-  <version>2.0.0RC5</version>
-  <date>2006-02-05</date>
+  <version>2.0.0</version>
+  <date>2006-02-09</date>
   <license>BSD License</license>
-  <state>beta</state>
-  <notes>- expanded testing of prepared queries (out of order binding, escape characters
-  inside the string, lobs without named parameters that match the field name)
-- removed ugly hack for quote parameter in quote() since it was insufficient
-  (escaping also needs to be prevented)
-- added support for out of order parameter binding in prepared queries
-- expanded testing of prepared queries (out of order binding, escape characters
-  inside the string, lobs without named parameters that match the field name)
-- reset row_limit and row_offset after calling prepare() just like we do for query() and exec()
-- cosmetic fix (removed &quot;row_&quot; prefix from &quot;row_limit&quot; and &quot;row_offset&quot;)
-- now using INT/TINYINT/SMALLINT by default instead of CHAR(1) for the boolean datatype
-  (BC BREAK!)
-- added MDB2_datatype_testcase to test suite
-- support an arbitrary number of arguments in concat()
-- add property phpdoc comments to LOB.php
+  <state>stable</state>
+  <notes>- handle null as resource when disable_query option is enabled in result object
   </notes>
   <deps>
    <dep type="php" rel="ge" version="4.3.0" optional="no"/>
@@ -320,10 +307,10 @@ portability. Among other things MDB2 features:
    <file role="php" baseinstalldir="/" md5sum="b5e017bc099f3ed4f7c872f5d358ccda" name="MDB2/Date.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="php" baseinstalldir="/" md5sum="fbd795790ede4831a8fde7bc2e799206" name="MDB2/Extended.php">
+   <file role="php" baseinstalldir="/" md5sum="aeb66b129031c60a534726947d46fe81" name="MDB2/Extended.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="php" baseinstalldir="/" md5sum="076535df91665e8d7a5a1108162761c6" name="MDB2/Iterator.php">
+   <file role="php" baseinstalldir="/" md5sum="057ed4dc55d88286bb076cb659348c0b" name="MDB2/Iterator.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
    <file role="php" baseinstalldir="/" md5sum="be8bfdab90d088d0cddd6a2ee511677e" name="MDB2/LOB.php">
@@ -377,7 +364,7 @@ portability. Among other things MDB2 features:
    <file role="test" baseinstalldir="/" md5sum="ef00970fb47030044f29790dc9087203" name="tests/README">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="test" baseinstalldir="/" md5sum="5a27ce050a989954698c822255f4df96" name="tests/test.php">
+   <file role="test" baseinstalldir="/" md5sum="6ad5efe07e48f8570c7eedc76917c424" name="tests/test.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
    <file role="test" baseinstalldir="/" md5sum="dc05c6cc4540981d350ccac2005c2578" name="tests/testchoose.php">
@@ -392,12 +379,20 @@ portability. Among other things MDB2 features:
    <file role="test" baseinstalldir="/" md5sum="dd039333c49feddf1c05294475d8c7df" name="tests/test_setup.php.dist">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="php" baseinstalldir="/" md5sum="fd712d11d18e0221505d2b93780ea0f7" name="MDB2.php">
+   <file role="php" baseinstalldir="/" md5sum="4c9ca8866c039f9171ac9d80aae46e9e" name="MDB2.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
   </filelist>
  </release>
  <changelog>
+   <release>
+    <version>2.0.0</version>
+    <date>2006-02-09</date>
+    <license>BSD License</license>
+    <state>stable</state>
+    <notes>- handle null as resource when disable_query option is enabled in result object
+    </notes>
+   </release>
    <release>
     <version>2.0.0RC5</version>
     <date>2006-02-05</date>

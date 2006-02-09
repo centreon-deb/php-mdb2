@@ -42,7 +42,7 @@
 // | Author: Lukas Smith <smith@pooteeweet.org>                           |
 // +----------------------------------------------------------------------+
 //
-// $Id: Extended.php,v 1.35 2005/12/27 15:28:29 lsmith Exp $
+// $Id: Extended.php,v 1.36 2006/02/09 12:45:30 lsmith Exp $
 
 /**
  * @package  MDB2
@@ -414,7 +414,7 @@ class MDB2_Extended extends MDB2_Module_Common
      * will be an array of the values from column 2-n.  If the result
      * set contains only two columns, the returned value will be a
      * scalar with the value of the second column (unless forced to an
-     * array with the $force_array parameter).  A MDB error code is
+     * array with the $force_array parameter).  A MDB2 error code is
      * returned on errors.  If the result set contains fewer than two
      * columns, a MDB2_ERROR_TRUNCATED error is returned.
      *

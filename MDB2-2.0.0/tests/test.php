@@ -41,7 +41,7 @@
 // | Author: Paul Cooper <pgc@ucecom.com>                                 |
 // +----------------------------------------------------------------------+
 //
-// $Id: test.php,v 1.11 2005/10/05 12:39:13 lsmith Exp $
+// $Id: test.php,v 1.12 2006/02/09 13:14:30 lsmith Exp $
 
 /*
  This is a small test suite for MDB2 using PHPUnit
@@ -102,7 +102,7 @@ foreach ($dbarray as $db) {
     $options = array_key_exists('options', $db) ? $db['options'] : array();
     $GLOBALS['_show_silenced'] = array_key_exists('debug', $options) ? $options['debug'] :false;
 
-    $display_dsn = $dsn['phptype'] . "://" . $dsn['username'] . ":" . $dsn['password'] . "@" . $dsn['hostspec'] . "/" . $database;
+    $display_dsn = $dsn['phptype'] . "://" . $dsn['username'] . ":XXX@" . $dsn['hostspec'] . "/" . $database;
     echo "<div class=\"test\">\n";
     echo "<div class=\"title\">Testing $display_dsn</div>\n";
 

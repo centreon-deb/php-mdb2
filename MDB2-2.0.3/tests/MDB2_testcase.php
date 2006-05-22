@@ -41,7 +41,7 @@
 // | Author: Paul Cooper <pgc@ucecom.com>                                 |
 // +----------------------------------------------------------------------+
 //
-// $Id: MDB2_testcase.php,v 1.11 2006/05/02 15:19:31 lsmith Exp $
+// $Id: MDB2_testcase.php,v 1.13 2006/05/20 10:33:15 lsmith Exp $
 
 class MDB2_TestCase extends PHPUnit_TestCase {
     //contains the dsn of the database we are testing
@@ -54,8 +54,6 @@ class MDB2_TestCase extends PHPUnit_TestCase {
     var $db;
     // contains field names from the test table
     var $fields;
-    // contains the types of the fields from the test table
-    var $types;
     // if the tables should be cleared in the setUp() and tearDown() methods
     var $clear_tables = true;
 
@@ -114,7 +112,7 @@ class MDB2_TestCase extends PHPUnit_TestCase {
         return true;
     }
 
-    function verifyFetchedValues(&$result, $rownum, &$data) {
+    function verifyFetchedValues(&$result, $rownum, $data) {
         $row = $result->fetchRow(MDB2_FETCHMODE_DEFAULT, $rownum);
         reset($row);
         foreach ($this->fields as $field => $type) {
@@ -125,12 +123,12 @@ class MDB2_TestCase extends PHPUnit_TestCase {
                 $delta = 0;
             }
 
-            $this->assertEquals($value, $data[$field], "the value retrieved for field \"$field\" doesn't match what was stored into the row $rownum", $delta);
+            $this->assertEquals($value, $data[$field], "the value retrieved for field \"$field\" doesn't match what was stored into the rownum $rownum", $delta);
             next($row);
         }
     }
 
-    function getSampleData($row) {
+    function getSampleData($row = 1) {
         $data = array();
         $data['user_name']     = 'user_' . $row;
         $data['user_password'] = 'somepassword';

@@ -42,7 +42,7 @@
 // | Author: Lukas Smith <smith@pooteeweet.org>                           |
 // +----------------------------------------------------------------------+
 //
-// $Id: LOB.php,v 1.32 2006/05/13 14:48:30 lsmith Exp $
+// $Id: LOB.php,v 1.33 2006/05/31 14:38:06 lsmith Exp $
 
 /**
  * @package  MDB2
@@ -98,7 +98,7 @@ class MDB2_LOB
             return false;
         }
         $url = parse_url($path);
-        if (!array_key_exists('host', $url) && !array_key_exists('user', $url)) {
+        if (empty($url['host'])) {
             return false;
         }
         $this->db_index = (int)$url['host'];

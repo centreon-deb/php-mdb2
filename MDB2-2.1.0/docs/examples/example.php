@@ -1,6 +1,6 @@
 <?php
 
-    // $Id: example.php,v 1.23 2006/05/08 08:09:02 lsmith Exp $
+    // $Id: example.php,v 1.24 2006/05/31 14:38:06 lsmith Exp $
     //
     // MDB2 and MDB2_Schema example script.
     //
@@ -25,11 +25,7 @@
     $pass = '';
     $host = 'localhost';
     $mdb2_name = 'metapear_test_db';
-    if (array_key_exists('db_type', $_GET)) {
-        $mdb2_type = $_GET['db_type'];
-    } else {
-        $mdb2_type = 'mysql';
-    }
+    $mdb2_type = !empty($_GET['db_type']) ? $_GET['db_type'] : 'mysql';
     echo($mdb2_type.'<br>');
 
     // Data Source Name: This is the universal connection string

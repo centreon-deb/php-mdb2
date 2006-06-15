@@ -66,19 +66,37 @@ portability. Among other things MDB2 features:
   </maintainer>
   </maintainers>
  <release>
-  <version>2.0.3</version>
-  <date>2006-05-22</date>
+  <version>2.1.0</version>
+  <date>2006-06-15</date>
   <license>BSD License</license>
   <state>stable</state>
-  <notes>- fix float/decimal handling (Request #3021)
-- default to decimal for double (instead of float)
-- serialize arrays when no type is explicitly given
-- phpdoc fixes
-- expanded FLOAT test
-- added support for identifier quoting (Request #7671)
-- added test class for the Extended module
-- added support for DELETE in auto*() methods (Request #5345)
-- added &quot;emulate_prepared&quot; option to force prepared statement emulation
+  <notes>- removed bogus code from execute()
+- new test case for floats/decimals and locale
+- reworked fix for float/decimal handling
+- expanded scientific notation handling
+- fixed several minor issues with the datatype tests
+- removed use of &quot;*&quot; in all places in the test suite that are followed by a fetch
+- tweaked handling of free() for prepared statements
+- return error if a prepared statement is attempted to be free&apos;ed or executed again
+- added result_wrap_class param to limitQuery()
+- added parameter to not quote return value of getBeforeId()
+- added setCharset()
+- enable transactions by default
+- added decimal reverse engineering test
+- fixed parameter order in assertions in reverse engineering fields tests
+- generalized quoteIdentifier() with a property
+- switched most array_key_exists() calls to !empty() to improve readability and performance
+- fixed a few edge cases and potential warnings
+- added ability to rewrite queries for query(), exec() and prepare() using a debug handler callback
+- added &apos;datatype_map&apos; option (Request #7797)
+- added reverse parameter to getColumnNames()
+- added &apos;datatype_map_callback&apos; option
+- added getValidTypes() method to handle additional types from the &apos;datatype_map&apos; option
+- set last_query in _execute() to prepared statement (Bug #7856)
+- adding random function emulation to generate a float between 0 and 1
+- explicitly fetch row id = 1 in LOB tests
+- cosmetic fix to prepare() (Bug #7883)
+- bumped PHP dependency to 4.3.2 because of LOB stream support
 
 open todo items:
 - handle autoincrement fields in alterTable()
@@ -87,10 +105,11 @@ open todo items:
 - add length handling to LOB reverse engineering
   </notes>
   <deps>
-   <dep type="php" rel="ge" version="4.3.0" optional="no"/>
+   <dep type="php" rel="ge" version="4.3.2" optional="no"/>
    <dep type="pkg" rel="ge" version="1.3.6" optional="no">PEAR</dep>
   </deps>
   <provides type="class" name="MDB2_Driver_Datatype_Common" extends="MDB2_Module_Common" />
+  <provides type="function" name="MDB2_Driver_Datatype_Common::getValidTypes" />
   <provides type="function" name="MDB2_Driver_Datatype_Common::checkResultTypes" />
   <provides type="function" name="MDB2_Driver_Datatype_Common::convertResult" />
   <provides type="function" name="MDB2_Driver_Datatype_Common::convertResultRow" />
@@ -102,12 +121,14 @@ open todo items:
   <provides type="function" name="MDB2_Driver_Datatype_Common::destroyLOB" />
   <provides type="function" name="MDB2_Driver_Datatype_Common::implodeArray" />
   <provides type="function" name="MDB2_Driver_Datatype_Common::mapNativeDatatype" />
+  <provides type="function" name="MDB2_Driver_Datatype_Common::mapPrepareDatatype" />
   <provides type="class" name="MDB2_Driver_Function_Common" extends="MDB2_Module_Common" />
   <provides type="function" name="MDB2_Driver_Function_Common::executeStoredProc" />
   <provides type="function" name="MDB2_Driver_Function_Common::functionTable" />
   <provides type="function" name="MDB2_Driver_Function_Common::now" />
   <provides type="function" name="MDB2_Driver_Function_Common::substring" />
   <provides type="function" name="MDB2_Driver_Function_Common::concat" />
+  <provides type="function" name="MDB2_Driver_Function_Common::random" />
   <provides type="class" name="MDB2_Driver_Manager_Common" extends="MDB2_Module_Common" />
   <provides type="function" name="MDB2_Driver_Manager_Common::getFieldDeclarationList" />
   <provides type="function" name="MDB2_Driver_Manager_Common::createDatabase" />
@@ -223,6 +244,8 @@ open todo items:
   <provides type="function" name="MDB2_Driver_Common::commit" />
   <provides type="function" name="MDB2_Driver_Common::rollback" />
   <provides type="function" name="MDB2_Driver_Common::inTransaction" />
+  <provides type="function" name="MDB2_Driver_Common::connect" />
+  <provides type="function" name="MDB2_Driver_Common::setCharset" />
   <provides type="function" name="MDB2_Driver_Common::disconnect" />
   <provides type="function" name="MDB2_Driver_Common::setDatabase" />
   <provides type="function" name="MDB2_Driver_Common::getDatabase" />
@@ -273,7 +296,7 @@ open todo items:
   <provides type="function" name="MDB2_closeOpenTransactions" />
   <provides type="function" name="MDB2_defaultDebugOutput" />
   <filelist>
-   <file role="doc" baseinstalldir="/" md5sum="1bc04837219908fa1b28e509f6bb8295" name="docs/examples/example.php">
+   <file role="doc" baseinstalldir="/" md5sum="b5cd8d01a36258caa0c4eb7e3478c219" name="docs/examples/example.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
    <file role="doc" baseinstalldir="/" md5sum="9d111ec2aec184bc1ece351aa7a59aaa" name="docs/examples/example_php5.php">
@@ -300,13 +323,13 @@ open todo items:
    <file role="doc" baseinstalldir="/" md5sum="ec0c4383ddfd3af69d577344d0d5b4dd" name="docs/TODO">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="php" baseinstalldir="/" md5sum="3a381071a446279c78a3243d1cdf580f" name="MDB2/Driver/Datatype/Common.php">
+   <file role="php" baseinstalldir="/" md5sum="19a1e87d5f6a0eadbca621058984e2a7" name="MDB2/Driver/Datatype/Common.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="php" baseinstalldir="/" md5sum="e48668e2fdd850a9cc84d1ec50faeb6c" name="MDB2/Driver/Function/Common.php">
+   <file role="php" baseinstalldir="/" md5sum="2ae4ff20289531be124240f30c165744" name="MDB2/Driver/Function/Common.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="php" baseinstalldir="/" md5sum="e748fc67ce2241c9e79a1bbae7c30c16" name="MDB2/Driver/Manager/Common.php">
+   <file role="php" baseinstalldir="/" md5sum="a4dda5e3542ad89c219c6d47cc967b5e" name="MDB2/Driver/Manager/Common.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
    <file role="php" baseinstalldir="/" md5sum="6e2cd0a7d2df0f8ff41c2b917c4af058" name="MDB2/Driver/Reverse/Common.php">
@@ -315,19 +338,19 @@ open todo items:
    <file role="php" baseinstalldir="/" md5sum="af81dd360b2d2d09f8c978214b06a553" name="MDB2/Date.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="php" baseinstalldir="/" md5sum="f4f9d5c3759f680ba51ff842858ea2eb" name="MDB2/Extended.php">
+   <file role="php" baseinstalldir="/" md5sum="ef567ccdb725d9eb0ce4e43c9a0210fd" name="MDB2/Extended.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
    <file role="php" baseinstalldir="/" md5sum="023c4bda6db2d8f277d8d3c76dc8f850" name="MDB2/Iterator.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="php" baseinstalldir="/" md5sum="79edc52219fa9b1a1148a8eb077f6903" name="MDB2/LOB.php">
+   <file role="php" baseinstalldir="/" md5sum="610d6d15ce65cc831dfffb297d20af1e" name="MDB2/LOB.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
    <file role="test" baseinstalldir="/" md5sum="01d41e566bdb62c7bcb432c8039dda9a" name="tests/basic.phpt">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="test" baseinstalldir="/" md5sum="74e55865943919cbda32e9502ea70a66" name="tests/clitest.php">
+   <file role="test" baseinstalldir="/" md5sum="b52c5bb4e9b89712ad33e90d7f4a5655" name="tests/clitest.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
    <file role="test" baseinstalldir="/" md5sum="764f0965a4c837694c5aa9ba17ff5e89" name="tests/config.php">
@@ -342,40 +365,40 @@ open todo items:
    <file role="test" baseinstalldir="/" md5sum="98da3f3aba98f4a9adc71a9fd19929de" name="tests/MDB2_api_testcase.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="test" baseinstalldir="/" md5sum="8449d6297353e39c4070e4f718e7da96" name="tests/MDB2_bugs_testcase.php">
+   <file role="test" baseinstalldir="/" md5sum="5e299c9e47a43a772342f58af533e47f" name="tests/MDB2_bugs_testcase.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
    <file role="test" baseinstalldir="/" md5sum="f8534befe37efc7f35beb0897b75f951" name="tests/MDB2_Connect_Test.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="test" baseinstalldir="/" md5sum="f07900f00fd9fce332b8d9b7216b7b65" name="tests/MDB2_datatype_testcase.php">
+   <file role="test" baseinstalldir="/" md5sum="f02507d291cca72feb3414067fd7a431" name="tests/MDB2_datatype_testcase.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="test" baseinstalldir="/" md5sum="3a0f2eac70aa6990e7b94d834f02b7f5" name="tests/MDB2_extended_testcase.php">
+   <file role="test" baseinstalldir="/" md5sum="c99980455add7067ba6f364007497616" name="tests/MDB2_extended_testcase.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="test" baseinstalldir="/" md5sum="0381c0f219dcd53ac52959679aa4de5a" name="tests/MDB2_function_testcase.php">
+   <file role="test" baseinstalldir="/" md5sum="95a3459c2a557e2ac7f26bea78797609" name="tests/MDB2_function_testcase.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="test" baseinstalldir="/" md5sum="c2b707abe888cfa87d3522a6a936da6f" name="tests/MDB2_manager_testcase.php">
+   <file role="test" baseinstalldir="/" md5sum="edb864169081c5b6a2d9b6d5e2f28e83" name="tests/MDB2_manager_testcase.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
    <file role="test" baseinstalldir="/" md5sum="22be0efc5b2b81bd6cd6ebe31747445e" name="tests/MDB2_native_testcase.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="test" baseinstalldir="/" md5sum="fee76b0800fa6f1c01a52ab94014f71e" name="tests/MDB2_reverse_testcase.php">
+   <file role="test" baseinstalldir="/" md5sum="817539c55bece7d1808e0d0d2ab63924" name="tests/MDB2_reverse_testcase.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
    <file role="test" baseinstalldir="/" md5sum="5c43a333b8bf44b2484bc5336d057a78" name="tests/MDB2_testcase.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="test" baseinstalldir="/" md5sum="f4da08c9b8fedd684656d37940172100" name="tests/MDB2_usage_testcase.php">
+   <file role="test" baseinstalldir="/" md5sum="9c5e51dc1af401de4de7e9dc8175faa9" name="tests/MDB2_usage_testcase.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
    <file role="test" baseinstalldir="/" md5sum="f63fc244c0673638950f9c614771af0a" name="tests/README">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="test" baseinstalldir="/" md5sum="66e58aa922dcf045697f36337179488c" name="tests/test.php">
+   <file role="test" baseinstalldir="/" md5sum="6e13a54abd3affa4d707a916f48cd25e" name="tests/test.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
    <file role="test" baseinstalldir="/" md5sum="dc05c6cc4540981d350ccac2005c2578" name="tests/testchoose.php">
@@ -384,18 +407,58 @@ open todo items:
    <file role="test" baseinstalldir="/" md5sum="3c4d2c9d89398c5692d36299d98f9c6e" name="tests/tests.css">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="test" baseinstalldir="/" md5sum="e53402583e7c24e43f2653fbfdf94677" name="tests/testUtils.php">
+   <file role="test" baseinstalldir="/" md5sum="92b3b7dad31ae305e3de39180b3b8e75" name="tests/testUtils.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
    <file role="test" baseinstalldir="/" md5sum="c2935cb59576409546f9c541b99e1d0b" name="tests/test_setup.php.dist">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="php" baseinstalldir="/" md5sum="e5e0a365bbcab26de2151408e7014642" name="MDB2.php">
+   <file role="php" baseinstalldir="/" md5sum="c36901c2fe46fa3bcf078257287cae21" name="MDB2.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
   </filelist>
  </release>
  <changelog>
+   <release>
+    <version>2.1.0</version>
+    <date>2006-06-15</date>
+    <license>BSD License</license>
+    <state>stable</state>
+    <notes>- removed bogus code from execute()
+- new test case for floats/decimals and locale
+- reworked fix for float/decimal handling
+- expanded scientific notation handling
+- fixed several minor issues with the datatype tests
+- removed use of &quot;*&quot; in all places in the test suite that are followed by a fetch
+- tweaked handling of free() for prepared statements
+- return error if a prepared statement is attempted to be free&apos;ed or executed again
+- added result_wrap_class param to limitQuery()
+- added parameter to not quote return value of getBeforeId()
+- added setCharset()
+- enable transactions by default
+- added decimal reverse engineering test
+- fixed parameter order in assertions in reverse engineering fields tests
+- generalized quoteIdentifier() with a property
+- switched most array_key_exists() calls to !empty() to improve readability and performance
+- fixed a few edge cases and potential warnings
+- added ability to rewrite queries for query(), exec() and prepare() using a debug handler callback
+- added &apos;datatype_map&apos; option (Request #7797)
+- added reverse parameter to getColumnNames()
+- added &apos;datatype_map_callback&apos; option
+- added getValidTypes() method to handle additional types from the &apos;datatype_map&apos; option
+- set last_query in _execute() to prepared statement (Bug #7856)
+- adding random function emulation to generate a float between 0 and 1
+- explicitly fetch row id = 1 in LOB tests
+- cosmetic fix to prepare() (Bug #7883)
+- bumped PHP dependency to 4.3.2 because of LOB stream support
+
+open todo items:
+- handle autoincrement fields in alterTable()
+- add support for ADODB style &quot;smart transactions&quot;:
+  http://phplens.com/lens/adodb/docs-adodb.htm#ex11
+- add length handling to LOB reverse engineering
+    </notes>
+   </release>
    <release>
     <version>2.0.3</version>
     <date>2006-05-22</date>

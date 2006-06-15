@@ -41,7 +41,7 @@
 // | Author: Lorenzo Alberton <l dot alberton at quipo dot it>            |
 // +----------------------------------------------------------------------+
 //
-// $Id: MDB2_function_testcase.php,v 1.14 2006/03/20 12:34:08 lsmith Exp $
+// $Id: MDB2_function_testcase.php,v 1.19 2006/06/14 08:11:28 lsmith Exp $
 
 class MDB2_Function_TestCase extends MDB2_TestCase
 {
@@ -107,7 +107,9 @@ class MDB2_Function_TestCase extends MDB2_TestCase
         }
         $data = $this->getSampleData(1234);
 
-        $stmt = $this->db->prepare('INSERT INTO users (' . implode(', ', array_keys($this->fields)) . ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', array_values($this->fields), MDB2_PREPARE_MANIP);
+        $query = 'INSERT INTO users (' . implode(', ', array_keys($this->fields)) . ') VALUES ('.implode(', ', array_fill(0, count($this->fields), '?')).')';
+        $stmt = $this->db->prepare($query, array_values($this->fields), MDB2_PREPARE_MANIP);
+
         $result = $stmt->execute(array_values($data));
         $stmt->free();
 
@@ -158,9 +160,29 @@ class MDB2_Function_TestCase extends MDB2_TestCase
         $query = 'SELECT '.$concat_clause . $functionTable_clause;
         $result = $this->db->queryOne($query);
         if (PEAR::isError($result)) {
-            $this->assertFalse(true, 'Error getting substring');
+            $this->assertFalse(true, 'Error getting concat');
         } else {
             $this->assertEquals('timestamp', $result, 'Error: could not concatenate "time+stamp"');
+        }
+    }
+
+    /**
+     * Test random()
+     */
+    function testRandom()
+    {
+        if (!$this->methodExists($this->db->function, 'random')) {
+            return;
+        }
+
+        $rand_clause = $this->db->function->random();
+        $functionTable_clause = $this->db->function->functionTable();
+        $query = 'SELECT '.$rand_clause . $functionTable_clause;
+        $result = $this->db->queryOne($query, 'float');
+        if (PEAR::isError($result)) {
+            $this->assertFalse(true, 'Error getting random value');
+        } else {
+            $this->assertTrue(($result >= 0 && $result <= 1), 'Error: could not get random value between 0 and 1: '.$result);
         }
     }
 }

@@ -41,7 +41,7 @@
 // | Author: Lorenzo Alberton <l dot alberton at quipo dot it>            |
 // +----------------------------------------------------------------------+
 //
-// $Id: MDB2_datatype_testcase.php,v 1.5 2006/05/19 06:08:31 lsmith Exp $
+// $Id: MDB2_datatype_testcase.php,v 1.10 2006/05/23 13:48:18 lsmith Exp $
 
 require_once 'MDB2_testcase.php';
 
@@ -123,8 +123,9 @@ class MDB2_Datatype_TestCase extends MDB2_TestCase
      *
      * @param array $values associative array (name => value)
      */
-    function insertValues($values, $type) {
-        $types = array('integer', $type);
+    function insertValues($values) {
+        $types = $this->getFieldTypes(array_keys($values));
+
         $result = $this->db->exec('DELETE FROM '.$this->table);
         if (PEAR::isError($result)) {
             $this->assertTrue(false, 'Error emptying table: '.$result->getMessage());
@@ -135,7 +136,7 @@ class MDB2_Datatype_TestCase extends MDB2_TestCase
             implode(', ', array_keys($values)),
             implode(', ', array_fill(0, count($values), '?'))
         );
-        $stmt = $this->db->prepare($query, $types, MDB2_PREPARE_MANIP);
+        $stmt = $this->db->prepare($query, array_values($types), MDB2_PREPARE_MANIP);
         if (PEAR::isError($stmt)) {
             $this->assertTrue(false, 'Error creating prepared query: '.$stmt->getMessage());
         }
@@ -163,106 +164,243 @@ class MDB2_Datatype_TestCase extends MDB2_TestCase
     /**
      * Test the TEXT datatype for incorrect conversions
      */
-    function testTextDataType() {
+    function testTextDataType($emulate_prepared = false) {
+        if ($emulate_prepared) {
+            $this->db->setOption('emulate_prepared', true);
+        }
+
         $data = array(
             'id'        => 1,
             'textfield' => 'test',
         );
-        $this->insertValues($data, 'text');
+        $this->insertValues($data);
         $this->selectAndCheck($data);
+
+        if (!$emulate_prepared && !$this->db->getOption('emulate_prepared')) {
+            $this->testTextDataType(true);
+        } elseif($emulate_prepared) {
+            $this->db->setOption('emulate_prepared', false);
+        }
     }
 
     /**
      * Test the DECIMAL datatype for incorrect conversions
      */
-    function testDecimalDataType() {
+    function testDecimalDataType($emulate_prepared = false) {
+        if ($emulate_prepared) {
+            $this->db->setOption('emulate_prepared', true);
+        }
+
         $data = array(
             'id'           => 1,
             'decimalfield' => 10.35,
         );
-        $this->insertValues($data, 'decimal');
+        $this->insertValues($data);
         $this->selectAndCheck($data);
+
+        $old_locale = setlocale(LC_NUMERIC, 0);
+        if (OS_UNIX) {
+            setlocale(LC_NUMERIC, 'de_DE@euro', 'de_DE', 'de', 'ge');
+        } else {
+            setlocale(LC_NUMERIC, 'de_DE@euro', 'de_DE', 'deu_deu');
+        }
+
+        $this->insertValues($data);
+        $this->selectAndCheck($data);
+
+        setlocale(LC_NUMERIC, $old_locale);
+
+        $expected = 10.35;
+
+        $actual = $this->db->quote($expected, 'decimal');
+        $this->assertEquals($expected, $actual);
+
+        $non_us = number_format($expected, 2, ',', '');
+        $actual = $this->db->quote($non_us, 'decimal');
+        $this->assertEquals($expected, $actual);
+
+        $expected = 1000.35;
+
+        $non_us = '1,000.35';
+        $actual = $this->db->quote($non_us, 'decimal');
+        $this->assertEquals($expected, $actual);
+
+        $non_us = '1000,35';
+        $actual = $this->db->quote($non_us, 'decimal');
+        $this->assertEquals($expected, $actual);
+
+        $non_us = '1.000,35';
+        $actual = $this->db->quote($non_us, 'decimal');
+        $this->assertEquals($expected, $actual);
+
+        if (!$emulate_prepared && !$this->db->getOption('emulate_prepared')) {
+            $this->testDecimalDataType(true);
+        } elseif($emulate_prepared) {
+            $this->db->setOption('emulate_prepared', false);
+        }
     }
 
     /**
      * Test the FLOAT datatype for incorrect conversions
      */
-    function testFloatDataType() {
+    function testFloatDataType($emulate_prepared = false) {
+        if ($emulate_prepared) {
+            $this->db->setOption('emulate_prepared', true);
+        }
+
         $data = array(
             'id'         => 1,
             'floatfield' => 10.35,
         );
-        $this->insertValues($data, 'float');
+        $this->insertValues($data);
         $this->selectAndCheck($data);
 
-        $data = array(
-            'id'         => 1,
-            'floatfield' => '1.035e+1',
-        );
-        $this->insertValues($data, 'float');
+        $old_locale = setlocale(LC_NUMERIC, 0);
+        if (OS_UNIX) {
+            setlocale(LC_NUMERIC, 'de_DE@euro', 'de_DE', 'de', 'ge');
+        } else {
+            setlocale(LC_NUMERIC, 'de_DE@euro', 'de_DE', 'deu_deu');
+        }
+
+
+        $this->insertValues($data);
         $this->selectAndCheck($data);
 
-        $data = array(
-            'id'         => 1,
-            'floatfield' => '1.035E+01',
-        );
-        $this->insertValues($data, 'float');
+        setlocale(LC_NUMERIC, $old_locale);
+
+        $data['floatfield'] = '1.035e+1';
+        $this->insertValues($data);
         $this->selectAndCheck($data);
+
+        $data['floatfield'] = '1.035E+01';
+        $this->insertValues($data);
+        $this->selectAndCheck($data);
+
+        $expected = '1.035E+01';
+        $non_us = '1,035e+1';
+        $actual = $this->db->quote($non_us, 'float');
+        $this->assertEquals($expected, $actual);
+
+        $expected = 10.35;
+
+        $actual = $this->db->quote($expected, 'float');
+        $this->assertEquals($expected, $actual);
+
+        $non_us = number_format($expected, 2, ',', '');
+        $actual = $this->db->quote($non_us, 'float');
+        $this->assertEquals($expected, $actual);
+
+        $expected = 1000.35;
+
+        $non_us = '1,000.35';
+        $actual = $this->db->quote($non_us, 'float');
+        $this->assertEquals($expected, $actual);
+
+        $non_us = '1000,35';
+        $actual = $this->db->quote($non_us, 'float');
+        $this->assertEquals($expected, $actual);
+
+        $non_us = '1.000,35';
+        $actual = $this->db->quote($non_us, 'float');
+        $this->assertEquals($expected, $actual);
+
+        if (!$emulate_prepared && !$this->db->getOption('emulate_prepared')) {
+            $this->testFloatDataType(true);
+        } elseif($emulate_prepared) {
+            $this->db->setOption('emulate_prepared', false);
+        }
     }
 
     /**
      * Test the BOOLEAN datatype for incorrect conversions
      */
-    function testBooleanDataType() {
-        $data = array(
-            'id'           => 1,
-            'booleanfield' => true,
-        );
-        $this->insertValues($data, 'boolean');
-        $this->selectAndCheck($data);
+    function testBooleanDataType($emulate_prepared = false) {
+        if ($emulate_prepared) {
+            $this->db->setOption('emulate_prepared', true);
+        }
 
         $data = array(
-            'id'           => 2,
-            'booleanfield' => false,
+            'id'          => 1,
+            'booleanfield' => true,
         );
-        $this->insertValues($data, 'boolean');
+        $this->insertValues($data);
         $this->selectAndCheck($data);
+
+        $data['booleanfield'] = false;
+        $this->insertValues($data);
+        $this->selectAndCheck($data);
+
+        if (!$emulate_prepared && !$this->db->getOption('emulate_prepared')) {
+            $this->testBooleanDataType(true);
+        } elseif($emulate_prepared) {
+            $this->db->setOption('emulate_prepared', false);
+        }
     }
 
     /**
      * Test the DATE datatype for incorrect conversions
      */
-    function testDateDataType() {
+    function testDateDataType($emulate_prepared = false) {
+        if ($emulate_prepared) {
+            $this->db->setOption('emulate_prepared', true);
+        }
+
         $data = array(
             'id'        => 1,
             'datefield' => date('Y-m-d'),
         );
         $this->insertValues($data, 'date');
         $this->selectAndCheck($data);
+
+        if (!$emulate_prepared && !$this->db->getOption('emulate_prepared')) {
+            $this->testDateDataType(true);
+        } elseif($emulate_prepared) {
+            $this->db->setOption('emulate_prepared', false);
+        }
     }
 
     /**
      * Test the TIME datatype for incorrect conversions
      */
-    function testTimeDataType() {
+    function testTimeDataType($emulate_prepared = false) {
+        if ($emulate_prepared) {
+            $this->db->setOption('emulate_prepared', true);
+        }
+
         $data = array(
             'id'        => 1,
             'timefield' => date('H:i:s'),
         );
         $this->insertValues($data, 'time');
         $this->selectAndCheck($data);
+
+        if (!$emulate_prepared && !$this->db->getOption('emulate_prepared')) {
+            $this->testTimeDataType(true);
+        } elseif($emulate_prepared) {
+            $this->db->setOption('emulate_prepared', false);
+        }
     }
 
     /**
      * Test the TIMESTAMP datatype for incorrect conversions
      */
-    function testTimestampDataType() {
+    function testTimestampDataType($emulate_prepared = false) {
+        if ($emulate_prepared) {
+            $this->db->setOption('emulate_prepared', true);
+        }
+
         $data = array(
-            'id'             => 1,
+            'id'            => 1,
             'timestampfield' => date('Y-m-d H:i:s'),
         );
         $this->insertValues($data, 'timestamp');
         $this->selectAndCheck($data);
+
+        if (!$emulate_prepared && !$this->db->getOption('emulate_prepared')) {
+            $this->testTimestampDataType(true);
+        } elseif($emulate_prepared) {
+            $this->db->setOption('emulate_prepared', false);
+        }
     }
 }
 

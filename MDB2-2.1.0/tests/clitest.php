@@ -41,70 +41,91 @@
 // | Author: Paul Cooper <pgc@ucecom.com>                                 |
 // +----------------------------------------------------------------------+
 //
-// $Id: MDB2_extended_testcase.php,v 1.2 2006/05/20 10:57:19 lsmith Exp $
+// $Id: clitest.php,v 1.12 2006/05/31 14:38:07 lsmith Exp $
 
-require_once 'MDB2_testcase.php';
+/*
+ This is a small test suite for MDB2 using PHPUnit
 
-class MDB2_Extended_TestCase extends MDB2_TestCase {
-    /**
-     *
-     */
-    function testAutoExecute() {
-        $data = $this->getSampleData();
+ This is the command line version and should be used like so;
 
-        $result = $this->db->loadModule('Extended');
-        if (PEAR::isError($result)) {
-            $this->assertTrue(false, 'Error loading "Extended" module: '.$result->getMessage());
-        }
+ php -q clitest.php
 
-        $result = $this->db->extended->autoExecute('users', $data, MDB2_AUTOQUERY_INSERT, null, $this->fields);
-        if (PEAR::isError($result)) {
-            $this->assertTrue(false, 'Error auto executing insert: '.$result->getMessage());
-        }
+ This will run through all tests in all testcases (as defined in
+ test_setup.php). To run individual tests add their names to the command
+ line and all testcases will be searched for matching test names, e.g.
 
-        $this->db->setFetchMode(MDB2_FETCHMODE_ASSOC);
-        $result = $this->db->query('SELECT * FROM users', $this->fields);
-        if (PEAR::isError($result)) {
-            $this->assertTrue(false, 'Error selecting from users: '.$result->getMessage());
-        }
+ php -q clitest.php teststorage testreplace
+*/
 
-        $this->verifyFetchedValues($result, null, $data);
-        $result->free();
+require_once 'test_setup.php';
+require_once 'PHPUnit.php';
+require_once 'testUtils.php';
+require_once 'MDB2.php';
+require_once 'Console_TestListener.php';
 
-        $update_data = array();
-        $data['user_name'] = $update_data['user_name'] = 'foo';
+MDB2::loadFile('Date');
 
-        $where = 'user_id = '.$this->db->quote($data['user_id'], 'integer');
-        $result = $this->db->extended->autoExecute('users', $update_data, MDB2_AUTOQUERY_UPDATE, $where, $this->fields);
-        if (PEAR::isError($result)) {
-            $this->assertTrue(false, 'Error auto executing insert: '.$result->getMessage());
-        }
+foreach ($testcases as $testcase) {
+    include_once $testcase.'.php';
+}
 
-        $this->db->setFetchMode(MDB2_FETCHMODE_ASSOC);
-        $result = $this->db->query('SELECT * FROM users', $this->fields);
-        if (PEAR::isError($result)) {
-            $this->assertTrue(false, 'Error selecting from users: '.$result->getMessage());
-        }
+$database = 'driver_test';
 
-        $this->verifyFetchedValues($result, null, $data);
-        $result->free();
+$inputMethods = $argv;
 
-        $where = array($where, 'user_name = '.$this->db->quote($data['user_name'], 'text'));
-        $result = $this->db->extended->autoExecute('users', null, MDB2_AUTOQUERY_DELETE, $where, null);
-
-        if (PEAR::isError($result)) {
-            $this->assertTrue(false, 'Error auto executing insert: '.$result->getMessage());
-        }
-
-        $this->db->setFetchMode(MDB2_FETCHMODE_ASSOC);
-        $result = $this->db->query('SELECT * FROM users', $this->fields);
-        if (PEAR::isError($result)) {
-            $this->assertTrue(false, 'Error selecting from users: '.$result->getMessage());
-        }
-
-        $this->assertEquals($result->numRows(), 0, 'No rows were expected to be returned');
-        $result->free();
+if ($argc > 1) {
+    array_shift($inputMethods);
+    $exclude = false;
+    if ($inputMethods[0] == '-exclude') {
+        array_shift($inputMethods);
+        $exclude = true;
     }
+    foreach ($testcases as $testcase) {
+        $possibleMethods = getTests($testcase);
+        if ($exclude) {
+            $intersect = array_diff($possibleMethods, $inputMethods);
+        } else {
+            $intersect = array_intersect($possibleMethods, $inputMethods);
+        }
+        if (count($intersect) > 0) {
+            $testmethods[$testcase] = array_flip($intersect);
+        }
+    }
+}
+
+$database = 'driver_test';
+
+if (!isset($testmethods) || !is_array($testmethods)) {
+    foreach ($testcases as $testcase) {
+        $testmethods[$testcase] = array_flip(getTests($testcase));
+    }
+}
+
+foreach ($dbarray as $db) {
+    $dsn = $db['dsn'];
+    $options = !empty($db['options']) ? $db['options'] : array();
+    $GLOBALS['_show_silenced'] = !empty($options['debug']) ? $options['debug'] : false;
+
+    $display_dsn = $dsn['phptype'] . "://" . $dsn['username'] . ":XXX@" . $dsn['hostspec'] . "/" . $database;
+    echo "=== Start test of $display_dsn ===\n";
+
+    $suite = new PHPUnit_TestSuite();
+
+    foreach ($testcases as $testcase) {
+        if (is_array($testmethods[$testcase])) {
+            $methods = array_keys($testmethods[$testcase]);
+            foreach ($methods as $method) {
+                $suite->addTest(new $testcase($method));
+            }
+        }
+    }
+
+    $result = new PHPUnit_TestResult;
+    $result->addListener(new Console_TestListener);
+
+    $suite->run($result);
+
+    echo "=== End test of $display_dsn ===\n\n";
 }
 
 ?>

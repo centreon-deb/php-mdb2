@@ -42,7 +42,7 @@
 // | Author: Lukas Smith <smith@pooteeweet.org>                           |
 // +----------------------------------------------------------------------+
 //
-// $Id: Common.php,v 1.52 2006/05/02 15:49:35 lsmith Exp $
+// $Id: Common.php,v 1.53 2006/05/31 14:38:06 lsmith Exp $
 //
 
 /**
@@ -677,9 +677,9 @@ class MDB2_Driver_Manager_Common extends MDB2_Module_Common
         $table = $db->quoteIdentifier($table, true);
         $name = $db->quoteIdentifier($db->getIndexName($name), true);
         $query = "ALTER TABLE $table ADD CONSTRAINT $name";
-        if (array_key_exists('primary', $definition) && $definition['primary']) {
+        if (!empty($definition['primary'])) {
             $query.= ' PRIMARY KEY';
-        } elseif (array_key_exists('unique', $definition) && $definition['unique']) {
+        } elseif (!empty($definition['unique'])) {
             $query.= ' UNIQUE';
         }
         $fields = array();

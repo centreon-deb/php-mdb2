@@ -42,7 +42,7 @@
 // | Author: Lukas Smith <smith@pooteeweet.org>                           |
 // +----------------------------------------------------------------------+
 //
-// $Id: Common.php,v 1.12 2006/05/02 15:49:35 lsmith Exp $
+// $Id: Common.php,v 1.14 2006/06/12 21:48:43 lsmith Exp $
 //
 
 /**
@@ -152,13 +152,27 @@ class MDB2_Driver_Function_Common extends MDB2_Module_Common
      * @param string $value1
      * @param string $value2
      * @param string $values...
-     * @return string to caoncatenate two strings
+     * @return string to concatenate two strings
      * @access public
      */
     function concat($value1, $value2)
     {
         $args = func_get_args();
         return "(".implode(' || ', $args).")";
+    }
+
+    // }}}
+    // {{{ random()
+
+    /**
+     * return string to call a function to get random value inside an SQL statement
+     *
+     * @return return string to generate float between 0 and 1
+     * @access public
+     */
+    function random()
+    {
+        return 'RAND()';
     }
 
     // }}}

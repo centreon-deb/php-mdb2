@@ -41,87 +41,71 @@
 // | Author: Paul Cooper <pgc@ucecom.com>                                 |
 // +----------------------------------------------------------------------+
 //
-// $Id: test.php,v 1.14 2006/05/02 15:28:56 lsmith Exp $
+// $Id: MDB2_extended_testcase.php,v 1.4 2006/05/23 10:11:49 lsmith Exp $
 
-/*
- This is a small test suite for MDB2 using PHPUnit
- */
+require_once 'MDB2_testcase.php';
 
-require_once 'test_setup.php';
-require_once 'PHPUnit.php';
-require_once 'testUtils.php';
-require_once 'MDB2.php';
-require_once 'HTML_TestListener.php';
+class MDB2_Extended_TestCase extends MDB2_TestCase {
+    /**
+     *
+     */
+    function testAutoExecute() {
+        $data = $this->getSampleData();
+        $select_query = 'SELECT ' . implode(', ', array_keys($this->fields)) . ' FROM users';
 
-function htmlErrorHandler($errno, $errstr, $errfile, $errline)
-{
-    if ((!$GLOBALS['_show_silenced'] && !error_reporting()) || $errno == 2048) {
-        return;
-    }
-    echo '<pre>';
-    errorHandler($errno, $errstr, $errfile, $errline);
-    echo '</pre>';
-}
-set_error_handler('htmlErrorHandler');
-
-function htmlErrorHandlerPEAR($error_obj)
-{
-    echo '<pre>';
-    errorHandlerPEAR($error_obj);
-    echo '</pre>';
-}
-PEAR::setErrorHandling(PEAR_ERROR_CALLBACK, 'htmlErrorHandlerPEAR');
-
-MDB2::loadFile('Date');
-
-foreach ($testcases as $testcase) {
-    include_once $testcase.'.php';
-}
-
-$database = 'driver_test';
-
-$testmethods = array_key_exists('testmethods', $_POST) ? $_POST['testmethods'] : null;
-
-if (!is_array($testmethods)) {
-    foreach ($testcases as $testcase) {
-        $testmethods[$testcase] = array_flip(getTests($testcase));
-    }
-}
-
-?>
-<html>
-<head>
-<title>MDB2 Tests</title>
-<link href="tests.css" rel="stylesheet" type="text/css">
-</head>
-<body>
-<?php
-
-foreach ($dbarray as $db) {
-    $dsn = $db['dsn'];
-    $options = array_key_exists('options', $db) ? $db['options'] : array();
-    $GLOBALS['_show_silenced'] = array_key_exists('debug', $options) ? $options['debug'] : false;
-
-    $display_dsn = $dsn['phptype'] . "://" . $dsn['username'] . ":XXX@" . $dsn['hostspec'] . "/" . $database;
-    echo "<div class=\"test\">\n";
-    echo "<div class=\"title\">Testing $display_dsn</div>\n";
-
-    $suite = new PHPUnit_TestSuite();
-
-    foreach ($testcases as $testcase) {
-        if (isset($testmethods[$testcase]) && is_array($testmethods[$testcase])) {
-            $methods = array_keys($testmethods[$testcase]);
-            foreach ($methods as $method) {
-                $suite->addTest(new $testcase($method));
-            }
+        $result = $this->db->loadModule('Extended');
+        if (PEAR::isError($result)) {
+            $this->assertTrue(false, 'Error loading "Extended" module: '.$result->getMessage());
         }
-    }
 
-    $result = new PHPUnit_TestResult;
-    $result->addListener(new HTML_TestListener);
-    $suite->run($result);
-    echo "\n</div>\n";
+        $result = $this->db->extended->autoExecute('users', $data, MDB2_AUTOQUERY_INSERT, null, $this->fields);
+        if (PEAR::isError($result)) {
+            $this->assertTrue(false, 'Error auto executing insert: '.$result->getMessage());
+        }
+
+        $this->db->setFetchMode(MDB2_FETCHMODE_ASSOC);
+        $result =& $this->db->query($select_query, $this->fields);
+        if (PEAR::isError($result)) {
+            $this->assertTrue(false, 'Error selecting from users: '.$result->getMessage());
+        }
+
+        $this->verifyFetchedValues($result, null, $data);
+        $result->free();
+
+        $update_data = array();
+        $data['user_name'] = $update_data['user_name'] = 'foo';
+
+        $where = 'user_id = '.$this->db->quote($data['user_id'], 'integer');
+        $result = $this->db->extended->autoExecute('users', $update_data, MDB2_AUTOQUERY_UPDATE, $where, $this->fields);
+        if (PEAR::isError($result)) {
+            $this->assertTrue(false, 'Error auto executing insert: '.$result->getMessage());
+        }
+
+        $this->db->setFetchMode(MDB2_FETCHMODE_ASSOC);
+        $result =& $this->db->query($select_query, $this->fields);
+        if (PEAR::isError($result)) {
+            $this->assertTrue(false, 'Error selecting from users: '.$result->getMessage());
+        }
+
+        $this->verifyFetchedValues($result, null, $data);
+        $result->free();
+
+        $where = array($where, 'user_name = '.$this->db->quote($data['user_name'], 'text'));
+        $result = $this->db->extended->autoExecute('users', null, MDB2_AUTOQUERY_DELETE, $where, null);
+
+        if (PEAR::isError($result)) {
+            $this->assertTrue(false, 'Error auto executing insert: '.$result->getMessage());
+        }
+
+        $this->db->setFetchMode(MDB2_FETCHMODE_ASSOC);
+        $result =& $this->db->query($select_query, $this->fields);
+        if (PEAR::isError($result)) {
+            $this->assertTrue(false, 'Error selecting from users: '.$result->getMessage());
+        }
+
+        $this->assertEquals($result->numRows(), 0, 'No rows were expected to be returned');
+        $result->free();
+    }
 }
+
 ?>
-</body>
-</html>

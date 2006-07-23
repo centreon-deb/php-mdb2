@@ -42,7 +42,7 @@
 // | Author: Lukas Smith <smith@pooteeweet.org>                           |
 // +----------------------------------------------------------------------+
 //
-// $Id: Common.php,v 1.14 2006/06/12 21:48:43 lsmith Exp $
+// $Id: Common.php,v 1.15 2006/07/15 13:07:15 lsmith Exp $
 //
 
 /**
@@ -82,7 +82,7 @@ class MDB2_Driver_Function_Common extends MDB2_Module_Common
         }
 
         $error =& $db->raiseError(MDB2_ERROR_UNSUPPORTED, null, null,
-            'executeStoredProc: method not implemented');
+            'method not implemented', __FUNCTION__);
         return $error;
     }
 

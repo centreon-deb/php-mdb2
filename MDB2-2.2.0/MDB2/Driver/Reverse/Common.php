@@ -42,7 +42,7 @@
 // | Author: Lukas Smith <smith@pooteeweet.org>                           |
 // +----------------------------------------------------------------------+
 //
-// $Id: Common.php,v 1.20 2006/05/02 15:49:35 lsmith Exp $
+// $Id: Common.php,v 1.24 2006/07/19 07:18:52 lsmith Exp $
 //
 
 /**
@@ -88,7 +88,7 @@ class MDB2_Driver_Reverse_Common extends MDB2_Module_Common
         }
 
         return $db->raiseError(MDB2_ERROR_UNSUPPORTED, null, null,
-            'getTableFieldDefinition: method not implemented');
+            'method not implemented', __FUNCTION__);
     }
 
     // }}}
@@ -110,7 +110,7 @@ class MDB2_Driver_Reverse_Common extends MDB2_Module_Common
         }
 
         return $db->raiseError(MDB2_ERROR_UNSUPPORTED, null, null,
-            'getTableIndexDefinition: method not implemented');
+            'method not implemented', __FUNCTION__);
     }
 
     // }}}
@@ -132,7 +132,7 @@ class MDB2_Driver_Reverse_Common extends MDB2_Module_Common
         }
 
         return $db->raiseError(MDB2_ERROR_UNSUPPORTED, null, null,
-            'getTableConstraintDefinition: method not implemented');
+            'method not implemented', __FUNCTION__);
     }
 
     // }}}
@@ -187,7 +187,7 @@ class MDB2_Driver_Reverse_Common extends MDB2_Module_Common
         }
 
         return $db->raiseError(MDB2_ERROR_UNSUPPORTED, null, null,
-            'getTriggerDefinition: method not implemented');
+            'method not implemented', __FUNCTION__);
     }
 
     // }}}
@@ -320,8 +320,89 @@ class MDB2_Driver_Reverse_Common extends MDB2_Module_Common
             return $db;
         }
 
-        return $db->raiseError(MDB2_ERROR_UNSUPPORTED, null, null,
-            'tableInfo: method not implemented');
+        if (!is_string($result)) {
+            return $db->raiseError(MDB2_ERROR_UNSUPPORTED, null, null,
+                'method not implemented', __FUNCTION__);
+        }
+
+        $db->loadModule('Manager');
+        $fields = $db->manager->listTableFields($result);
+        if (PEAR::isError($fields)) {
+            return $fields;
+        }
+
+        $flags = array();
+
+        $indexes = $db->manager->listTableIndexes($result);
+        if (PEAR::isError($indexes)) {
+            return $indexes;
+        }
+
+        foreach ($indexes as $index) {
+            $definition = $this->getTableIndexDefinition($result, $index);
+            if (PEAR::isError($definition)) {
+                return $definition;
+            }
+            if (count($definition['fields']) > 1) {
+                foreach ($definition['fields'] as $field => $sort) {
+                    $flags[$field] = 'multiple_key';
+                }
+            }
+        }
+
+        $constraints = $db->manager->listTableConstraints($result);
+        if (PEAR::isError($constraints)) {
+            return $constraints;
+            $flag = !empty($definition['primary'])
+                ? 'primary_key' : (!empty($definition['unique'])
+                    ? 'unique_key' : false);
+            if ($flag) {
+                foreach ($definition['fields'] as $field => $sort) {
+                    if (!empty($flags[$field]) || $flags[$field] != 'primary_key') {
+                        $flags[$field] = $flag;
+                    }
+                }
+            }
+        }
+
+        if ($mode) {
+            $res['num_fields'] = count($fields);
+        }
+
+        foreach ($fields as $i => $field) {
+            $definition = $this->getTableFieldDefinition($result, $field);
+            if (PEAR::isError($definition)) {
+                return $definition;
+            }
+            $res[$i] = $definition[0];
+            $res[$i]['name'] = $field;
+            $res[$i]['table'] = $result;
+            $res[$i]['type'] = $definition[0]['nativetype'];
+            // 'primary_key', 'unique_key', 'multiple_key'
+            $res[$i]['flags'] = empty($flags[$field]) ? '' : $flags[$field];
+            // not_null', 'unsigned', 'auto_increment', 'default_[rawencodedvalue]'
+            if (!empty($res[$i]['notnull'])) {
+                $res[$i]['flags'].= ' not_null';
+            }
+            if (!empty($res[$i]['unsigned'])) {
+                $res[$i]['flags'].= ' unsigned';
+            }
+            if (!empty($res[$i]['auto_increment'])) {
+                $res[$i]['flags'].= ' autoincrement';
+            }
+            if (!empty($res[$i]['default'])) {
+                $res[$i]['flags'].= ' default_'.rawurlencode($res[$i]['default']);
+            }
+
+            if ($mode & MDB2_TABLEINFO_ORDER) {
+                $res['order'][$res[$i]['name']] = $i;
+            }
+            if ($mode & MDB2_TABLEINFO_ORDERTABLE) {
+                $res['ordertable'][$res[$i]['table']][$res[$i]['name']] = $i;
+            }
+        }
+
+        return $res;
     }
 }
 ?>

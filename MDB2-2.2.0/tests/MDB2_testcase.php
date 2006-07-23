@@ -41,7 +41,7 @@
 // | Author: Paul Cooper <pgc@ucecom.com>                                 |
 // +----------------------------------------------------------------------+
 //
-// $Id: MDB2_testcase.php,v 1.13 2006/05/20 10:33:15 lsmith Exp $
+// $Id: MDB2_testcase.php,v 1.15 2006/07/19 12:40:13 lsmith Exp $
 
 class MDB2_TestCase extends PHPUnit_TestCase {
     //contains the dsn of the database we are testing
@@ -114,6 +114,10 @@ class MDB2_TestCase extends PHPUnit_TestCase {
 
     function verifyFetchedValues(&$result, $rownum, $data) {
         $row = $result->fetchRow(MDB2_FETCHMODE_DEFAULT, $rownum);
+        if (!is_array($row)) {
+            $this->assertTrue(false, 'Error result row is not an array');
+            return;
+        }
         reset($row);
         foreach ($this->fields as $field => $type) {
             $value = current($row);
@@ -131,7 +135,7 @@ class MDB2_TestCase extends PHPUnit_TestCase {
     function getSampleData($row = 1) {
         $data = array();
         $data['user_name']     = 'user_' . $row;
-        $data['user_password'] = 'somepassword';
+        $data['user_password'] = 'somepass';
         $data['subscribed']    = $row % 2 ? true : false;
         $data['user_id']       = $row;
         $data['quota']         = strval($row/100);

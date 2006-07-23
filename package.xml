@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE package SYSTEM "http://pear.php.net/dtd/package-1.0">
-<package version="1.0" packagerversion="1.4.9">
+<package version="1.0" packagerversion="1.4.10">
  <name>MDB2</name>
  <summary>database abstraction layer</summary>
  <description>PEAR MDB2 is a merge of the PEAR DB and Metabase php database abstraction layers.
@@ -17,14 +17,14 @@ portability. Among other things MDB2 features:
 * Ability to make buffered and unbuffered queries
 * Ordered array and associative array for the fetched rows
 * Prepare/execute (bind) emulation
-* Sequence emulation
+* Sequence/autoincrement emulation
 * Replace emulation
 * Limited sub select emulation
 * Row limit support
-* Transactions support
+* Transactions/savepoint support
 * Large Object support
 * Index/Unique Key/Primary Key support
-* Autoincrement emulation
+* Pattern matching abstraction
 * Module framework to load advanced functionality on demand
 * Ability to read the information schema
 * RDBMS management methods (creating, dropping, altering)
@@ -66,43 +66,63 @@ portability. Among other things MDB2 features:
   </maintainer>
   </maintainers>
  <release>
-  <version>2.1.0</version>
-  <date>2006-06-15</date>
+  <version>2.2.0</version>
+  <date>2006-07-23</date>
   <license>BSD License</license>
   <state>stable</state>
-  <notes>- removed bogus code from execute()
-- new test case for floats/decimals and locale
-- reworked fix for float/decimal handling
-- expanded scientific notation handling
-- fixed several minor issues with the datatype tests
-- removed use of &quot;*&quot; in all places in the test suite that are followed by a fetch
-- tweaked handling of free() for prepared statements
-- return error if a prepared statement is attempted to be free&apos;ed or executed again
-- added result_wrap_class param to limitQuery()
-- added parameter to not quote return value of getBeforeId()
-- added setCharset()
-- enable transactions by default
-- added decimal reverse engineering test
-- fixed parameter order in assertions in reverse engineering fields tests
-- generalized quoteIdentifier() with a property
-- switched most array_key_exists() calls to !empty() to improve readability and performance
-- fixed a few edge cases and potential warnings
-- added ability to rewrite queries for query(), exec() and prepare() using a debug handler callback
-- added &apos;datatype_map&apos; option (Request #7797)
-- added reverse parameter to getColumnNames()
-- added &apos;datatype_map_callback&apos; option
-- added getValidTypes() method to handle additional types from the &apos;datatype_map&apos; option
-- set last_query in _execute() to prepared statement (Bug #7856)
-- adding random function emulation to generate a float between 0 and 1
-- explicitly fetch row id = 1 in LOB tests
-- cosmetic fix to prepare() (Bug #7883)
-- bumped PHP dependency to 4.3.2 because of LOB stream support
+  <notes>- added MDB2_AUTOQUERY_SELECT (Request #7817)
+- added nested transaction support (inspired by ADODB&apos;s smart transactions) but
+  expanded to optionally use SAVEPOINTs *EXPERIMENTAL*
+  beginNestedTransaction(), completeNestedTransaction(),
+  failNestedTransaction(), getNestedTransactionError()
+- inTransaction() will now return an integer with the nested transaction depth
+  if a nested transaction has been started
+- added setTransactionIsolation()
+- added savepoint support to beginTransaction(), commit() and rollback()
+- added Native base class for consistency
+- added missing colnum parameter to queryOne() [used by getOne()]
+- added new tests for get*() Extended module methods
+- fixed missing db variable from getValidTypes()
+- added testing of a prepared statement with no parameters
+- added handling of empty result sets to result set verification in the test suite
+- oci8 and ibase (and possibly other rdbms) do not like freeing the statement
+  before reading the result set (Bug #8068):
+  * moved statement freeing after reading the result set in get*() Extended methods
+  * bypass prepared statement API for queries without parameters in autoExecute()
+  (this means you cannot use parameters with SELECT statements in autoExecute()
+  on the above mentioned platforms)
+- use data type callback in getValidTypes()
+- fixed identifier quoting in buildManipSQL() for SELECT statements (thx Kailoran)
+- phpdoc and cosmetic fixes in limitQuery()
+- added matchPattern() and patternEscapeString(), escapePattern() *EXPERIMENTAL*
+- added ability to escape wildcard characters in escape() and quote()
+- added debug() call at the end of a query/prepare/execute calling (Request #7933)
+- added context array parameter to debug() and make use of it whereever sensible
+- added optional method name parameter to raiseError() and use whereever possible
+- added a new option &quot;debug_expanded_output&quot; which needs to be set to true to
+  get additional context information and to get &quot;post&quot; callback calls
+- added testPortabilityOptions()
+- set length of 8 and fixed for user_password in the test suite
+- reworked tableInfo() to use a common implementation based on getTableFieldDefinition()
+  when a table name is passed (Bug #8124)
+- disconnect after changing database/DSN (otherwise transactions may be left open)
 
 open todo items:
 - handle autoincrement fields in alterTable()
-- add support for ADODB style &quot;smart transactions&quot;:
-  http://phplens.com/lens/adodb/docs-adodb.htm#ex11
 - add length handling to LOB reverse engineering
+- expand charset support in schema management and result set handling (Request #4666)
+- add EXPLAIN abstraction
+- add cursor support along the lines of PDO (Request #3660 etc.)
+- expand length/scale support for numeric types (Request #7170)
+- add PDO based drivers, especially a driver to support SQLite 3 (Request #6907)
+- add support to export/import in CSV format
+- add more functions to the Function module (MD5(), IFNULL(), LENGTH() etc.)
+- add support to generating &quot;AS&quot; keyword if required
+- add support for database/table/row LOCKs
+- add ActiveRecord implementation (probably as a separate package)
+- add support for FOREIGN KEYs and CHECK (ENUM as possible mysql fallback) constraints
+- extended to support for case insensitive matching via ILIKE/collate in matchPattern()
+- generate STATUS file from test suite results and allow users to submit test results
   </notes>
   <deps>
    <dep type="php" rel="ge" version="4.3.2" optional="no"/>
@@ -120,6 +140,8 @@ open todo items:
   <provides type="function" name="MDB2_Driver_Datatype_Common::writeLOBToFile" />
   <provides type="function" name="MDB2_Driver_Datatype_Common::destroyLOB" />
   <provides type="function" name="MDB2_Driver_Datatype_Common::implodeArray" />
+  <provides type="function" name="MDB2_Driver_Datatype_Common::matchPattern" />
+  <provides type="function" name="MDB2_Driver_Datatype_Common::patternEscapeString" />
   <provides type="function" name="MDB2_Driver_Datatype_Common::mapNativeDatatype" />
   <provides type="function" name="MDB2_Driver_Datatype_Common::mapPrepareDatatype" />
   <provides type="class" name="MDB2_Driver_Function_Common" extends="MDB2_Module_Common" />
@@ -153,6 +175,7 @@ open todo items:
   <provides type="function" name="MDB2_Driver_Manager_Common::createSequence" />
   <provides type="function" name="MDB2_Driver_Manager_Common::dropSequence" />
   <provides type="function" name="MDB2_Driver_Manager_Common::listSequences" />
+  <provides type="class" name="MDB2_Driver_Native_Common" extends="MDB2_Module_Common" />
   <provides type="class" name="MDB2_Driver_Reverse_Common" extends="MDB2_Module_Common" />
   <provides type="function" name="MDB2_Driver_Reverse_Common::getTableFieldDefinition" />
   <provides type="function" name="MDB2_Driver_Reverse_Common::getTableIndexDefinition" />
@@ -237,6 +260,7 @@ open todo items:
   <provides type="function" name="MDB2_Driver_Common::debug" />
   <provides type="function" name="MDB2_Driver_Common::getDebugOutput" />
   <provides type="function" name="MDB2_Driver_Common::escape" />
+  <provides type="function" name="MDB2_Driver_Common::escapePattern" />
   <provides type="function" name="MDB2_Driver_Common::quoteIdentifier" />
   <provides type="function" name="MDB2_Driver_Common::getConnection" />
   <provides type="function" name="MDB2_Driver_Common::loadModule" />
@@ -244,6 +268,11 @@ open todo items:
   <provides type="function" name="MDB2_Driver_Common::commit" />
   <provides type="function" name="MDB2_Driver_Common::rollback" />
   <provides type="function" name="MDB2_Driver_Common::inTransaction" />
+  <provides type="function" name="MDB2_Driver_Common::setTransactionIsolation" />
+  <provides type="function" name="MDB2_Driver_Common::beginNestedTransaction" />
+  <provides type="function" name="MDB2_Driver_Common::completeNestedTransaction" />
+  <provides type="function" name="MDB2_Driver_Common::failNestedTransaction" />
+  <provides type="function" name="MDB2_Driver_Common::getNestedTransactionError" />
   <provides type="function" name="MDB2_Driver_Common::connect" />
   <provides type="function" name="MDB2_Driver_Common::setCharset" />
   <provides type="function" name="MDB2_Driver_Common::disconnect" />
@@ -323,22 +352,25 @@ open todo items:
    <file role="doc" baseinstalldir="/" md5sum="ec0c4383ddfd3af69d577344d0d5b4dd" name="docs/TODO">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="php" baseinstalldir="/" md5sum="19a1e87d5f6a0eadbca621058984e2a7" name="MDB2/Driver/Datatype/Common.php">
+   <file role="php" baseinstalldir="/" md5sum="10b194c69d78eaf79f3a2f052d535017" name="MDB2/Driver/Datatype/Common.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="php" baseinstalldir="/" md5sum="2ae4ff20289531be124240f30c165744" name="MDB2/Driver/Function/Common.php">
+   <file role="php" baseinstalldir="/" md5sum="814896802085f48a2f77896771a8aabc" name="MDB2/Driver/Function/Common.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="php" baseinstalldir="/" md5sum="a4dda5e3542ad89c219c6d47cc967b5e" name="MDB2/Driver/Manager/Common.php">
+   <file role="php" baseinstalldir="/" md5sum="e26cbcaa9cfd6fad09159e4e1031abbc" name="MDB2/Driver/Manager/Common.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="php" baseinstalldir="/" md5sum="6e2cd0a7d2df0f8ff41c2b917c4af058" name="MDB2/Driver/Reverse/Common.php">
+   <file role="php" baseinstalldir="/" md5sum="005901a0e84f6ff717e0847f0a3faf14" name="MDB2/Driver/Native/Common.php">
+    <replace type="package-info" from="@package_version@" to="version"/>
+   </file>
+   <file role="php" baseinstalldir="/" md5sum="3e82bb4c15ae8f21b5b046c05a1d10cb" name="MDB2/Driver/Reverse/Common.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
    <file role="php" baseinstalldir="/" md5sum="af81dd360b2d2d09f8c978214b06a553" name="MDB2/Date.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="php" baseinstalldir="/" md5sum="ef567ccdb725d9eb0ce4e43c9a0210fd" name="MDB2/Extended.php">
+   <file role="php" baseinstalldir="/" md5sum="4436d198b10b3f02225ea9d144abcde6" name="MDB2/Extended.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
    <file role="php" baseinstalldir="/" md5sum="023c4bda6db2d8f277d8d3c76dc8f850" name="MDB2/Iterator.php">
@@ -365,7 +397,7 @@ open todo items:
    <file role="test" baseinstalldir="/" md5sum="98da3f3aba98f4a9adc71a9fd19929de" name="tests/MDB2_api_testcase.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="test" baseinstalldir="/" md5sum="5e299c9e47a43a772342f58af533e47f" name="tests/MDB2_bugs_testcase.php">
+   <file role="test" baseinstalldir="/" md5sum="6f5ca4adb851f22a41f84bd7be1d9b4d" name="tests/MDB2_bugs_testcase.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
    <file role="test" baseinstalldir="/" md5sum="f8534befe37efc7f35beb0897b75f951" name="tests/MDB2_Connect_Test.php">
@@ -374,7 +406,7 @@ open todo items:
    <file role="test" baseinstalldir="/" md5sum="f02507d291cca72feb3414067fd7a431" name="tests/MDB2_datatype_testcase.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="test" baseinstalldir="/" md5sum="c99980455add7067ba6f364007497616" name="tests/MDB2_extended_testcase.php">
+   <file role="test" baseinstalldir="/" md5sum="871510e52d4ad21c67df39677ff6b143" name="tests/MDB2_extended_testcase.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
    <file role="test" baseinstalldir="/" md5sum="95a3459c2a557e2ac7f26bea78797609" name="tests/MDB2_function_testcase.php">
@@ -389,13 +421,13 @@ open todo items:
    <file role="test" baseinstalldir="/" md5sum="817539c55bece7d1808e0d0d2ab63924" name="tests/MDB2_reverse_testcase.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="test" baseinstalldir="/" md5sum="5c43a333b8bf44b2484bc5336d057a78" name="tests/MDB2_testcase.php">
+   <file role="test" baseinstalldir="/" md5sum="2d4098056e3e1eb2ab73e5803d51c136" name="tests/MDB2_testcase.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="test" baseinstalldir="/" md5sum="9c5e51dc1af401de4de7e9dc8175faa9" name="tests/MDB2_usage_testcase.php">
+   <file role="test" baseinstalldir="/" md5sum="89a48a36ceaa11d0653e08c91c1d08b6" name="tests/MDB2_usage_testcase.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="test" baseinstalldir="/" md5sum="f63fc244c0673638950f9c614771af0a" name="tests/README">
+   <file role="test" baseinstalldir="/" md5sum="7a13f2bc2d431c365f838d12e7259ec6" name="tests/README">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
    <file role="test" baseinstalldir="/" md5sum="6e13a54abd3affa4d707a916f48cd25e" name="tests/test.php">
@@ -413,12 +445,72 @@ open todo items:
    <file role="test" baseinstalldir="/" md5sum="c2935cb59576409546f9c541b99e1d0b" name="tests/test_setup.php.dist">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
-   <file role="php" baseinstalldir="/" md5sum="c36901c2fe46fa3bcf078257287cae21" name="MDB2.php">
+   <file role="php" baseinstalldir="/" md5sum="fd99ab4d7f4c09ddbaed765479d04b23" name="MDB2.php">
     <replace type="package-info" from="@package_version@" to="version"/>
    </file>
   </filelist>
  </release>
  <changelog>
+   <release>
+    <version>2.2.0</version>
+    <date>2006-07-23</date>
+    <license>BSD License</license>
+    <state>stable</state>
+    <notes>- added MDB2_AUTOQUERY_SELECT (Request #7817)
+- added nested transaction support (inspired by ADODB&apos;s smart transactions) but
+  expanded to optionally use SAVEPOINTs *EXPERIMENTAL*
+  beginNestedTransaction(), completeNestedTransaction(),
+  failNestedTransaction(), getNestedTransactionError()
+- inTransaction() will now return an integer with the nested transaction depth
+  if a nested transaction has been started
+- added setTransactionIsolation()
+- added savepoint support to beginTransaction(), commit() and rollback()
+- added Native base class for consistency
+- added missing colnum parameter to queryOne() [used by getOne()]
+- added new tests for get*() Extended module methods
+- fixed missing db variable from getValidTypes()
+- added testing of a prepared statement with no parameters
+- added handling of empty result sets to result set verification in the test suite
+- oci8 and ibase (and possibly other rdbms) do not like freeing the statement
+  before reading the result set (Bug #8068):
+  * moved statement freeing after reading the result set in get*() Extended methods
+  * bypass prepared statement API for queries without parameters in autoExecute()
+  (this means you cannot use parameters with SELECT statements in autoExecute()
+  on the above mentioned platforms)
+- use data type callback in getValidTypes()
+- fixed identifier quoting in buildManipSQL() for SELECT statements (thx Kailoran)
+- phpdoc and cosmetic fixes in limitQuery()
+- added matchPattern() and patternEscapeString(), escapePattern() *EXPERIMENTAL*
+- added ability to escape wildcard characters in escape() and quote()
+- added debug() call at the end of a query/prepare/execute calling (Request #7933)
+- added context array parameter to debug() and make use of it whereever sensible
+- added optional method name parameter to raiseError() and use whereever possible
+- added a new option &quot;debug_expanded_output&quot; which needs to be set to true to
+  get additional context information and to get &quot;post&quot; callback calls
+- added testPortabilityOptions()
+- set length of 8 and fixed for user_password in the test suite
+- reworked tableInfo() to use a common implementation based on getTableFieldDefinition()
+  when a table name is passed (Bug #8124)
+- disconnect after changing database/DSN (otherwise transactions may be left open)
+
+open todo items:
+- handle autoincrement fields in alterTable()
+- add length handling to LOB reverse engineering
+- expand charset support in schema management and result set handling (Request #4666)
+- add EXPLAIN abstraction
+- add cursor support along the lines of PDO (Request #3660 etc.)
+- expand length/scale support for numeric types (Request #7170)
+- add PDO based drivers, especially a driver to support SQLite 3 (Request #6907)
+- add support to export/import in CSV format
+- add more functions to the Function module (MD5(), IFNULL(), LENGTH() etc.)
+- add support to generating &quot;AS&quot; keyword if required
+- add support for database/table/row LOCKs
+- add ActiveRecord implementation (probably as a separate package)
+- add support for FOREIGN KEYs and CHECK (ENUM as possible mysql fallback) constraints
+- extended to support for case insensitive matching via ILIKE/collate in matchPattern()
+- generate STATUS file from test suite results and allow users to submit test results
+    </notes>
+   </release>
    <release>
     <version>2.1.0</version>
     <date>2006-06-15</date>

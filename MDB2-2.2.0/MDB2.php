@@ -43,7 +43,7 @@
 // | Author: Lukas Smith <smith@pooteeweet.org>                           |
 // +----------------------------------------------------------------------+
 //
-// $Id: MDB2.php,v 1.217 2006/06/13 08:08:21 lsmith Exp $
+// $Id: MDB2.php,v 1.247 2006/07/21 07:06:45 lsmith Exp $
 //
 
 /**
@@ -55,6 +55,7 @@
 require_once 'PEAR.php';
 
 // {{{ Error constants
+
 /**
  * The method mapErrorCode in each MDB2_dbtype implementation maps
  * native error codes to one of these.
@@ -107,31 +108,29 @@ define('MDB2_ERROR_INSUFFICIENT_DATA',  -35);
 
 define('MDB2_PREPARE_MANIP', false);
 define('MDB2_PREPARE_RESULT', null);
+
 // }}}
 // {{{ Fetchmode constants
+
 /**
  * This is a special constant that tells MDB2 the user hasn't specified
  * any particular get mode, so the default should be used.
  */
-
 define('MDB2_FETCHMODE_DEFAULT', 0);
 
 /**
  * Column data indexed by numbers, ordered from 0 and up
  */
-
 define('MDB2_FETCHMODE_ORDERED', 1);
 
 /**
  * Column data indexed by column names
  */
-
 define('MDB2_FETCHMODE_ASSOC', 2);
 
 /**
  * Column data as object properties
  */
-
 define('MDB2_FETCHMODE_OBJECT', 3);
 
 /**
@@ -140,8 +139,8 @@ define('MDB2_FETCHMODE_OBJECT', 3);
  * MDB2_FETCHMODE_FLIPPED switches this order, so the first level of arrays
  * is the column name, and the second level the row number.
  */
-
 define('MDB2_FETCHMODE_FLIPPED', 4);
+
 // }}}
 // {{{ Portability mode constants
 
@@ -149,7 +148,6 @@ define('MDB2_FETCHMODE_FLIPPED', 4);
  * Portability: turn off all portability features.
  * @see MDB2_Driver_Common::setOption()
  */
-
 define('MDB2_PORTABILITY_NONE', 0);
 
 /**
@@ -157,28 +155,24 @@ define('MDB2_PORTABILITY_NONE', 0);
  * "field_case" option when using the query*(), fetch*() and tableInfo() methods.
  * @see MDB2_Driver_Common::setOption()
  */
-
 define('MDB2_PORTABILITY_FIX_CASE', 1);
 
 /**
  * Portability: right trim the data output by query*() and fetch*().
  * @see MDB2_Driver_Common::setOption()
  */
-
 define('MDB2_PORTABILITY_RTRIM', 2);
 
 /**
  * Portability: force reporting the number of rows deleted.
  * @see MDB2_Driver_Common::setOption()
  */
-
 define('MDB2_PORTABILITY_DELETE_COUNT', 4);
 
 /**
  * Portability: not needed in MDB2 (just left here for compatibility to DB)
  * @see MDB2_Driver_Common::setOption()
  */
-
 define('MDB2_PORTABILITY_NUMROWS', 8);
 
 /**
@@ -194,7 +188,6 @@ define('MDB2_PORTABILITY_NUMROWS', 8);
  *
  * @see MDB2_Driver_Common::setOption()
  */
-
 define('MDB2_PORTABILITY_ERRORS', 16);
 
 /**
@@ -202,24 +195,23 @@ define('MDB2_PORTABILITY_ERRORS', 16);
  * query*() and fetch*().
  * @see MDB2_Driver_Common::setOption()
  */
-
 define('MDB2_PORTABILITY_EMPTY_TO_NULL', 32);
 
 /**
  * Portability: removes database/table qualifiers from associative indexes
  * @see MDB2_Driver_Common::setOption()
  */
-
 define('MDB2_PORTABILITY_FIX_ASSOC_FIELD_NAMES', 64);
 
 /**
  * Portability: turn on all portability features.
  * @see MDB2_Driver_Common::setOption()
  */
-
 define('MDB2_PORTABILITY_ALL', 127);
+
 // }}}
 // {{{ Globals for class instance tracking
+
 /**
  * These are global variables that are used to track the various class instances
  */
@@ -237,9 +229,10 @@ $GLOBALS['_MDB2_dsninfo_default'] = array(
     'database' => false,
     'mode'     => false,
 );
-// }}}
 
+// }}}
 // {{{ class MDB2
+
 /**
  * The main 'MDB2' class is simply a container class with some static
  * methods for creating DB objects as well as some utility functions
@@ -295,9 +288,10 @@ class MDB2
         }
         return MDB2_OK;
     }
-    // }}}
 
+    // }}}
     // {{{ function classExists($classname)
+
     /**
      * Checks if a class exists without triggering __autoload
      *
@@ -314,9 +308,10 @@ class MDB2
         }
         return class_exists($classname);
     }
-    // }}}
 
+    // }}}
     // {{{ function loadClass($class_name, $debug)
+
     /**
      * Loads a PEAR class.
      *
@@ -348,8 +343,8 @@ class MDB2
         }
         return MDB2_OK;
     }
-    // }}}
 
+    // }}}
     // {{{ function &factory($dsn, $options = false)
 
     /**
@@ -401,8 +396,8 @@ class MDB2
 
         return $db;
     }
-    // }}}
 
+    // }}}
     // {{{ function &connect($dsn, $options = false)
 
     /**
@@ -450,8 +445,8 @@ class MDB2
 
         return $db;
     }
-    // }}}
 
+    // }}}
     // {{{ function &singleton($dsn = null, $options = false)
 
     /**
@@ -503,8 +498,8 @@ class MDB2
         $db =& MDB2::factory($dsn, $options);
         return $db;
     }
-    // }}}
 
+    // }}}
     // {{{ function loadFile($file)
 
     /**
@@ -529,8 +524,8 @@ class MDB2
         }
         return $file_name;
     }
-    // }}}
 
+    // }}}
     // {{{ function apiVersion()
 
     /**
@@ -544,8 +539,8 @@ class MDB2
     {
         return '@package_version@';
     }
-    // }}}
 
+    // }}}
     // {{{ function &raiseError($code = null, $mode = null, $options = null, $userinfo = null)
 
     /**
@@ -579,8 +574,8 @@ class MDB2
         $err =& PEAR::raiseError(null, $code, $mode, $options, $userinfo, 'MDB2_Error', true);
         return $err;
     }
-    // }}}
 
+    // }}}
     // {{{ function isError($data, $code = null)
 
     /**
@@ -610,9 +605,10 @@ class MDB2
         }
         return false;
     }
-    // }}}
 
+    // }}}
     // {{{ function isConnection($value)
+
     /**
      * Tell whether a value is a MDB2 connection
      *
@@ -626,9 +622,10 @@ class MDB2
     {
         return is_a($value, 'MDB2_Driver_Common');
     }
-    // }}}
 
+    // }}}
     // {{{ function isResult($value)
+
     /**
      * Tell whether a value is a MDB2 result
      *
@@ -642,9 +639,10 @@ class MDB2
     {
         return is_a($value, 'MDB2_Result');
     }
-    // }}}
 
+    // }}}
     // {{{ function isResultCommon($value)
+
     /**
      * Tell whether a value is a MDB2 result implementing the common interface
      *
@@ -658,9 +656,10 @@ class MDB2
     {
         return is_a($value, 'MDB2_Result_Common');
     }
-    // }}}
 
+    // }}}
     // {{{ function isStatement($value)
+
     /**
      * Tell whether a value is a MDB2 statement interface
      *
@@ -674,8 +673,8 @@ class MDB2
     {
         return is_a($value, 'MDB2_Statement');
     }
-    // }}}
 
+    // }}}
     // {{{ function errorMessage($value = null)
 
     /**
@@ -748,8 +747,8 @@ class MDB2
         return isset($errorMessages[$value]) ?
            $errorMessages[$value] : $errorMessages[MDB2_ERROR];
     }
-    // }}}
 
+    // }}}
     // {{{ function parseDSN($dsn)
 
     /**
@@ -897,8 +896,8 @@ class MDB2
 
         return $parsed;
     }
-    // }}}
 
+    // }}}
     // {{{ function fileExists($file)
 
     /**
@@ -921,9 +920,10 @@ class MDB2
     }
     // }}}
 }
-// }}}
 
+// }}}
 // {{{ class MDB2_Error extends PEAR_Error
+
 /**
  * MDB2_Error implements a class for reporting portable database error
  * messages.
@@ -950,11 +950,13 @@ class MDB2_Error extends PEAR_Error
         $this->PEAR_Error('MDB2 Error: '.MDB2::errorMessage($code), $code,
             $mode, $level, $debuginfo);
     }
+
     // }}}
 }
-// }}}
 
+// }}}
 // {{{ class MDB2_Driver_Common extends PEAR
+
 /**
  * MDB2_Driver_Common: Base class that is extended by each MDB2 driver
  *
@@ -965,6 +967,7 @@ class MDB2_Error extends PEAR_Error
 class MDB2_Driver_Common extends PEAR
 {
     // {{{ Variables (Properties)
+
     /**
      * index of the MDB2 object within the $GLOBALS['_MDB2_databases'] array
      * @var     int
@@ -1033,6 +1036,7 @@ class MDB2_Driver_Common extends PEAR
         'summary_functions' => false,
         'order_by_text' => false,
         'transactions' => false,
+        'savepoints' => false,
         'current_id' => false,
         'limit_queries' => false,
         'LOBs' => false,
@@ -1042,6 +1046,8 @@ class MDB2_Driver_Common extends PEAR
         'primary_key' => false,
         'result_introspection' => false,
         'prepared_statements' => false,
+        'identifier_quoting' => false,
+        'pattern_escaping' => false,
     );
 
     /**
@@ -1064,11 +1070,13 @@ class MDB2_Driver_Common extends PEAR
      *  <li>$options['persistent'] -> boolean: persistent connection?</li>
      *  <li>$options['debug'] -> integer: numeric debug level</li>
      *  <li>$options['debug_handler'] -> string: function/method that captures debug messages</li>
+     *  <li>$options['debug_expanded_output'] -> bool: BC option to determine if more context information should be send to the debug handler</li>
      *  <li>$options['default_text_field_length'] -> integer: default text field length to use</li>
      *  <li>$options['lob_buffer_length'] -> integer: LOB buffer length</li>
      *  <li>$options['log_line_break'] -> string: line-break format</li>
      *  <li>$options['idxname_format'] -> string: pattern for index name</li>
      *  <li>$options['seqname_format'] -> string: pattern for sequence name</li>
+     *  <li>$options['savepoint_format'] -> string: pattern for auto generated savepoint names</li>
      *  <li>$options['seqcol_name'] -> string: sequence column name</li>
      *  <li>$options['quote_identifier'] -> boolean: if identifier quoting should be done when check_option is used</li>
      *  <li>$options['use_transactions'] -> boolean: if transaction use should be enabled</li>
@@ -1088,39 +1096,41 @@ class MDB2_Driver_Common extends PEAR
      * @see     MDB2_Driver_Common::setOption()
      */
     var $options = array(
-            'ssl' => false,
-            'field_case' => CASE_LOWER,
-            'disable_query' => false,
-            'result_class' => 'MDB2_Result_%s',
-            'buffered_result_class' => 'MDB2_BufferedResult_%s',
-            'result_wrap_class' => false,
-            'result_buffering' => true,
-            'fetch_class' => 'stdClass',
-            'persistent' => false,
-            'debug' => 0,
-            'debug_handler' => 'MDB2_defaultDebugOutput',
-            'default_text_field_length' => 4096,
-            'lob_buffer_length' => 8192,
-            'log_line_break' => "\n",
-            'idxname_format' => '%s_idx',
-            'seqname_format' => '%s_seq',
-            'seqcol_name' => 'sequence',
-            'quote_identifier' => false,
-            'use_transactions' => true,
-            'decimal_places' => 2,
-            'portability' => MDB2_PORTABILITY_ALL,
-            'modules' => array(
-                'ex' => 'Extended',
-                'dt' => 'Datatype',
-                'mg' => 'Manager',
-                'rv' => 'Reverse',
-                'na' => 'Native',
-                'fc' => 'Function',
-            ),
-            'emulate_prepared' => false,
-            'datatype_map' => array(),
-            'datatype_map_callback' => array(),
-        );
+        'ssl' => false,
+        'field_case' => CASE_LOWER,
+        'disable_query' => false,
+        'result_class' => 'MDB2_Result_%s',
+        'buffered_result_class' => 'MDB2_BufferedResult_%s',
+        'result_wrap_class' => false,
+        'result_buffering' => true,
+        'fetch_class' => 'stdClass',
+        'persistent' => false,
+        'debug' => 0,
+        'debug_handler' => 'MDB2_defaultDebugOutput',
+        'debug_expanded_output' => false,
+        'default_text_field_length' => 4096,
+        'lob_buffer_length' => 8192,
+        'log_line_break' => "\n",
+        'idxname_format' => '%s_idx',
+        'seqname_format' => '%s_seq',
+        'savepoint_format' => 'MDB2_SAVEPOINT_%s',
+        'seqcol_name' => 'sequence',
+        'quote_identifier' => false,
+        'use_transactions' => true,
+        'decimal_places' => 2,
+        'portability' => MDB2_PORTABILITY_ALL,
+        'modules' => array(
+            'ex' => 'Extended',
+            'dt' => 'Datatype',
+            'mg' => 'Manager',
+            'rv' => 'Reverse',
+            'na' => 'Native',
+            'fc' => 'Function',
+        ),
+        'emulate_prepared' => false,
+        'datatype_map' => array(),
+        'datatype_map_callback' => array(),
+    );
 
     /**
      * escape character
@@ -1128,6 +1138,20 @@ class MDB2_Driver_Common extends PEAR
      * @access  protected
      */
     var $escape_quotes = "'";
+
+    /**
+     * escape character for pattern
+     * @var     string
+     * @access  protected
+     */
+    var $escape_pattern = '';
+
+    /**
+     * comparision wildcards
+     * @var     array
+     * @access  protected
+     */
+    var $wildcards = array('%', '_');
 
     /**
      * escape character
@@ -1156,6 +1180,20 @@ class MDB2_Driver_Common extends PEAR
      * @access  protected
      */
     var $in_transaction = false;
+
+    /**
+     * the smart transaction nesting depth
+     * @var     int
+     * @access  protected
+     */
+    var $nested_transaction_counter = null;
+
+    /**
+     * the first error that occured inside a nested transaction
+     * @var     MDB2_Error|bool
+     * @access  protected
+     */
+    var $has_transaction_error = false;
 
     /**
      * result offset used in the next query
@@ -1208,12 +1246,12 @@ class MDB2_Driver_Common extends PEAR
 
     /**
      * determines of the PHP4 destructor emulation has been enabled yet
-    * @var     array
-    * @access  protected
-    */
+     * @var     array
+     * @access  protected
+     */
     var $destructor_registered = true;
-    // }}}
 
+    // }}}
     // {{{ constructor: function __construct()
 
     /**
@@ -1226,8 +1264,8 @@ class MDB2_Driver_Common extends PEAR
         $GLOBALS['_MDB2_databases'][$db_index] = &$this;
         $this->db_index = $db_index;
     }
-    // }}}
 
+    // }}}
     // {{{ function MDB2_Driver_Common()
 
     /**
@@ -1238,8 +1276,8 @@ class MDB2_Driver_Common extends PEAR
         $this->destructor_registered = false;
         $this->__construct();
     }
-    // }}}
 
+    // }}}
     // {{{ destructor: function __destruct()
 
     /**
@@ -1249,8 +1287,8 @@ class MDB2_Driver_Common extends PEAR
     {
         $this->disconnect(false);
     }
-    // }}}
 
+    // }}}
     // {{{ function free()
 
     /**
@@ -1266,8 +1304,8 @@ class MDB2_Driver_Common extends PEAR
         unset($this->db_index);
         return MDB2_OK;
     }
-    // }}}
 
+    // }}}
     // {{{ function __toString()
 
     /**
@@ -1286,8 +1324,8 @@ class MDB2_Driver_Common extends PEAR
         }
         return $info;
     }
-    // }}}
 
+    // }}}
     // {{{ function errorInfo($error = null)
 
     /**
@@ -1303,8 +1341,8 @@ class MDB2_Driver_Common extends PEAR
     {
         return array($error, null, null);
     }
-    // }}}
 
+    // }}}
     // {{{ function &raiseError($code = null, $mode = null, $options = null, $userinfo = null)
 
     /**
@@ -1312,31 +1350,27 @@ class MDB2_Driver_Common extends PEAR
      * callbacks etc.  Basically a wrapper for PEAR::raiseError
      * without the message string.
      *
-     * @param   mixed   integer error code, or a PEAR error object (all
-     *                 other parameters are ignored if this parameter is
-     *                 an object
-     *
+     * @param   mixed   integer error code, or a PEAR error object (all other
+     *                  parameters are ignored if this parameter is an object
      * @param   int     error mode, see PEAR_Error docs
-     *
      * @param   mixed   If error mode is PEAR_ERROR_TRIGGER, this is the
-     *                 error level (E_USER_NOTICE etc).  If error mode is
-     *                 PEAR_ERROR_CALLBACK, this is the callback function,
-     *                 either as a function name, or as an array of an
-     *                 object and method name.  For other error modes this
-     *                 parameter is ignored.
-     *
+         *              error level (E_USER_NOTICE etc).  If error mode is
+     *                  PEAR_ERROR_CALLBACK, this is the callback function,
+     *                  either as a function name, or as an array of an
+     *                  object and method name.  For other error modes this
+     *                  parameter is ignored.
      * @param   string  Extra debug information.  Defaults to the last
-     *                 query and native error code.
-     *
-     * @param   object  a PEAR error object
+     *                  query and native error code.
+     * @param   string  name of the method that triggered the error
      *
      * @return PEAR_Error   instance of a PEAR Error object
      *
      * @access  public
      * @see     PEAR_Error
      */
-    function &raiseError($code = null, $mode = null, $options = null, $userinfo = null)
+    function &raiseError($code = null, $mode = null, $options = null, $userinfo = null, $method = null)
     {
+        $userinfo = "[Error message: $userinfo]\n";
         // The error is yet a MDB2 error object
         if (PEAR::isError($code)) {
             // because we use the static PEAR::raiseError, our global
@@ -1350,26 +1384,30 @@ class MDB2_Driver_Common extends PEAR
             }
             $code = $code->getCode();
         } elseif (isset($this->connection)) {
-            if (is_null($userinfo) && !empty($this->last_query)) {
-                $userinfo = "[Last query: {$this->last_query}]\n";
+            if (!empty($this->last_query)) {
+                $userinfo.= "[Last query: {$this->last_query}]\n";
             }
             $native_errno = $native_msg = null;
             list($code, $native_errno, $native_msg) = $this->errorInfo($code);
-            if (!is_null($native_errno)) {
+            if (!is_null($native_errno) && $native_errno !== '') {
                 $userinfo.= "[Native code: $native_errno]\n";
             }
-            if (!is_null($native_msg)) {
+            if (!is_null($native_msg) && $native_msg !== '') {
                 $userinfo.= "[Native message: ". strip_tags($native_msg) ."]\n";
             }
-        } else {
-            $userinfo = "[Error message: $userinfo]\n";
+            if (!is_null($method)) {
+                $userinfo = $method.': '.$userinfo;
+            }
         }
 
         $err =& PEAR::raiseError(null, $code, $mode, $options, $userinfo, 'MDB2_Error', true);
+        if (isset($this->nested_transaction_counter) && !$this->has_transaction_error) {
+            $this->has_transaction_error =& $err;
+        }
         return $err;
     }
-    // }}}
 
+    // }}}
     // {{{ function resetWarnings()
 
     /**
@@ -1383,8 +1421,8 @@ class MDB2_Driver_Common extends PEAR
     {
         $this->warnings = array();
     }
-    // }}}
 
+    // }}}
     // {{{ function getWarnings()
 
     /**
@@ -1400,8 +1438,8 @@ class MDB2_Driver_Common extends PEAR
     {
         return array_reverse($this->warnings);
     }
-    // }}}
 
+    // }}}
     // {{{ function setFetchMode($fetchmode, $object_class = 'stdClass')
 
     /**
@@ -1434,13 +1472,13 @@ class MDB2_Driver_Common extends PEAR
             break;
         default:
             return $this->raiseError(MDB2_ERROR_UNSUPPORTED, null, null,
-                'invalid fetchmode mode');
+                'invalid fetchmode mode', __FUNCTION__);
         }
 
         return MDB2_OK;
     }
-    // }}}
 
+    // }}}
     // {{{ function setOption($option, $value)
 
     /**
@@ -1460,10 +1498,10 @@ class MDB2_Driver_Common extends PEAR
             return MDB2_OK;
         }
         return $this->raiseError(MDB2_ERROR_UNSUPPORTED, null, null,
-            "unknown option $option");
+            "unknown option $option", __FUNCTION__);
     }
-    // }}}
 
+    // }}}
     // {{{ function getOption($option)
 
     /**
@@ -1481,30 +1519,41 @@ class MDB2_Driver_Common extends PEAR
             return $this->options[$option];
         }
         return $this->raiseError(MDB2_ERROR_UNSUPPORTED, null, null,
-            "unknown option $option");
+            "unknown option $option", __FUNCTION__);
     }
-    // }}}
 
+    // }}}
     // {{{ function debug($message, $scope = '', $is_manip = null)
 
     /**
      * set a debug message
      *
-     * @param   string  Message with information for the user.
+     * @param   string  message that should be appended to the debug variable
+     * @param   string  usually the method name that triggered the debug call:
+     *                  for example 'query', 'prepare', 'execute', 'parameters',
+     *                  'beginTransaction', 'commit', 'rollback'
+     * @param   array   contains context information about the debug() call
+     *                  common keys are: is_manip, time, result etc.
      *
      * @return void
      *
      * @access  public
      */
-    function debug($message, $scope = '', $is_manip = null)
+    function debug($message, $scope = '', $context = array())
     {
         if ($this->options['debug'] && $this->options['debug_handler']) {
-            return call_user_func_array($this->options['debug_handler'], array(&$this, $scope, $message, $is_manip));
+            if (!$this->options['debug_expanded_output']) {
+                if (!empty($context['when']) && $context['when'] !== 'pre') {
+                    return null;
+                }
+                $context = empty($context['is_manip']) ? false : $context['is_manip'];
+            }
+            return call_user_func_array($this->options['debug_handler'], array(&$this, $scope, $message, $context));
         }
         return null;
     }
-    // }}}
 
+    // }}}
     // {{{ function getDebugOutput()
 
     /**
@@ -1518,8 +1567,8 @@ class MDB2_Driver_Common extends PEAR
     {
         return $this->debug_output;
     }
-    // }}}
 
+    // }}}
     // {{{ function escape($text)
 
     /**
@@ -1527,20 +1576,54 @@ class MDB2_Driver_Common extends PEAR
      * the text so it can safely be used within a query.
      *
      * @param   string  the input string to quote
+     * @param   bool    escape wildcards
      *
      * @return  string  quoted string
      *
      * @access  public
      */
-    function escape($text)
+    function escape($text, $escape_wildcards = false)
     {
         if ($this->escape_quotes !== "'") {
             $text = str_replace($this->escape_quotes, $this->escape_quotes.$this->escape_quotes, $text);
         }
-        return str_replace("'", $this->escape_quotes . "'", $text);
-    }
-    // }}}
 
+        if ($escape_wildcards) {
+            $text = $this->escapePattern($text);
+        }
+        $text = str_replace("'", $this->escape_quotes . "'", $text);
+        return $text;
+    }
+
+    // }}}
+    // {{{ function escapePattern($text)
+
+    /**
+     * Quotes pattern (% and _) characters in a string)
+     *
+     * EXPERIMENTAL
+     *
+     * WARNING: this function is experimental and may change signature at
+     * any time until labelled as non-experimental
+     *
+     * @param   string  the input string to quote
+     *
+     * @return  string  quoted string
+     *
+     * @access  public
+     */
+    function escapePattern($text)
+    {
+        if ($this->escape_pattern) {
+            $text = str_replace($this->escape_pattern, $this->escape_pattern . $this->escape_pattern, $text);
+            foreach ($this->wildcards as $wildcard) {
+                $text = str_replace($wildcard, $this->escape_pattern . $wildcard, $text);
+            }
+        }
+        return $text;
+    }
+
+    // }}}
     // {{{ function quoteIdentifier($str, $check_option = false)
 
     /**
@@ -1585,8 +1668,8 @@ class MDB2_Driver_Common extends PEAR
         $str = str_replace($this->escape_identifier, $this->escape_identifier.$this->escape_identifier, $str);
         return $this->escape_identifier . $str . $this->escape_identifier;
     }
-    // }}}
 
+    // }}}
     // {{{ function getConnection()
 
     /**
@@ -1605,8 +1688,8 @@ class MDB2_Driver_Common extends PEAR
         }
         return $this->connection;
     }
-    // }}}
 
+    // }}}
     // {{{ function _fixResultArrayValues(&$array, $mode)
 
     /**
@@ -1686,9 +1769,10 @@ class MDB2_Driver_Common extends PEAR
             break;
         }
     }
-    // }}}
 
+    // }}}
     // {{{ function &loadModule($module, $property = null, $phptype_specific = null)
+
     /**
      * loads a module
      *
@@ -1745,7 +1829,7 @@ class MDB2_Driver_Common extends PEAR
 
             if (!class_exists($class_name)) {
                 $err =& $this->raiseError(MDB2_ERROR_LOADMODULE, null, null,
-                    "unable to load module '$module' into property '$property'");
+                    "unable to load module '$module' into property '$property'", __FUNCTION__);
                 return $err;
             }
             $this->{$property} =& new $class_name($this->db_index);
@@ -1760,9 +1844,10 @@ class MDB2_Driver_Common extends PEAR
 
         return $this->{$property};
     }
-    // }}}
 
+    // }}}
     // {{{ function __call($method, $params)
+
     /**
      * Calls a module method using the __call magic method
      *
@@ -1800,80 +1885,260 @@ class MDB2_Driver_Common extends PEAR
         }
         trigger_error(sprintf('Call to undefined function: %s::%s().', get_class($this), $method), E_USER_ERROR);
     }
-    // }}}
 
-    // {{{ function beginTransaction()
+    // }}}
+    // {{{ function beginTransaction($savepoint = null)
 
     /**
-     * Start a transaction.
+     * Start a transaction or set a savepoint.
      *
+     * @param   string  name of a savepoint to set
      * @return  mixed   MDB2_OK on success, a MDB2 error on failure
      *
      * @access  public
      */
-    function beginTransaction()
+    function beginTransaction($savepoint = null)
     {
-        $this->debug('Starting transaction', 'beginTransaction', false);
+        $this->debug('Starting transaction', __FUNCTION__, array('is_manip' => true, 'savepoint' => $savepoint));
         return $this->raiseError(MDB2_ERROR_UNSUPPORTED, null, null,
-            'beginTransaction: transactions are not supported');
+            'transactions are not supported', __FUNCTION__);
     }
-    // }}}
 
-    // {{{ function commit()
+    // }}}
+    // {{{ function commit($savepoint = null)
 
     /**
      * Commit the database changes done during a transaction that is in
-     * progress. This function may only be called when auto-committing is
-     * disabled, otherwise it will fail. Therefore, a new transaction is
-     * implicitly started after committing the pending changes.
+     * progress or release a savepoint. This function may only be called when
+     * auto-committing is disabled, otherwise it will fail. Therefore, a new
+     * transaction is implicitly started after committing the pending changes.
      *
+     * @param   string  name of a savepoint to release
      * @return  mixed   MDB2_OK on success, a MDB2 error on failure
      *
      * @access  public
      */
-    function commit()
+    function commit($savepoint = null)
     {
-        $this->debug('commiting transaction', 'commit', false);
+        $this->debug('Committing transaction/savepoint', __FUNCTION__, array('is_manip' => true, 'savepoint' => $savepoint));
         return $this->raiseError(MDB2_ERROR_UNSUPPORTED, null, null,
-            'commit: commiting transactions is not supported');
+            'commiting transactions is not supported', __FUNCTION__);
     }
-    // }}}
 
-    // {{{ function rollback()
+    // }}}
+    // {{{ function rollback($savepoint = null)
 
     /**
-     * Cancel any database changes done during a transaction that is in
-     * progress. This function may only be called when auto-committing is
-     * disabled, otherwise it will fail. Therefore, a new transaction is
-     * implicitly started after canceling the pending changes.
+     * Cancel any database changes done during a transaction or since a specific
+     * savepoint that is in progress. This function may only be called when
+     * auto-committing is disabled, otherwise it will fail. Therefore, a new
+     * transaction is implicitly started after canceling the pending changes.
      *
+     * @param   string  name of a savepoint to rollback to
      * @return  mixed   MDB2_OK on success, a MDB2 error on failure
      *
      * @access  public
      */
-    function rollback()
+    function rollback($savepoint = null)
     {
-        $this->debug('rolling back transaction', 'rollback', false);
+        $this->debug('Rolling back transaction/savepoint', __FUNCTION__, array('is_manip' => true, 'savepoint' => $savepoint));
         return $this->raiseError(MDB2_ERROR_UNSUPPORTED, null, null,
-            'rollback: rolling back transactions is not supported');
+            'rolling back transactions is not supported', __FUNCTION__);
     }
-    // }}}
 
-    // {{{ function inTransaction()
+    // }}}
+    // {{{ function inTransaction($ignore_nested = false)
 
     /**
      * If a transaction is currently open.
      *
-     * @return  bool    true if a transaction is currently open, else false
+     * @param   bool    if the nested transaction count should be ignored
+     * @return  int|bool    - an integer with the nesting depth is returned if a
+     *                      nested transaction is open
+     *                      - true is returned for a normal open transaction
+     *                      - false is returned if no transaction is open
      *
      * @access  public
      */
-    function inTransaction()
+    function inTransaction($ignore_nested = false)
     {
+        if (!$ignore_nested && isset($this->nested_transaction_counter)) {
+            return $this->nested_transaction_counter;
+        }
         return $this->in_transaction;
     }
-    // }}}
 
+    // }}}
+    // {{{ function setTransactionIsolation($isolation)
+
+    /**
+     * Set the transacton isolation level.
+     *
+     * @param   string  standard isolation level
+     *                  READ UNCOMMITTED (allows dirty reads)
+     *                  READ COMMITTED (prevents dirty reads)
+     *                  REPEATABLE READ (prevents nonrepeatable reads)
+     *                  SERIALIZABLE (prevents phantom reads)
+     * @param   array some transaction options:
+     *                  'wait' => 'WAIT' | 'NO WAIT'
+     *                  'rw'   => 'READ WRITE' | 'READ ONLY'
+     * @return  mixed   MDB2_OK on success, a MDB2 error on failure
+     *
+     * @access  public
+     * @since   2.1.1
+     */
+    function setTransactionIsolation($isolation, $options = array())
+    {
+        $this->debug('Setting transaction isolation level', __FUNCTION__, array('is_manip' => true));
+        return $this->raiseError(MDB2_ERROR_UNSUPPORTED, null, null,
+            'isolation level setting is not supported', __FUNCTION__);
+    }
+
+    // }}}
+    // {{{ function beginNestedTransaction($savepoint = false)
+
+    /**
+     * Start a nested transaction.
+     *
+     * EXPERIMENTAL
+     *
+     * WARNING: this function is experimental and may change signature at
+     * any time until labelled as non-experimental
+     *
+     * @return  mixed   MDB2_OK on success/savepoint name, a MDB2 error on failure
+     *
+     * @access  public
+     * @since   2.1.1
+     */
+    function beginNestedTransaction()
+    {
+        if ($this->in_transaction) {
+            ++$this->nested_transaction_counter;
+            $savepoint = sprintf($this->options['savepoint_format'], $this->nested_transaction_counter);
+            if ($this->supports('savepoints') && $savepoint) {
+                return $this->beginTransaction($savepoint);
+            }
+            return MDB2_OK;
+        }
+        $this->has_transaction_error = false;
+        $result = $this->beginTransaction();
+        $this->nested_transaction_counter = 1;
+        return $result;
+    }
+
+    // }}}
+    // {{{ function completeNestedTransaction($force_rollback = false, $release = false)
+
+    /**
+     * Finish a nested transaction by rolling back if an error occured or
+     * committing otherwise.
+     *
+     * EXPERIMENTAL
+     *
+     * WARNING: this function is experimental and may change signature at
+     * any time until labelled as non-experimental
+     *
+     * @param   bool    if the transaction should be rolled back regardless
+     *                  even if no error was set within the nested transaction
+     * @return  mixed   MDB_OK on commit/counter decrementing, false on rollback
+     *                  and a MDB2 error on failure
+     *
+     * @access  public
+     * @since   2.1.1
+     */
+    function completeNestedTransaction($force_rollback = false)
+    {
+        if ($this->nested_transaction_counter > 1) {
+            $savepoint = sprintf($this->options['savepoint_format'], $this->nested_transaction_counter);
+            if ($this->supports('savepoints') && $savepoint) {
+                if ($force_rollback || $this->has_transaction_error) {
+                    $result = $this->rollback($savepoint);
+                    if (!PEAR::isError($result)) {
+                        $result = false;
+                        $this->has_transaction_error = false;
+                    }
+                } else {
+                    $result = $this->commit($savepoint);
+                }
+            } else {
+                $result = MDB2_OK;
+            }
+            --$this->nested_transaction_counter;
+            return $result;
+        }
+
+        $this->nested_transaction_counter = null;
+        $result = MDB2_OK;
+
+        // transaction has not yet been rolled back
+        if ($this->in_transaction) {
+            if ($force_rollback || $this->has_transaction_error) {
+                $result = $this->rollback();
+                if (!PEAR::isError($result)) {
+                    $result = false;
+                }
+            } else {
+                $result = $this->commit();
+            }
+        }
+        $this->has_transaction_error = false;
+        return $result;
+    }
+
+    // }}}
+    // {{{ function failNestedTransaction($error = null, $immediately = false)
+
+    /**
+     * Force setting nested transaction to failed.
+     *
+     * EXPERIMENTAL
+     *
+     * WARNING: this function is experimental and may change signature at
+     * any time until labelled as non-experimental
+     *
+     * @param   mixed   value to return in getNestededTransactionError()
+     * @param   bool    if the transaction should be rolled back immediately
+     * @return  bool    MDB2_OK
+     *
+     * @access  public
+     * @since   2.1.1
+     */
+    function failNestedTransaction($error = null, $immediately = false)
+    {
+        if (is_null($error)) {
+            $error = $this->has_transaction_error ? $this->has_transaction_error : true;
+        } elseif (!$error) {
+            $error = true;
+        }
+        $this->has_transaction_error = $error;
+        if (!$immediately) {
+            return MDB2_OK;
+        }
+        return $this->rollback();
+    }
+
+    // }}}
+    // {{{ function getNestedTransactionError()
+
+    /**
+     * The first error that occured since the transaction start.
+     *
+     * EXPERIMENTAL
+     *
+     * WARNING: this function is experimental and may change signature at
+     * any time until labelled as non-experimental
+     *
+     * @return  MDB2_Error|bool     MDB2 error object if an error occured or false.
+     *
+     * @access  public
+     * @since   2.1.1
+     */
+    function getNestedTransactionError()
+    {
+        return $this->has_transaction_error;
+    }
+
+    // }}}
     // {{{ connect()
 
     /**
@@ -1884,11 +2149,11 @@ class MDB2_Driver_Common extends PEAR
     function connect()
     {
         return $this->raiseError(MDB2_ERROR_UNSUPPORTED, null, null,
-            'connect: method not implemented');
+            'method not implemented', __FUNCTION__);
     }
-    // }}}
 
-    // {{{ setCharset()
+    // }}}
+    // {{{ setCharset($charset, $connection = null)
 
     /**
      * Set the charset on the current connection
@@ -1901,10 +2166,10 @@ class MDB2_Driver_Common extends PEAR
     function setCharset($charset, $connection = null)
     {
         return $this->raiseError(MDB2_ERROR_UNSUPPORTED, null, null,
-            'setCharset: method not implemented');
+            'method not implemented', __FUNCTION__);
     }
-    // }}}
 
+    // }}}
     // {{{ function disconnect($force = true)
 
     /**
@@ -1925,11 +2190,12 @@ class MDB2_Driver_Common extends PEAR
         $this->connected_database_name = '';
         $this->opened_persistent = null;
         $this->connected_server_info = '';
-        $this->in_transaction = false;
+        $this->in_transaction = null;
+        $this->nested_transaction_counter = 0;
         return MDB2_OK;
     }
-    // }}}
 
+    // }}}
     // {{{ function setDatabase($name)
 
     /**
@@ -1945,10 +2211,11 @@ class MDB2_Driver_Common extends PEAR
     {
         $previous_database_name = (isset($this->database_name)) ? $this->database_name : '';
         $this->database_name = $name;
+        $this->disconnect(false);
         return $previous_database_name;
     }
-    // }}}
 
+    // }}}
     // {{{ function getDatabase()
 
     /**
@@ -1962,8 +2229,8 @@ class MDB2_Driver_Common extends PEAR
     {
         return $this->database_name;
     }
-    // }}}
 
+    // }}}
     // {{{ function setDSN($dsn)
 
     /**
@@ -1984,10 +2251,10 @@ class MDB2_Driver_Common extends PEAR
             unset($dsn['database']);
         }
         $this->dsn = array_merge($dsn_default, $dsn);
-        return MDB2_OK;
+        return $this->disconnect(false);
     }
-    // }}}
 
+    // }}}
     // {{{ function getDSN($type = 'string', $hidepw = false)
 
     /**
@@ -2024,8 +2291,8 @@ class MDB2_Driver_Common extends PEAR
         }
         return $dsn;
     }
-    // }}}
 
+    // }}}
     // {{{ function &standaloneQuery($query, $types = null, $is_manip = false)
 
    /**
@@ -2064,8 +2331,8 @@ class MDB2_Driver_Common extends PEAR
         $result =& $this->_wrapResult($result, $types, true, false, $limit, $offset);
         return $result;
     }
-    // }}}
 
+    // }}}
     // {{{ function _modifyQuery($query, $is_manip, $limit, $offset)
 
     /**
@@ -2084,8 +2351,8 @@ class MDB2_Driver_Common extends PEAR
     {
         return $query;
     }
-    // }}}
 
+    // }}}
     // {{{ function &_doQuery($query, $is_manip = false, $connection = null, $database_name = null)
 
     /**
@@ -2102,7 +2369,7 @@ class MDB2_Driver_Common extends PEAR
     function &_doQuery($query, $is_manip = false, $connection = null, $database_name = null)
     {
         $this->last_query = $query;
-        $result = $this->debug($query, 'query', $is_manip);
+        $result = $this->debug($query, 'query', array('is_manip' => $is_manip, 'when' => 'pre'));
         if ($result) {
             if (PEAR::isError($result)) {
                 return $result;
@@ -2110,11 +2377,11 @@ class MDB2_Driver_Common extends PEAR
             $query = $result;
         }
         $err =& $this->raiseError(MDB2_ERROR_UNSUPPORTED, null, null,
-            '_doQuery: method not implemented');
+            'method not implemented', __FUNCTION__);
         return $err;
     }
-    // }}}
 
+    // }}}
     // {{{ function _affectedRows($connection, $result = null)
 
     /**
@@ -2130,11 +2397,12 @@ class MDB2_Driver_Common extends PEAR
     function _affectedRows($connection, $result = null)
     {
         return $this->raiseError(MDB2_ERROR_UNSUPPORTED, null, null,
-            '_affectedRows: method not implemented');
+            'method not implemented', __FUNCTION__);
     }
-    // }}}
 
+    // }}}
     // {{{ function exec($query)
+
     /**
      * Execute a manipulation query to the database and return any the affected rows
      *
@@ -2163,8 +2431,8 @@ class MDB2_Driver_Common extends PEAR
 
         return $this->_affectedRows($connection, $result);
     }
-    // }}}
 
+    // }}}
     // {{{ function &query($query, $types = null, $result_class = true, $result_wrap_class = false)
 
     /**
@@ -2201,8 +2469,8 @@ class MDB2_Driver_Common extends PEAR
         $result =& $this->_wrapResult($result, $types, $result_class, $result_wrap_class, $limit, $offset);
         return $result;
     }
-    // }}}
 
+    // }}}
     // {{{ function &_wrapResult($result, $types = array(), $result_class = true, $result_wrap_class = false, $limit = null, $offset = null)
 
     /**
@@ -2248,13 +2516,13 @@ class MDB2_Driver_Common extends PEAR
             $class_name = sprintf($result_class, $this->phptype);
             if (!class_exists($class_name)) {
                 $err =& $this->raiseError(MDB2_ERROR_NOT_FOUND, null, null,
-                    '_wrapResult: result class does not exist '.$class_name);
+                    'result class does not exist '.$class_name, __FUNCTION__);
                 return $err;
             }
             $result =& new $class_name($this, $result, $limit, $offset);
             if (!MDB2::isResultCommon($result)) {
                 $err =& $this->raiseError(MDB2_ERROR_NOT_FOUND, null, null,
-                    '_wrapResult: result class is not extended from MDB2_Result_Common');
+                    'result class is not extended from MDB2_Result_Common', __FUNCTION__);
                 return $err;
             }
             if (!empty($types)) {
@@ -2271,15 +2539,15 @@ class MDB2_Driver_Common extends PEAR
         if ($result_wrap_class) {
             if (!class_exists($result_wrap_class)) {
                 $err =& $this->raiseError(MDB2_ERROR_NOT_FOUND, null, null,
-                    '_wrapResult: result wrap class does not exist '.$result_wrap_class);
+                    'result wrap class does not exist '.$result_wrap_class, __FUNCTION__);
                 return $err;
             }
             $result =& new $result_wrap_class($result, $this->fetchmode);
         }
         return $result;
     }
-    // }}}
 
+    // }}}
     // {{{ function getServerVersion($native = false)
 
     /**
@@ -2294,10 +2562,10 @@ class MDB2_Driver_Common extends PEAR
     function getServerVersion($native = false)
     {
         return $this->raiseError(MDB2_ERROR_UNSUPPORTED, null, null,
-            'getServerVersion: method not implemented');
+            'method not implemented', __FUNCTION__);
     }
-    // }}}
 
+    // }}}
     // {{{ function setLimit($limit, $offset = null)
 
     /**
@@ -2314,26 +2582,26 @@ class MDB2_Driver_Common extends PEAR
     {
         if (!$this->supports('limit_queries')) {
             return $this->raiseError(MDB2_ERROR_UNSUPPORTED, null, null,
-                'setLimit: limit is not supported by this driver');
+                'limit is not supported by this driver', __FUNCTION__);
         }
         $limit = (int)$limit;
         if ($limit < 0) {
             return $this->raiseError(MDB2_ERROR_SYNTAX, null, null,
-                'setLimit: it was not specified a valid selected range row limit');
+                'it was not specified a valid selected range row limit', __FUNCTION__);
         }
         $this->limit = $limit;
         if (!is_null($offset)) {
             $offset = (int)$offset;
             if ($offset < 0) {
                 return $this->raiseError(MDB2_ERROR_SYNTAX, null, null,
-                    'setLimit: it was not specified a valid first selected range row');
+                    'it was not specified a valid first selected range row', __FUNCTION__);
             }
             $this->offset = $offset;
         }
         return MDB2_OK;
     }
-    // }}}
 
+    // }}}
     // {{{ function subSelect($query, $type = false)
 
     /**
@@ -2356,7 +2624,7 @@ class MDB2_Driver_Common extends PEAR
 
         if (!$this->supports('sub_selects')) {
             return $this->raiseError(MDB2_ERROR_UNSUPPORTED, null, null,
-                'subSelect: method not implemented');
+                'method not implemented', __FUNCTION__);
         }
 
         $col = $this->queryCol($query, $type);
@@ -2372,8 +2640,8 @@ class MDB2_Driver_Common extends PEAR
         }
         return implode(', ', $col);
     }
-    // }}}
 
+    // }}}
     // {{{ function replace($table, $fields)
 
     /**
@@ -2443,7 +2711,7 @@ class MDB2_Driver_Common extends PEAR
     {
         if (!$this->supports('replace')) {
             return $this->raiseError(MDB2_ERROR_UNSUPPORTED, null, null,
-                'replace: replace query is not supported');
+                'replace query is not supported', __FUNCTION__);
         }
         $count = count($fields);
         $condition = $values = array();
@@ -2459,14 +2727,14 @@ class MDB2_Driver_Common extends PEAR
             if (isset($fields[$name]['key']) && $fields[$name]['key']) {
                 if ($value === 'NULL') {
                     return $this->raiseError(MDB2_ERROR_CANNOT_REPLACE, null, null,
-                        'replace: key value '.$name.' may not be NULL');
+                        'key value '.$name.' may not be NULL', __FUNCTION__);
                 }
                 $condition[] = $name . '=' . $value;
             }
         }
         if (empty($condition)) {
             return $this->raiseError(MDB2_ERROR_CANNOT_REPLACE, null, null,
-                'replace: not specified which fields are keys');
+                'not specified which fields are keys', __FUNCTION__);
         }
 
         $result = null;
@@ -2508,8 +2776,8 @@ class MDB2_Driver_Common extends PEAR
 
         return $affected_rows;
     }
-    // }}}
 
+    // }}}
     // {{{ function &prepare($query, $types = null, $result_types = null, $lobs = array())
 
     /**
@@ -2540,7 +2808,7 @@ class MDB2_Driver_Common extends PEAR
         $offset = $this->offset;
         $limit = $this->limit;
         $this->offset = $this->limit = 0;
-        $result = $this->debug($query, 'prepare', $is_manip);
+        $result = $this->debug($query, __FUNCTION__, array('is_manip' => $is_manip, 'when' => 'pre'));
         if ($result) {
             if (PEAR::isError($result)) {
                 return $result;
@@ -2570,7 +2838,7 @@ class MDB2_Driver_Common extends PEAR
             if (is_int($quote = strpos($query, "'", $position)) && $quote < $p_position) {
                 if (!is_int($end_quote = strpos($query, "'", $quote + 1))) {
                     $err =& $this->raiseError(MDB2_ERROR_SYNTAX, null, null,
-                        'prepare: query with an unterminated text string specified');
+                        'query with an unterminated text string specified', __FUNCTION__);
                     return $err;
                 }
                 switch ($this->escape_quotes) {
@@ -2610,7 +2878,7 @@ class MDB2_Driver_Common extends PEAR
                     $parameter = preg_replace('/^.{'.($position+1).'}([a-z0-9_]+).*$/si', '\\1', $query);
                     if ($parameter === '') {
                         $err =& $this->raiseError(MDB2_ERROR_SYNTAX, null, null,
-                            'prepare: named parameter with an empty name');
+                            'named parameter with an empty name', __FUNCTION__);
                         return $err;
                     }
                     $positions[$parameter] = $p_position;
@@ -2630,10 +2898,11 @@ class MDB2_Driver_Common extends PEAR
         $class_name = 'MDB2_Statement_'.$this->phptype;
         $statement = null;
         $obj =& new $class_name($this, $statement, $positions, $query, $types, $result_types, $is_manip, $limit, $offset);
+        $this->debug($query, __FUNCTION__, array('is_manip' => $is_manip, 'when' => 'post', 'result' => $obj));
         return $obj;
     }
-    // }}}
 
+    // }}}
     // {{{ function quote($value, $type = null, $quote = true)
 
     /**
@@ -2642,22 +2911,24 @@ class MDB2_Driver_Common extends PEAR
      *
      * @param   string  text string value that is intended to be converted.
      * @param   string  type to which the value should be converted to
+     * @param   bool    escape wildcards
      *
      * @return  string  text string that represents the given argument value in
      *       a DBMS specific format.
      *
      * @access  public
      */
-    function quote($value, $type = null, $quote = true)
+    function quote($value, $type = null, $quote = true, $escape_wildcards = false)
     {
         $result = $this->loadModule('Datatype', null, true);
         if (PEAR::isError($result)) {
             return $result;
         }
-        return $this->datatype->quote($value, $type, $quote);
-    }
-    // }}}
 
+        return $this->datatype->quote($value, $type, $quote, $escape_wildcards);
+    }
+
+    // }}}
     // {{{ function getDeclaration($type, $name, $field)
 
     /**
@@ -2681,8 +2952,8 @@ class MDB2_Driver_Common extends PEAR
         }
         return $this->datatype->getDeclaration($type, $name, $field);
     }
-    // }}}
 
+    // }}}
     // {{{ function compareDefinition($current, $previous)
 
     /**
@@ -2703,8 +2974,8 @@ class MDB2_Driver_Common extends PEAR
         }
         return $this->datatype->compareDefinition($current, $previous);
     }
-    // }}}
 
+    // }}}
     // {{{ function supports($feature)
 
     /**
@@ -2725,10 +2996,10 @@ class MDB2_Driver_Common extends PEAR
             return $this->supported[$feature];
         }
         return $this->raiseError(MDB2_ERROR_UNSUPPORTED, null, null,
-            "unknown support feature $feature");
+            "unknown support feature $feature", __FUNCTION__);
     }
-    // }}}
 
+    // }}}
     // {{{ function getSequenceName($sqn)
 
     /**
@@ -2745,8 +3016,8 @@ class MDB2_Driver_Common extends PEAR
         return sprintf($this->options['seqname_format'],
             preg_replace('/[^a-z0-9_\$.]/i', '_', $sqn));
     }
-    // }}}
 
+    // }}}
     // {{{ function getIndexName($idx)
 
     /**
@@ -2763,8 +3034,8 @@ class MDB2_Driver_Common extends PEAR
         return sprintf($this->options['idxname_format'],
             preg_replace('/[^a-z0-9_\$]/i', '_', $idx));
     }
-    // }}}
 
+    // }}}
     // {{{ function nextID($seq_name, $ondemand = true)
 
     /**
@@ -2780,10 +3051,10 @@ class MDB2_Driver_Common extends PEAR
     function nextID($seq_name, $ondemand = true)
     {
         return $this->raiseError(MDB2_ERROR_UNSUPPORTED, null, null,
-            'nextID: method not implemented');
+            'method not implemented', __FUNCTION__);
     }
-    // }}}
 
+    // }}}
     // {{{ function lastInsertID($table = null, $field = null)
 
     /**
@@ -2802,8 +3073,8 @@ class MDB2_Driver_Common extends PEAR
         $seq = $table.(empty($field) ? '' : '_'.$field);
         return $this->currID($seq);
     }
-    // }}}
 
+    // }}}
     // {{{ function currID($seq_name)
 
     /**
@@ -2821,9 +3092,9 @@ class MDB2_Driver_Common extends PEAR
             sequence value, the sequence value was incremented';
         return $this->nextID($seq_name);
     }
-    // }}}
 
-    // {{{ function queryOne($query, $type = null)
+    // }}}
+    // {{{ function queryOne($query, $type = null, $colnum = 0)
 
     /**
      * Execute the specified query, fetch the value from the first column of
@@ -2835,24 +3106,25 @@ class MDB2_Driver_Common extends PEAR
      *       datatype of the result set field, so that an eventual conversion
      *       may be performed. The default datatype is text, meaning that no
      *       conversion is performed
+     * @param   int     the column number to fetch
      *
      * @return  mixed   MDB2_OK or field value on success, a MDB2 error on failure
      *
      * @access  public
      */
-    function queryOne($query, $type = null)
+    function queryOne($query, $type = null, $colnum = 0)
     {
         $result = $this->query($query, $type);
         if (!MDB2::isResultCommon($result)) {
             return $result;
         }
 
-        $one = $result->fetchOne();
+        $one = $result->fetchOne($colnum);
         $result->free();
         return $one;
     }
-    // }}}
 
+    // }}}
     // {{{ function queryRow($query, $types = null, $fetchmode = MDB2_FETCHMODE_DEFAULT)
 
     /**
@@ -2882,8 +3154,8 @@ class MDB2_Driver_Common extends PEAR
         $result->free();
         return $row;
     }
-    // }}}
 
+    // }}}
     // {{{ function queryCol($query, $type = null, $colnum = 0)
 
     /**
@@ -2912,8 +3184,8 @@ class MDB2_Driver_Common extends PEAR
         $result->free();
         return $col;
     }
-    // }}}
 
+    // }}}
     // {{{ function queryAll($query, $types = null, $fetchmode = MDB2_FETCHMODE_DEFAULT, $rekey = false, $force_array = false, $group = false)
 
     /**
@@ -2952,10 +3224,11 @@ class MDB2_Driver_Common extends PEAR
         $result->free();
         return $all;
     }
+
     // }}}
 }
-// }}}
 
+// }}}
 // {{{ class MDB2_Result
 
 /**
@@ -2968,8 +3241,8 @@ class MDB2_Driver_Common extends PEAR
 class MDB2_Result
 {
 }
-// }}}
 
+// }}}
 // {{{ class MDB2_Result_Common extends MDB2_Result
 
 /**
@@ -2982,6 +3255,7 @@ class MDB2_Result
 class MDB2_Result_Common extends MDB2_Result
 {
     // {{{ Variables (Properties)
+
     var $db;
     var $result;
     var $rownum = -1;
@@ -2991,8 +3265,8 @@ class MDB2_Result_Common extends MDB2_Result
     var $offset_count = 0;
     var $limit;
     var $column_names;
-    // }}}
 
+    // }}}
     // {{{ constructor: function __construct(&$db, &$result, $limit = 0, $offset = 0)
 
     /**
@@ -3005,8 +3279,8 @@ class MDB2_Result_Common extends MDB2_Result
         $this->offset = $offset;
         $this->limit = max(0, $limit - 1);
     }
-    // }}}
 
+    // }}}
     // {{{ function MDB2_Result_Common(&$db, &$result, $limit = 0, $offset = 0)
 
     /**
@@ -3016,8 +3290,8 @@ class MDB2_Result_Common extends MDB2_Result
     {
         $this->__construct($db, $result, $limit, $offset);
     }
-    // }}}
 
+    // }}}
     // {{{ function setResultTypes($types)
 
     /**
@@ -3054,9 +3328,10 @@ class MDB2_Result_Common extends MDB2_Result
         $this->types = $types;
         return MDB2_OK;
     }
-    // }}}
 
+    // }}}
     // {{{ function seek($rownum = 0)
+
     /**
      * Seek to a specific row in a result set
      *
@@ -3071,15 +3346,15 @@ class MDB2_Result_Common extends MDB2_Result
         $target_rownum = $rownum - 1;
         if ($this->rownum > $target_rownum) {
             return $this->db->raiseError(MDB2_ERROR_UNSUPPORTED, null, null,
-                'seek: seeking to previous rows not implemented');
+                'seeking to previous rows not implemented', __FUNCTION__);
         }
         while ($this->rownum < $target_rownum) {
             $this->fetchRow();
         }
         return MDB2_OK;
     }
-    // }}}
 
+    // }}}
     // {{{ function &fetchRow($fetchmode = MDB2_FETCHMODE_DEFAULT, $rownum = null)
 
     /**
@@ -3095,11 +3370,11 @@ class MDB2_Result_Common extends MDB2_Result
     function &fetchRow($fetchmode = MDB2_FETCHMODE_DEFAULT, $rownum = null)
     {
         $err =& $this->db->raiseError(MDB2_ERROR_UNSUPPORTED, null, null,
-            'fetch: method not implemented');
+            'method not implemented', __FUNCTION__);
         return $err;
     }
-    // }}}
 
+    // }}}
     // {{{ function fetchOne($colnum = 0)
 
     /**
@@ -3120,12 +3395,13 @@ class MDB2_Result_Common extends MDB2_Result
             return $row;
         }
         if (!array_key_exists($colnum, $row)) {
-            return $this->db->raiseError(MDB2_ERROR_TRUNCATED);
+            return $this->db->raiseError(MDB2_ERROR_TRUNCATED, null, null,
+                'column is not defined in the result set: '.$colnum, __FUNCTION__);
         }
         return $row[$colnum];
     }
-    // }}}
 
+    // }}}
     // {{{ function fetchCol($colnum = 0)
 
     /**
@@ -3144,7 +3420,8 @@ class MDB2_Result_Common extends MDB2_Result
         $row = $this->fetchRow($fetchmode);
         if (is_array($row)) {
             if (!array_key_exists($colnum, $row)) {
-                return $this->db->raiseError(MDB2_ERROR_TRUNCATED);
+                return $this->db->raiseError(MDB2_ERROR_TRUNCATED, null, null,
+                    'column is not defined in the result set: '.$colnum, __FUNCTION__);
             }
             do {
                 $column[] = $row[$colnum];
@@ -3155,8 +3432,8 @@ class MDB2_Result_Common extends MDB2_Result
         }
         return $column;
     }
-    // }}}
 
+    // }}}
     // {{{ function fetchAll($fetchmode = MDB2_FETCHMODE_DEFAULT, $rekey = false, $force_array = false, $group = false)
 
     /**
@@ -3201,7 +3478,8 @@ class MDB2_Result_Common extends MDB2_Result
                 $colnum = count($row);
             }
             if ($colnum < 2) {
-                return $this->db->raiseError(MDB2_ERROR_TRUNCATED);
+                return $this->db->raiseError(MDB2_ERROR_TRUNCATED, null, null,
+                    'rekey feature requires atleast 2 column', __FUNCTION__);
             }
             $shift_array = (!$force_array && $colnum == 2);
         }
@@ -3243,8 +3521,8 @@ class MDB2_Result_Common extends MDB2_Result
 
         return $all;
     }
-    // }}}
 
+    // }}}
     // {{{ function rowCount()
     /**
      * Returns the actual row number that was last fetched (count from 0)
@@ -3256,8 +3534,8 @@ class MDB2_Result_Common extends MDB2_Result
     {
         return $this->rownum + 1;
     }
-    // }}}
 
+    // }}}
     // {{{ function numRows()
 
     /**
@@ -3270,11 +3548,12 @@ class MDB2_Result_Common extends MDB2_Result
     function numRows()
     {
         return $this->db->raiseError(MDB2_ERROR_UNSUPPORTED, null, null,
-            'numRows: method not implemented');
+            'method not implemented', __FUNCTION__);
     }
-    // }}}
 
+    // }}}
     // {{{ function nextResult()
+
     /**
      * Move the internal result pointer to the next available result
      *
@@ -3288,10 +3567,10 @@ class MDB2_Result_Common extends MDB2_Result
     function nextResult()
     {
         return $this->db->raiseError(MDB2_ERROR_UNSUPPORTED, null, null,
-            'nextResult: method not implemented');
+            'method not implemented', __FUNCTION__);
     }
-    // }}}
 
+    // }}}
     // {{{ function getColumnNames()
 
     /**
@@ -3321,8 +3600,8 @@ class MDB2_Result_Common extends MDB2_Result
         }
         return $this->column_names;
     }
-    // }}}
 
+    // }}}
     // {{{ function _getColumnNames()
 
     /**
@@ -3338,10 +3617,10 @@ class MDB2_Result_Common extends MDB2_Result
     function _getColumnNames()
     {
         return $this->db->raiseError(MDB2_ERROR_UNSUPPORTED, null, null,
-            'getColumnNames: method not implemented');
+            'method not implemented', __FUNCTION__);
     }
-    // }}}
 
+    // }}}
     // {{{ function numCols()
 
     /**
@@ -3355,11 +3634,12 @@ class MDB2_Result_Common extends MDB2_Result
     function numCols()
     {
         return $this->db->raiseError(MDB2_ERROR_UNSUPPORTED, null, null,
-            'numCols: method not implemented');
+            'method not implemented', __FUNCTION__);
     }
-    // }}}
 
+    // }}}
     // {{{ function getResource()
+
     /**
      * return the resource associated with the result object
      *
@@ -3367,14 +3647,14 @@ class MDB2_Result_Common extends MDB2_Result
      *
      * @access  public
      */
-
     function getResource()
     {
         return $this->result;
     }
-    // }}}
 
+    // }}}
     // {{{ function bindColumn($column, &$value, $type = null)
+
     /**
      * Set bind variable to a column.
      *
@@ -3405,8 +3685,8 @@ class MDB2_Result_Common extends MDB2_Result
         }
         return MDB2_OK;
     }
-    // }}}
 
+    // }}}
     // {{{ function _assignBindColumns($row)
 
     /**
@@ -3428,8 +3708,8 @@ class MDB2_Result_Common extends MDB2_Result
         }
         return MDB2_OK;
     }
-    // }}}
 
+    // }}}
     // {{{ function free()
 
     /**
@@ -3444,10 +3724,11 @@ class MDB2_Result_Common extends MDB2_Result
         $this->result = false;
         return MDB2_OK;
     }
+
     // }}}
 }
-// }}}
 
+// }}}
 // {{{ class MDB2_Row
 
 /**
@@ -3472,8 +3753,8 @@ class MDB2_Row
             $this->$key = &$row[$key];
         }
     }
-    // }}}
 
+    // }}}
     // {{{ function MDB2_Row(&$row)
 
     /**
@@ -3485,10 +3766,11 @@ class MDB2_Row
     {
         $this->__construct($row);
     }
+
     // }}}
 }
-// }}}
 
+// }}}
 // {{{ class MDB2_Statement_Common
 
 /**
@@ -3501,6 +3783,7 @@ class MDB2_Row
 class MDB2_Statement_Common
 {
     // {{{ Variables (Properties)
+
     var $db;
     var $statement;
     var $query;
@@ -3510,8 +3793,8 @@ class MDB2_Statement_Common
     var $limit;
     var $offset;
     var $is_manip;
-    // }}}
 
+    // }}}
     // {{{ constructor: function __construct(&$db, &$statement, $positions, $query, $types, $result_types, $is_manip = false, $limit = null, $offset = null)
 
     /**
@@ -3529,8 +3812,8 @@ class MDB2_Statement_Common
         $this->is_manip = $is_manip;
         $this->offset = $offset;
     }
-    // }}}
 
+    // }}}
     // {{{ function MDB2_Statement_Common(&$db, &$statement, $positions, $query, $types, $result_types, $is_manip = false, $limit = null, $offset = null)
 
     /**
@@ -3540,8 +3823,8 @@ class MDB2_Statement_Common
     {
         $this->__construct($db, $statement, $positions, $query, $types, $result_types, $is_manip, $limit, $offset);
     }
-    // }}}
 
+    // }}}
     // {{{ function bindValue($parameter, &$value, $type = null)
 
     /**
@@ -3564,7 +3847,7 @@ class MDB2_Statement_Common
         }
         if (!array_key_exists($parameter, $this->positions)) {
             return $this->db->raiseError(MDB2_ERROR_NOT_FOUND, null, null,
-                'bindValue: Unable to bind to missing placeholder: '.$parameter);
+                'Unable to bind to missing placeholder: '.$parameter, __FUNCTION__);
         }
         $this->values[$parameter] = $value;
         if (!is_null($type)) {
@@ -3572,8 +3855,8 @@ class MDB2_Statement_Common
         }
         return MDB2_OK;
     }
-    // }}}
 
+    // }}}
     // {{{ function bindValueArray($values, $types = null)
 
     /**
@@ -3598,8 +3881,8 @@ class MDB2_Statement_Common
         }
         return MDB2_OK;
     }
-    // }}}
 
+    // }}}
     // {{{ function bindParam($parameter, &$value, $type = null)
 
     /**
@@ -3622,7 +3905,7 @@ class MDB2_Statement_Common
         }
         if (!array_key_exists($parameter, $this->positions)) {
             return $this->db->raiseError(MDB2_ERROR_NOT_FOUND, null, null,
-                'bindParam: Unable to bind to missing placeholder: '.$parameter);
+                'Unable to bind to missing placeholder: '.$parameter, __FUNCTION__);
         }
         $this->values[$parameter] =& $value;
         if (!is_null($type)) {
@@ -3630,8 +3913,8 @@ class MDB2_Statement_Common
         }
         return MDB2_OK;
     }
-    // }}}
 
+    // }}}
     // {{{ function bindParamArray(&$values, $types = null)
 
     /**
@@ -3656,8 +3939,8 @@ class MDB2_Statement_Common
         }
         return MDB2_OK;
     }
-    // }}}
 
+    // }}}
     // {{{ function &execute($values = null, $result_class = true, $result_wrap_class = false)
 
     /**
@@ -3677,7 +3960,7 @@ class MDB2_Statement_Common
     {
         if (is_null($this->positions)) {
             return $this->db->raiseError(MDB2_ERROR, null, null,
-                'execute: Prepared statement has already been freed');
+                'Prepared statement has already been freed', __FUNCTION__);
         }
 
         if (!empty($values)) {
@@ -3687,8 +3970,8 @@ class MDB2_Statement_Common
         $result =& $this->_execute($result_class, $result_wrap_class);
         return $result;
     }
-    // }}}
 
+    // }}}
     // {{{ function &_execute($result_class = true, $result_wrap_class = false)
 
     /**
@@ -3709,7 +3992,7 @@ class MDB2_Statement_Common
         foreach ($this->positions as $parameter => $current_position) {
             if (!array_key_exists($parameter, $this->values)) {
                 return $this->db->raiseError(MDB2_ERROR_NOT_FOUND, null, null,
-                    '_execute: Unable to bind to missing placeholder: '.$parameter);
+                    'Unable to bind to missing placeholder: '.$parameter, __FUNCTION__);
             }
             $value = $this->values[$parameter];
             $query.= substr($this->query, $last_position, $current_position - $last_position);
@@ -3736,8 +4019,8 @@ class MDB2_Statement_Common
         }
         return $result;
     }
-    // }}}
 
+    // }}}
     // {{{ function free()
 
     /**
@@ -3751,7 +4034,7 @@ class MDB2_Statement_Common
     {
         if (is_null($this->positions)) {
             return $this->db->raiseError(MDB2_ERROR, null, null,
-                'free: Prepared statement has already been freed');
+                'Prepared statement has already been freed', __FUNCTION__);
         }
 
         $this->statement = null;
@@ -3766,10 +4049,11 @@ class MDB2_Statement_Common
 
         return MDB2_OK;
     }
+
     // }}}
 }
-// }}}
 
+// }}}
 // {{{ class MDB2_Module_Common
 
 /**
@@ -3782,6 +4066,7 @@ class MDB2_Statement_Common
 class MDB2_Module_Common
 {
     // {{{ Variables (Properties)
+
     /**
      * contains the key to the global MDB2 instance array of the associated
      * MDB2 instance
@@ -3790,8 +4075,8 @@ class MDB2_Module_Common
      * @access  protected
      */
     var $db_index;
-    // }}}
 
+    // }}}
     // {{{ constructor: function __construct($db_index)
 
     /**
@@ -3801,8 +4086,8 @@ class MDB2_Module_Common
     {
         $this->db_index = $db_index;
     }
-    // }}}
 
+    // }}}
     // {{{ function MDB2_Module_Common($db_index)
 
     /**
@@ -3812,8 +4097,8 @@ class MDB2_Module_Common
     {
         $this->__construct($db_index);
     }
-    // }}}
 
+    // }}}
     // {{{ function &getDBInstance()
 
     /**
@@ -3833,11 +4118,13 @@ class MDB2_Module_Common
         }
         return $result;
     }
+
     // }}}
 }
-// }}}
 
+// }}}
 // {{{ function MDB2_closeOpenTransactions()
+
 /**
  * Close any open transactions form persistent connections
  *
@@ -3858,9 +4145,10 @@ function MDB2_closeOpenTransactions()
         }
     }
 }
-// }}}
 
+// }}}
 // {{{ function MDB2_defaultDebugOutput(&$db, $scope, $message, $is_manip = null)
+
 /**
  * default debug output handler
  *
@@ -3869,19 +4157,20 @@ function MDB2_closeOpenTransactions()
  *                  for example 'query', 'prepare', 'execute', 'parameters',
  *                  'beginTransaction', 'commit', 'rollback'
  * @param   string  message that should be appended to the debug variable
- * @param   bool    in case of a query if its a DML statement
+ * @param   array   contains context information about the debug() call
+ *                  common keys are: is_manip, time, result etc.
  *
  * @return  void|string optionally return a modified message, this allows
  *                      rewriting a query before being issued or prepared
  *
  * @access  public
  */
-function MDB2_defaultDebugOutput(&$db, $scope, $message, $is_manip = null)
+function MDB2_defaultDebugOutput(&$db, $scope, $message, $context)
 {
     $db->debug_output.= $scope.'('.$db->db_index.'): ';
     $db->debug_output.= $message.$db->getOption('log_line_break');
     return $message;
 }
-// }}}
 
+// }}}
 ?>

@@ -2,7 +2,8 @@
 // +----------------------------------------------------------------------+
 // | PHP versions 4 and 5                                                 |
 // +----------------------------------------------------------------------+
-// | Copyright (c) 1998-2006 Manuel Lemos, Paul Cooper                    |
+// | Copyright (c) 1998-2006 Manuel Lemos, Tomas V.V.Cox,                 |
+// | Stig. S. Bakken, Lukas Smith                                         |
 // | All rights reserved.                                                 |
 // +----------------------------------------------------------------------+
 // | MDB2 is a merge of PEAR DB and Metabases that provides a unified DB  |
@@ -38,74 +39,20 @@
 // | WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE          |
 // | POSSIBILITY OF SUCH DAMAGE.                                          |
 // +----------------------------------------------------------------------+
-// | Author: Paul Cooper <pgc@ucecom.com>                                 |
+// | Author: Lukas Smith <smith@pooteeweet.org>                           |
 // +----------------------------------------------------------------------+
 //
-// $Id: MDB2_extended_testcase.php,v 1.4 2006/05/23 10:11:49 lsmith Exp $
+// $Id: Common.php,v 1.1 2006/06/18 21:59:05 lsmith Exp $
+//
 
-require_once 'MDB2_testcase.php';
-
-class MDB2_Extended_TestCase extends MDB2_TestCase {
-    /**
-     *
-     */
-    function testAutoExecute() {
-        $data = $this->getSampleData();
-        $select_query = 'SELECT ' . implode(', ', array_keys($this->fields)) . ' FROM users';
-
-        $result = $this->db->loadModule('Extended');
-        if (PEAR::isError($result)) {
-            $this->assertTrue(false, 'Error loading "Extended" module: '.$result->getMessage());
-        }
-
-        $result = $this->db->extended->autoExecute('users', $data, MDB2_AUTOQUERY_INSERT, null, $this->fields);
-        if (PEAR::isError($result)) {
-            $this->assertTrue(false, 'Error auto executing insert: '.$result->getMessage());
-        }
-
-        $this->db->setFetchMode(MDB2_FETCHMODE_ASSOC);
-        $result =& $this->db->query($select_query, $this->fields);
-        if (PEAR::isError($result)) {
-            $this->assertTrue(false, 'Error selecting from users: '.$result->getMessage());
-        }
-
-        $this->verifyFetchedValues($result, null, $data);
-        $result->free();
-
-        $update_data = array();
-        $data['user_name'] = $update_data['user_name'] = 'foo';
-
-        $where = 'user_id = '.$this->db->quote($data['user_id'], 'integer');
-        $result = $this->db->extended->autoExecute('users', $update_data, MDB2_AUTOQUERY_UPDATE, $where, $this->fields);
-        if (PEAR::isError($result)) {
-            $this->assertTrue(false, 'Error auto executing insert: '.$result->getMessage());
-        }
-
-        $this->db->setFetchMode(MDB2_FETCHMODE_ASSOC);
-        $result =& $this->db->query($select_query, $this->fields);
-        if (PEAR::isError($result)) {
-            $this->assertTrue(false, 'Error selecting from users: '.$result->getMessage());
-        }
-
-        $this->verifyFetchedValues($result, null, $data);
-        $result->free();
-
-        $where = array($where, 'user_name = '.$this->db->quote($data['user_name'], 'text'));
-        $result = $this->db->extended->autoExecute('users', null, MDB2_AUTOQUERY_DELETE, $where, null);
-
-        if (PEAR::isError($result)) {
-            $this->assertTrue(false, 'Error auto executing insert: '.$result->getMessage());
-        }
-
-        $this->db->setFetchMode(MDB2_FETCHMODE_ASSOC);
-        $result =& $this->db->query($select_query, $this->fields);
-        if (PEAR::isError($result)) {
-            $this->assertTrue(false, 'Error selecting from users: '.$result->getMessage());
-        }
-
-        $this->assertEquals($result->numRows(), 0, 'No rows were expected to be returned');
-        $result->free();
-    }
+/**
+ * Base class for the natuve modules that is extended by each MDB2 driver
+ *
+ * @package MDB2
+ * @category Database
+ * @author  Lukas Smith <smith@pooteeweet.org>
+ */
+class MDB2_Driver_Native_Common extends MDB2_Module_Common
+{
 }
-
 ?>

@@ -43,7 +43,7 @@
 // | Author: Lukas Smith <smith@pooteeweet.org>                           |
 // +----------------------------------------------------------------------+
 //
-// $Id: MDB2.php,v 1.247 2006/07/21 07:06:45 lsmith Exp $
+// $Id: MDB2.php,v 1.255 2006/08/20 21:28:53 lsmith Exp $
 //
 
 /**
@@ -911,10 +911,20 @@ class MDB2
      */
     function fileExists($file)
     {
-        $fp = @fopen($file, 'r', true);
-        if (is_resource($fp)) {
-            @fclose($fp);
-            return true;
+        // safe_mode does notwork with is_readable()
+        if (ini_get('safe_mode')) {
+            $fp = @fopen($file, 'r', true);
+            if (is_resource($fp)) {
+                @fclose($fp);
+                return true;
+            }
+        } else {
+             $dirs = explode(PATH_SEPARATOR, ini_get('include_path'));
+             foreach ($dirs as $dir) {
+                 if (is_readable($dir . DIRECTORY_SEPARATOR . $file)) {
+                     return true;
+                 }
+            }
         }
         return false;
     }
@@ -1161,6 +1171,13 @@ class MDB2_Driver_Common extends PEAR
     var $escape_identifier = '"';
 
     /**
+     * column alias keyword
+     * @var     string
+     * @access  protected
+     */
+    var $as_keyword = ' AS ';
+
+    /**
      * warnings
      * @var     array
      * @access  protected
@@ -1401,7 +1418,8 @@ class MDB2_Driver_Common extends PEAR
         }
 
         $err =& PEAR::raiseError(null, $code, $mode, $options, $userinfo, 'MDB2_Error', true);
-        if (isset($this->nested_transaction_counter) && !$this->has_transaction_error) {
+        if ($err->getMode() !== PEAR_ERROR_RETURN
+            && isset($this->nested_transaction_counter) && !$this->has_transaction_error) {
             $this->has_transaction_error =& $err;
         }
         return $err;
@@ -1670,6 +1688,19 @@ class MDB2_Driver_Common extends PEAR
     }
 
     // }}}
+    // {{{ function getAsKeyword()
+
+    /**
+     * Gets the string to alias column
+     *
+     * @return string to use when aliasing a column
+     */
+    function getAsKeyword()
+    {
+        return $this->as_keyword;
+    }
+
+    // }}}
     // {{{ function getConnection()
 
     /**
@@ -1689,8 +1720,8 @@ class MDB2_Driver_Common extends PEAR
         return $this->connection;
     }
 
-    // }}}
-    // {{{ function _fixResultArrayValues(&$array, $mode)
+     // }}}
+    // {{{ function _fixResultArrayValues(&$row, $mode)
 
     /**
      * Do all necessary conversions on result arrays to fix DBMS quirks
@@ -1702,70 +1733,70 @@ class MDB2_Driver_Common extends PEAR
      *
      * @access  protected
      */
-    function _fixResultArrayValues(&$array, $mode)
+    function _fixResultArrayValues(&$row, $mode)
     {
         switch ($mode) {
-        case MDB2_PORTABILITY_RTRIM:
-            foreach ($array as $key => $value) {
-                if (is_string($value)) {
-                    $array[$key] = rtrim($value);
+        case MDB2_PORTABILITY_EMPTY_TO_NULL:
+            foreach ($row as $key => $value) {
+                if ($value === '') {
+                    $row[$key] = null;
                 }
             }
             break;
-        case MDB2_PORTABILITY_EMPTY_TO_NULL:
-            foreach ($array as $key => $value) {
-                if ($value === '') {
-                    $array[$key] = null;
+        case MDB2_PORTABILITY_RTRIM:
+            foreach ($row as $key => $value) {
+                if (is_string($value)) {
+                    $row[$key] = rtrim($value);
                 }
             }
             break;
         case MDB2_PORTABILITY_FIX_ASSOC_FIELD_NAMES:
-            $tmp_array = array();
-            foreach ($array as $key => $value) {
-                $tmp_array[preg_replace('/^(?:.*\.)?([^.]+)$/', '\\1', $key)] = $value;
+            $tmp_row = array();
+            foreach ($row as $key => $value) {
+                $tmp_row[preg_replace('/^(?:.*\.)?([^.]+)$/', '\\1', $key)] = $value;
             }
-            $array = $tmp_array;
+            $row = $tmp_row;
             break;
         case (MDB2_PORTABILITY_RTRIM + MDB2_PORTABILITY_EMPTY_TO_NULL):
-            foreach ($array as $key => $value) {
+            foreach ($row as $key => $value) {
                 if ($value === '') {
-                    $array[$key] = null;
+                    $row[$key] = null;
                 } elseif (is_string($value)) {
-                    $array[$key] = rtrim($value);
+                    $row[$key] = rtrim($value);
                 }
             }
             break;
         case (MDB2_PORTABILITY_RTRIM + MDB2_PORTABILITY_FIX_ASSOC_FIELD_NAMES):
-            $tmp_array = array();
-            foreach ($array as $key => $value) {
+            $tmp_row = array();
+            foreach ($row as $key => $value) {
                 if (is_string($value)) {
                     $value = rtrim($value);
                 }
-                $tmp_array[preg_replace('/^(?:.*\.)?([^.]+)$/', '\\1', $key)] = $value;
+                $tmp_row[preg_replace('/^(?:.*\.)?([^.]+)$/', '\\1', $key)] = $value;
             }
-            $array = $tmp_array;
+            $row = $tmp_row;
             break;
         case (MDB2_PORTABILITY_EMPTY_TO_NULL + MDB2_PORTABILITY_FIX_ASSOC_FIELD_NAMES):
-            $tmp_array = array();
-            foreach ($array as $key => $value) {
+            $tmp_row = array();
+            foreach ($row as $key => $value) {
                 if ($value === '') {
                     $value = null;
                 }
-                $tmp_array[preg_replace('/^(?:.*\.)?([^.]+)$/', '\\1', $key)] = $value;
+                $tmp_row[preg_replace('/^(?:.*\.)?([^.]+)$/', '\\1', $key)] = $value;
             }
-            $array = $tmp_array;
+            $row = $tmp_row;
             break;
         case (MDB2_PORTABILITY_RTRIM + MDB2_PORTABILITY_EMPTY_TO_NULL + MDB2_PORTABILITY_FIX_ASSOC_FIELD_NAMES):
-            $tmp_array = array();
-            foreach ($array as $key => $value) {
+            $tmp_row = array();
+            foreach ($row as $key => $value) {
                 if ($value === '') {
                     $value = null;
                 } elseif (is_string($value)) {
                     $value = rtrim($value);
                 }
-                $tmp_array[preg_replace('/^(?:.*\.)?([^.]+)$/', '\\1', $key)] = $value;
+                $tmp_row[preg_replace('/^(?:.*\.)?([^.]+)$/', '\\1', $key)] = $value;
             }
-            $array = $tmp_array;
+            $row = $tmp_row;
             break;
         }
     }
@@ -2879,6 +2910,10 @@ class MDB2_Driver_Common extends PEAR
                     if ($parameter === '') {
                         $err =& $this->raiseError(MDB2_ERROR_SYNTAX, null, null,
                             'named parameter with an empty name', __FUNCTION__);
+                        return $err;
+                    } elseif (isset($positions[$parameter])) {
+                        $err =& $this->raiseError(MDB2_ERROR_SYNTAX, null, null,
+                            'named parameter names can only be used once per statement', __FUNCTION__);
                         return $err;
                     }
                     $positions[$parameter] = $p_position;
@@ -4165,7 +4200,7 @@ function MDB2_closeOpenTransactions()
  *
  * @access  public
  */
-function MDB2_defaultDebugOutput(&$db, $scope, $message, $context)
+function MDB2_defaultDebugOutput(&$db, $scope, $message, $context = array())
 {
     $db->debug_output.= $scope.'('.$db->db_index.'): ';
     $db->debug_output.= $message.$db->getOption('log_line_break');

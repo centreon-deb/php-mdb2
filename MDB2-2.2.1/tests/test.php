@@ -41,27 +41,36 @@
 // | Author: Paul Cooper <pgc@ucecom.com>                                 |
 // +----------------------------------------------------------------------+
 //
-// $Id: clitest.php,v 1.12 2006/05/31 14:38:07 lsmith Exp $
+// $Id: test.php,v 1.17 2006/08/20 07:16:55 lsmith Exp $
 
 /*
  This is a small test suite for MDB2 using PHPUnit
-
- This is the command line version and should be used like so;
-
- php -q clitest.php
-
- This will run through all tests in all testcases (as defined in
- test_setup.php). To run individual tests add their names to the command
- line and all testcases will be searched for matching test names, e.g.
-
- php -q clitest.php teststorage testreplace
-*/
+ */
 
 require_once 'test_setup.php';
 require_once 'PHPUnit.php';
 require_once 'testUtils.php';
 require_once 'MDB2.php';
-require_once 'Console_TestListener.php';
+require_once 'HTML_TestListener.php';
+
+function htmlErrorHandler($errno, $errstr, $errfile, $errline)
+{
+    if ((!$GLOBALS['_show_silenced'] && !error_reporting()) || $errno == 2048) {
+        return;
+    }
+    echo '<pre>';
+    errorHandler($errno, $errstr, $errfile, $errline);
+    echo '</pre>';
+}
+set_error_handler('htmlErrorHandler');
+
+function htmlErrorHandlerPEAR($error_obj)
+{
+    echo '<pre>';
+    errorHandlerPEAR($error_obj);
+    echo '</pre>';
+}
+PEAR::setErrorHandling(PEAR_ERROR_CALLBACK, 'htmlErrorHandlerPEAR');
 
 MDB2::loadFile('Date');
 
@@ -71,35 +80,22 @@ foreach ($testcases as $testcase) {
 
 $database = 'driver_test';
 
-$inputMethods = $argv;
+$testmethods = !empty($_POST['testmethods']) ? $_POST['testmethods'] : null;
 
-if ($argc > 1) {
-    array_shift($inputMethods);
-    $exclude = false;
-    if ($inputMethods[0] == '-exclude') {
-        array_shift($inputMethods);
-        $exclude = true;
-    }
-    foreach ($testcases as $testcase) {
-        $possibleMethods = getTests($testcase);
-        if ($exclude) {
-            $intersect = array_diff($possibleMethods, $inputMethods);
-        } else {
-            $intersect = array_intersect($possibleMethods, $inputMethods);
-        }
-        if (count($intersect) > 0) {
-            $testmethods[$testcase] = array_flip($intersect);
-        }
-    }
-}
-
-$database = 'driver_test';
-
-if (!isset($testmethods) || !is_array($testmethods)) {
+if (!is_array($testmethods)) {
     foreach ($testcases as $testcase) {
         $testmethods[$testcase] = array_flip(getTests($testcase));
     }
 }
+
+?>
+<html>
+<head>
+<title>MDB2 Tests</title>
+<link href="tests.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+<?php
 
 foreach ($dbarray as $db) {
     $dsn = $db['dsn'];
@@ -107,12 +103,13 @@ foreach ($dbarray as $db) {
     $GLOBALS['_show_silenced'] = !empty($options['debug']) ? $options['debug'] : false;
 
     $display_dsn = $dsn['phptype'] . "://" . $dsn['username'] . ":XXX@" . $dsn['hostspec'] . "/" . $database;
-    echo "=== Start test of $display_dsn ===\n";
+    echo "<div class=\"test\">\n";
+    echo "<div class=\"title\">Testing $display_dsn</div>\n";
 
     $suite = new PHPUnit_TestSuite();
 
     foreach ($testcases as $testcase) {
-        if (is_array($testmethods[$testcase])) {
+        if (isset($testmethods[$testcase]) && is_array($testmethods[$testcase])) {
             $methods = array_keys($testmethods[$testcase]);
             foreach ($methods as $method) {
                 $suite->addTest(new $testcase($method));
@@ -121,11 +118,14 @@ foreach ($dbarray as $db) {
     }
 
     $result = new PHPUnit_TestResult;
-    $result->addListener(new Console_TestListener);
-
+    $result->addListener(new HTML_TestListener);
     $suite->run($result);
+    $count = $result->runCount();
+    $failed = $result->failureCount();
 
-    echo "=== End test of $display_dsn ===\n\n";
+    echo "<div class=\"title\">Summary: $failed failed assertions in $count tests</div>\n";
+    echo "\n</div>\n";
 }
-
 ?>
+</body>
+</html>

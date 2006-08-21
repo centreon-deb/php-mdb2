@@ -42,7 +42,7 @@
 // | Author: Lukas Smith <smith@pooteeweet.org>                           |
 // +----------------------------------------------------------------------+
 //
-// $Id: Common.php,v 1.15 2006/07/15 13:07:15 lsmith Exp $
+// $Id: Common.php,v 1.16 2006/08/07 20:15:21 lsmith Exp $
 //
 
 /**
@@ -173,6 +173,36 @@ class MDB2_Driver_Function_Common extends MDB2_Module_Common
     function random()
     {
         return 'RAND()';
+    }
+
+    // }}}
+    // {{{ lower()
+
+    /**
+     * return string to call a function to lower the case of an expression
+     *
+     * @param string $expression
+     * @return return string to lower case of an expression
+     * @access public
+     */
+    function lower($expression)
+    {
+        return "LOWER($expression)";
+    }
+
+    // }}}
+    // {{{ upper()
+
+    /**
+     * return string to call a function to upper the case of an expression
+     *
+     * @param string $expression
+     * @return return string to upper case of an expression
+     * @access public
+     */
+    function upper($expression)
+    {
+        return "UPPER($expression)";
     }
 
     // }}}

@@ -42,7 +42,7 @@
 // | Author: Lukas Smith <smith@pooteeweet.org>                           |
 // +----------------------------------------------------------------------+
 //
-// $Id: Common.php,v 1.98 2006/07/21 07:11:53 lsmith Exp $
+// $Id: Common.php,v 1.109 2006/08/20 09:48:43 lsmith Exp $
 
 require_once 'MDB2/LOB.php';
 
@@ -162,14 +162,17 @@ class MDB2_Driver_Datatype_Common extends MDB2_Module_Common
      * general type conversion method
      *
      * @param mixed $value refernce to a value to be converted
-     * @param int $type constant that specifies which type to convert to
+     * @param string $type specifies which type to convert to
      * @return object a MDB2 error on failure
      * @access protected
      */
-    function _baseConvertResult($value, $type)
+    function _baseConvertResult($value, $type, $rtrim = true)
     {
         switch ($type) {
         case 'text':
+            if ($rtrim) {
+                $value = rtrim($value);
+            }
             return $value;
         case 'integer':
             return intval($value);
@@ -208,7 +211,7 @@ class MDB2_Driver_Datatype_Common extends MDB2_Module_Common
         }
 
         return $db->raiseError(MDB2_ERROR_INVALID, null, null,
-            'attempt to convert result value to an unknown type ' . $type, __FUNCTION__);
+            'attempt to convert result value to an unknown type :' . $type, __FUNCTION__);
     }
 
     // }}}
@@ -218,11 +221,12 @@ class MDB2_Driver_Datatype_Common extends MDB2_Module_Common
      * convert a value to a RDBMS indepdenant MDB2 type
      *
      * @param mixed $value value to be converted
-     * @param int $type constant that specifies which type to convert to
-     * @return mixed converted value or a MDB2 error on failure
+     * @param string $type specifies which type to convert to
+     * @param bool   $rtrim   if to rtrim text values or not
+     * @return mixed converted value
      * @access public
      */
-    function convertResult($value, $type)
+    function convertResult($value, $type, $rtrim = true)
     {
         if (is_null($value)) {
             return null;
@@ -234,11 +238,11 @@ class MDB2_Driver_Datatype_Common extends MDB2_Module_Common
         if (!empty($db->options['datatype_map'][$type])) {
             $type = $db->options['datatype_map'][$type];
             if (!empty($db->options['datatype_map_callback'][$type])) {
-                $parameter = array('type' => $type, 'value' => $value);
+                $parameter = array('type' => $type, 'value' => $value, 'rtrim' => $rtrim);
                 return call_user_func_array($db->options['datatype_map_callback'][$type], array(&$db, __FUNCTION__, $parameter));
             }
         }
-        return $this->_baseConvertResult($value, $type);
+        return $this->_baseConvertResult($value, $type, $rtrim);
     }
 
     // }}}
@@ -247,37 +251,36 @@ class MDB2_Driver_Datatype_Common extends MDB2_Module_Common
     /**
      * convert a result row
      *
-     * @param resource $result result identifier
-     * @param array $row array with data
+     * @param array $types 
+     * @param array $row specifies the types to convert to
+     * @param bool   $rtrim   if to rtrim text values or not
      * @return mixed MDB2_OK on success,  a MDB2 error on failure
      * @access public
      */
-    function convertResultRow($types, $row)
+    function convertResultRow($types, $row, $rtrim = true)
     {
-        if (is_array($types)) {
-            reset($types);
-            $current_column = -1;
-            foreach ($row as $key => $column) {
-                ++$current_column;
-                if (!isset($column)) {
-                    continue;
-                }
-                if (isset($types[$current_column])) {
-                    $type = $types[$current_column];
-                } elseif (isset($types[$key])) {
-                    $type = $types[$key];
-                } elseif (current($types)) {
-                    $type = current($types);
-                    next($types);
-                } else {
-                    continue;
-                }
-                $value = $this->convertResult($row[$key], $type);
-                if (PEAR::isError($value)) {
-                    return $value;
-                }
-                $row[$key] = $value;
+        reset($types);
+        $current_column = -1;
+        foreach ($row as $key => $value) {
+            ++$current_column;
+            if (!isset($value)) {
+                continue;
             }
+            if (isset($types[$current_column])) {
+                $type = $types[$current_column];
+            } elseif (isset($types[$key])) {
+                $type = $types[$key];
+            } elseif (current($types)) {
+                $type = current($types);
+                next($types);
+            } else {
+                continue;
+            }
+            $value = $this->convertResult($row[$key], $type, $rtrim);
+            if (PEAR::isError($value)) {
+                return $value;
+            }
+            $row[$key] = $value;
         }
         return $row;
     }
@@ -416,19 +419,20 @@ class MDB2_Driver_Datatype_Common extends MDB2_Module_Common
         $default = '';
         if (array_key_exists('default', $field)) {
             if ($field['default'] === '') {
-                $field['default'] = (!empty($field['notnull']))
-                    ? $this->valid_types[$field['type']] : null;
+                $field['default'] = empty($field['notnull'])
+                    ? null : $this->valid_types[$field['type']];
                 if ($field['default'] === ''
-                    && $db->options['portability'] & MDB2_PORTABILITY_EMPTY_TO_NULL
+                    && ($db->options['portability'] & MDB2_PORTABILITY_EMPTY_TO_NULL)
                 ) {
                     $field['default'] = ' ';
                 }
             }
-
             $default = ' DEFAULT '.$this->quote($field['default'], $field['type']);
+        } elseif (empty($field['notnull'])) {
+            $default = ' DEFAULT NULL';
         }
 
-        $notnull = (!empty($field['notnull'])) ? ' NOT NULL' : '';
+        $notnull = empty($field['notnull']) ? '' : ' NOT NULL';
         $name = $db->quoteIdentifier($name, true);
         return $name.' '.$this->getTypeDeclaration($field).$default.$notnull;
     }
@@ -535,7 +539,7 @@ class MDB2_Driver_Datatype_Common extends MDB2_Module_Common
             return $db;
         }
 
-        $notnull = (!empty($field['notnull'])) ? ' NOT NULL' : '';
+        $notnull = empty($field['notnull']) ? '' : ' NOT NULL';
         $name = $db->quoteIdentifier($name, true);
         return $name.' '.$this->getTypeDeclaration($field).$notnull;
     }
@@ -571,7 +575,7 @@ class MDB2_Driver_Datatype_Common extends MDB2_Module_Common
             return $db;
         }
 
-        $notnull = (!empty($field['notnull'])) ? ' NOT NULL' : '';
+        $notnull = empty($field['notnull']) ? '' : ' NOT NULL';
         $name = $db->quoteIdentifier($name, true);
         return $name.' '.$this->getTypeDeclaration($field).$notnull;
     }
@@ -1544,11 +1548,13 @@ class MDB2_Driver_Datatype_Common extends MDB2_Module_Common
      * @access public
      *
      * @param array $pattern even keys are strings, odd are patterns (% and _)
-     * @param string $operator optional pattern operator (LIKE, maybe others in the future)
+     * @param string $operator optional pattern operator (LIKE, ILIKE and maybe others in the future)
+     * @param string $field optional field name that is being matched against
+     *                  (might be required when emulating ILIKE)
      *
      * @return string SQL pattern
      */
-    function matchPattern($pattern, $operator = null)
+    function matchPattern($pattern, $operator = null, $field = null)
     {
         $db =& $this->getDBInstance();
         if (PEAR::isError($db)) {
@@ -1557,10 +1563,21 @@ class MDB2_Driver_Datatype_Common extends MDB2_Module_Common
 
         $match = '';
         if (!is_null($operator)) {
-            switch (strtoupper($operator)) {
+            $operator = strtoupper($operator);
+            switch ($operator) {
+            // case insensitive
+            case 'ILIKE':
+                if (is_null($field)) {
+                    return $db->raiseError(MDB2_ERROR_UNSUPPORTED, null, null,
+                        'case insensitive LIKE matching requires passing the field name', __FUNCTION__);
+                }
+                $db->loadModule('Function', null, true);
+                $match = $db->function->lower($field).' '.'LIKE ';
+                break;
+            // case sensitive
             case 'LIKE':
-                $match = 'LIKE ';
-            break;
+                $match = is_null($field) ? 'LIKE ' : $field.' LIKE ';
+                break;
             default:
                 return $db->raiseError(MDB2_ERROR_UNSUPPORTED, null, null,
                     'not a supported operator type:'. $operator, __FUNCTION__);
@@ -1571,6 +1588,9 @@ class MDB2_Driver_Datatype_Common extends MDB2_Module_Common
             if ($key % 2) {
                 $match.= $value;
             } else {
+                if ($operator === 'ILIKE') {
+                    $value = strtolower($value);
+                }
                 $match.= $db->escapePattern($db->escape($value));
             }
         }

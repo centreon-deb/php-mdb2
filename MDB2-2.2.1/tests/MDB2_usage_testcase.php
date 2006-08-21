@@ -41,7 +41,7 @@
 // | Author: Paul Cooper <pgc@ucecom.com>                                 |
 // +----------------------------------------------------------------------+
 //
-// $Id: MDB2_usage_testcase.php,v 1.72 2006/07/19 12:50:03 lsmith Exp $
+// $Id: MDB2_usage_testcase.php,v 1.81 2006/08/20 12:14:25 lsmith Exp $
 
 require_once 'MDB2_testcase.php';
 
@@ -475,8 +475,6 @@ class MDB2_Usage_TestCase extends MDB2_TestCase {
                 $this->assertTrue(false, 'Error executing select query'.$result->getMessage());
             }
 
-            $this->assertTrue($result->valid(), 'The query result seems to have reached the end of result earlier than expected');
-
             if ($is_null) {
                 $error_message = 'A query result column is not NULL unlike what was expected';
             } else {
@@ -489,102 +487,56 @@ class MDB2_Usage_TestCase extends MDB2_TestCase {
 
             $result->free();
         }
-    }
 
-    /**
-     * Tests escaping of text values with special characters
-     *
-     */
-    function testEscapeSequences() {
-        $test_strings = array(
-            "'",
-            "\"",
-            "\\",
-            "%",
-            "_",
-            "''",
-            "\"\"",
-            "\\\\",
-            "\\'\\'",
-            "\\\"\\\""
-        );
+        $methods = array('fetchOne', 'fetchRow');
 
-        $this->clearTables();
-        foreach($test_strings as $key => $string) {
-            $value = $this->db->quote($string, 'text');
-            $query = "INSERT INTO users (user_name,user_id) VALUES ($value, $key)";
-            $result = $this->db->exec($query);
-
-            if (PEAR::isError($result)) {
-                $this->assertTrue(false, 'Error executing insert query'.$result->getMessage());
-            }
-
-            $query = 'SELECT user_name FROM users WHERE user_id = '.$key;
-            $value = $this->db->queryOne($query, 'text');
-
+        foreach ($methods as $method) {
+            $result =& $this->db->query('SELECT user_name FROM users WHERE user_id=123', array('text'));
+            $value = $result->$method();
             if (PEAR::isError($value)) {
-                $this->assertTrue(false, 'Error executing select query'.$value->getMessage());
+                $this->assertTrue(false, 'Error fetching non existant row');
+            } else {
+                $this->assertNull($value, 'selecting non existant row with "'.$method.'()" did not return NULL');
+                $result->free();
             }
-
-            $this->assertEquals($string, $value, "the value retrieved for field \"user_name\" doesn't match what was stored");
-        }
-    }
-
-    /**
-     * Tests escaping of text pattern strings with special characters
-     *
-     */
-    function testEscapePatternSequences() {
-        if (!$this->supported('pattern_escaping')) {
-            $this->assertTrue(false, '"pattern_escaping" is not supported');
-            return;
         }
 
-        $test_strings = array(
-            "%",
-            "_",
-            "%_",
-            "_%",
-            "%foo%",
-            "%foo_",
-            "foo%123",
-            "foo_123",
-            "_foo%",
-            "_foo_",
-            "%'",
-            "_'",
-            "'%",
-            "'_",
-            "'%'",
-            "'_'",
-        );
+        $methods = array('fetchCol', 'fetchAll');
 
-        $this->clearTables();
-        foreach($test_strings as $key => $string) {
-            $value = $this->db->quote($string, 'text');
-            $query = "INSERT INTO users (user_name,user_id) VALUES ($value, $key)";
-            $result = $this->db->exec($query);
-            if (PEAR::isError($result)) {
-                $this->assertTrue(false, 'Error executing insert query'.$result->getMessage());
-            }
-
-            $query = 'SELECT user_name FROM users WHERE user_name LIKE '.$this->db->quote($string, 'text', true, true);
-            $value = $this->db->queryOne($query, 'text');
+        foreach ($methods as $method) {
+            $result =& $this->db->query('SELECT user_name FROM users WHERE user_id=123', array('text'));
+            $value = $result->$method();
             if (PEAR::isError($value)) {
-                $this->assertTrue(false, 'Error executing select query'.$value->getMessage());
+                $this->assertTrue(false, 'Error fetching non existant row');
+            } else {
+                $this->assertTrue((is_array($value) && empty($value)), 'selecting non existant row with "'.$method.'()" did not return empty array');
+                $result->free();
             }
-
-            $this->assertEquals($string, $value, "the value retrieved for field \"user_name\" doesn't match what was stored");
         }
 
-        $this->db->loadModule('Datatype', null, true);
-        $query = 'SELECT user_name FROM users WHERE user_name LIKE '.$this->db->datatype->matchPattern(array('foo%', '_', '23'));
-        $value = $this->db->queryOne($query, 'text');
-        $this->assertEquals('foo%123', $value, "the value retrieved for field \"user_name\" doesn't match what was stored");
+        $methods = array('queryOne', 'queryRow');
 
-        $query = 'SELECT user_name FROM users WHERE user_name LIKE '.$this->db->datatype->matchPattern(array(1 => '_', 'oo', '%'));
-        $value = $this->db->queryOne($query, 'text');
-        $this->assertEquals('foo', substr($value, 0, 3), "the value retrieved for field \"user_name\" doesn't match what was stored");
+        foreach ($methods as $method) {
+            $value = $this->db->$method('SELECT user_name FROM users WHERE user_id=123', array('text'));
+            if (PEAR::isError($value)) {
+                $this->assertTrue(false, 'Error fetching non existant row');
+            } else {
+                $this->assertNull($value, 'selecting non existant row with "'.$method.'()" did not return NULL');
+                $result->free();
+            }
+        }
+
+        $methods = array('queryCol', 'queryAll');
+
+        foreach ($methods as $method) {
+            $value = $this->db->$method('SELECT user_name FROM users WHERE user_id=123', array('text'));
+            if (PEAR::isError($value)) {
+                $this->assertTrue(false, 'Error fetching non existant row');
+            } else {
+                $this->assertTrue((is_array($value) && empty($value)), 'selecting non existant row with "'.$method.'()" did not return empty array');
+                $result->free();
+            }
+        }
     }
 
     /**
@@ -594,7 +546,6 @@ class MDB2_Usage_TestCase extends MDB2_TestCase {
      */
     function testRanges() {
         if (!$this->supported('limit_queries')) {
-            $this->assertTrue(false, '"limit_queries" is not supported');
             return;
         }
 
@@ -667,8 +618,7 @@ class MDB2_Usage_TestCase extends MDB2_TestCase {
      */
     function testSequences() {
         if (!$this->supported('sequences')) {
-            $this->assertTrue(false, '"sequences" is not supported');
-            return;
+           return;
         }
 
         $this->db->loadModule('Manager', null, true);
@@ -739,7 +689,6 @@ class MDB2_Usage_TestCase extends MDB2_TestCase {
         }
     }
 
-
     /**
      * Test replace query
      *
@@ -747,7 +696,6 @@ class MDB2_Usage_TestCase extends MDB2_TestCase {
      */
     function testReplace() {
         if (!$this->supported('replace')) {
-            $this->assertTrue(false, '"replace" is not supported');
             return;
         }
 
@@ -855,7 +803,6 @@ class MDB2_Usage_TestCase extends MDB2_TestCase {
      */
     function testAffectedRows() {
         if (!$this->supported('affected_rows')) {
-            $this->assertTrue(false, '"affected_rows" is not supported');
             return;
         }
 
@@ -925,7 +872,6 @@ class MDB2_Usage_TestCase extends MDB2_TestCase {
      */
     function testTransactionsRollback() {
         if (!$this->supported('transactions')) {
-            $this->assertTrue(false, '"transactions" is not supported');
             return;
         }
 
@@ -954,7 +900,6 @@ class MDB2_Usage_TestCase extends MDB2_TestCase {
      */
     function testTransactionsCommit() {
         if (!$this->supported('transactions')) {
-            $this->assertTrue(false, '"transactions" is not supported');
             return;
         }
 
@@ -984,7 +929,6 @@ class MDB2_Usage_TestCase extends MDB2_TestCase {
     function testTransactionsBoth()
     {
         if (!$this->supported('transactions')) {
-            $this->assertTrue(false, '"transactions" is not supported');
             return;
         }
 
@@ -1014,7 +958,6 @@ class MDB2_Usage_TestCase extends MDB2_TestCase {
      */
     function testNestedTransactions() {
         if (!$this->supported('transactions')) {
-            $this->assertTrue(false, '"transactions" is not supported');
             return;
         }
 
@@ -1059,7 +1002,6 @@ class MDB2_Usage_TestCase extends MDB2_TestCase {
      */
     function testSavepoint() {
         if (!$this->supported('savepoints')) {
-            $this->assertTrue(false, '"savepoints" is not supported');
             return;
         }
 
@@ -1130,7 +1072,6 @@ class MDB2_Usage_TestCase extends MDB2_TestCase {
      */
     function testLOBStorage() {
         if (!$this->supported('LOBs')) {
-            $this->assertTrue(false, '"LOBs" is not supported');
             return;
         }
 
@@ -1204,7 +1145,6 @@ class MDB2_Usage_TestCase extends MDB2_TestCase {
      */
     function testLOBFiles() {
         if (!$this->supported('LOBs')) {
-            $this->assertTrue(false, '"LOBs" is not supported');
             return;
         }
 
@@ -1309,7 +1249,6 @@ class MDB2_Usage_TestCase extends MDB2_TestCase {
      */
     function testLOBNulls() {
         if (!$this->supported('LOBs')) {
-            $this->assertTrue(false, '"LOBs" is not supported');
             return;
         }
 
@@ -1336,6 +1275,102 @@ class MDB2_Usage_TestCase extends MDB2_TestCase {
         $this->assertTrue(is_null($row['document']), 'A query result large object column document is not NULL unlike what was expected');
         $this->assertTrue(is_null($row['picture']), 'A query result large object column picture is not NULL unlike what was expected');
 
+        $result->free();
+    }
+
+    function testLOBUpdate() {
+        if (!$this->supported('LOBs')) {
+            return;
+        }
+
+        $query = 'INSERT INTO files (ID, document, picture) VALUES (1, ?, ?)';
+        $stmt = $this->db->prepare($query, array('clob', 'blob'), MDB2_PREPARE_MANIP, array('document', 'picture'));
+
+        $character_lob = '';
+        $binary_lob = '';
+
+        for ($i = 0; $i < 1000; $i++) {
+            for ($code = 32; $code <= 127; ++$code) {
+                $character_lob .= chr($code);
+            }
+            for ($code = 0; $code <= 255; ++$code) {
+                $binary_lob .= chr($code);
+            }
+        }
+
+        $stmt->bindParam(0, $character_lob);
+        $stmt->bindParam(1, $binary_lob);
+
+        $result = $stmt->execute();
+
+        if (PEAR::isError($result)) {
+            $this->assertTrue(false, 'Error executing prepared query: '.$result->getUserInfo());
+        }
+
+        $stmt->free();
+
+        $query = 'UPDATE files SET document = ?, picture = ? WHERE ID = 1';
+        $stmt = $this->db->prepare($query, array('clob', 'blob'), MDB2_PREPARE_MANIP, array('document', 'picture'));
+
+        $character_lob = '';
+        $binary_lob = '';
+
+        for ($i = 0; $i < 999; $i++) {
+            for ($code = 127; $code >= 32; --$code) {
+                $character_lob .= chr($code);
+            }
+            for ($code = 255; $code >= 0; --$code) {
+                $binary_lob .= chr($code);
+            }
+        }
+
+        $stmt->bindParam(0, $character_lob);
+        $stmt->bindParam(1, $binary_lob);
+
+        $result = $stmt->execute();
+
+        if (PEAR::isError($result)) {
+            $this->assertTrue(false, 'Error executing prepared query: '.$result->getUserInfo());
+        }
+
+        $stmt->free();
+
+        $result =& $this->db->query('SELECT document, picture FROM files WHERE id = 1', array('clob', 'blob'));
+        if (PEAR::isError($result)) {
+            $this->assertTrue(false, 'Error selecting from files'.$result->getMessage());
+        }
+
+        $this->assertTrue($result->valid(), 'The query result seem to have reached the end of result too soon.');
+
+        $row = $result->fetchRow();
+        $clob = $row[0];
+        if (!PEAR::isError($clob) && is_resource($clob)) {
+            $value = '';
+            while (!feof($clob)) {
+                $data = fread($clob, 8192);
+                $this->assertTrue(strlen($data) >= 0, 'Could not read CLOB');
+                $value.= $data;
+            }
+            $this->db->datatype->destroyLOB($clob);
+            $this->assertEquals($character_lob, $value, 'Retrieved character LOB value is different from what was stored');
+        } else {
+            $this->assertTrue(false, 'Error retrieving CLOB result');
+        }
+
+        $blob = $row[1];
+        if (!PEAR::isError($blob) && is_resource($blob)) {
+            $value = '';
+            while (!feof($blob)) {
+                $data = fread($blob, 8192);
+                $this->assertTrue(strlen($data) >= 0, 'Could not read BLOB');
+                $value.= $data;
+            }
+
+            $this->db->datatype->destroyLOB($blob);
+            $this->assertEquals($binary_lob, $value, 'Retrieved binary LOB value is different from what was stored');
+        } else {
+            $this->assertTrue(false, 'Error retrieving BLOB result');
+        }
         $result->free();
     }
 
@@ -1427,20 +1462,6 @@ class MDB2_Usage_TestCase extends MDB2_TestCase {
             $field = next($fields);
         }
 
-        // leave the case as-is
-        $this->db->setOption('portability', MDB2_PORTABILITY_NONE);
-        $fields = array('User_Name', 'UseR_PassWord');
-        $query = 'SELECT '. implode(',', $fields).' FROM users';
-        $result =& $this->db->queryRow($query, null, MDB2_FETCHMODE_ASSOC);
-        if (PEAR::isError($result)) {
-            $this->assertTrue(false, 'Error selecting from users'.$result->getMessage());
-        }
-        $field = reset($fields);
-        foreach (array_keys($result) as $fieldname) {
-            $this->assertEquals($field, $fieldname, '"MDB2_PORTABILITY_FIX_CASE = off" not working');
-            $field = next($fields);
-        }
-
         // MDB2_PORTABILITY_RTRIM
         $this->db->setOption('portability', MDB2_PORTABILITY_NONE | MDB2_PORTABILITY_RTRIM);
         $value = 'rtrim   ';
@@ -1456,19 +1477,96 @@ class MDB2_Usage_TestCase extends MDB2_TestCase {
         }
         $this->assertEquals(rtrim($value), $result, '"MDB2_PORTABILITY_RTRIM = on" not working');
 
-        $this->db->setOption('portability', MDB2_PORTABILITY_NONE);
-        $value = 'rtrim   ';
-        $query = 'INSERT INTO users (user_id, user_password) VALUES (2, ' . $this->db->quote($value, 'text') .')';
-        $res = $this->db->exec($query);
-        if (PEAR::isError($res)) {
-            $this->assertTrue(false, 'Error executing query'.$res->getMessage());
+        if (!$this->supported('LOBs')) {
+            return;
         }
-        $query = 'SELECT user_password FROM users WHERE user_id = 2';
-        $result = $this->db->queryOne($query, array('text'));
+
+        $query = 'INSERT INTO files (ID, document, picture) VALUES (1, ?, ?)';
+        $stmt = $this->db->prepare($query, array('clob', 'blob'), MDB2_PREPARE_MANIP, array('document', 'picture'));
+
+        $character_lob = '';
+        $binary_lob = '';
+
+        for ($i = 0; $i < 999; $i++) {
+            for ($code = 127; $code >= 32; --$code) {
+                $character_lob .= chr($code);
+            }
+            for ($code = 255; $code >= 0; --$code) {
+                $binary_lob .= chr($code);
+            }
+        }
+
+        $stmt->bindParam(0, $character_lob);
+        $stmt->bindParam(1, $binary_lob);
+
+        $result = $stmt->execute();
+
         if (PEAR::isError($result)) {
-            $this->assertTrue(false, 'Error selecting from users'.$result->getMessage());
+            $this->assertTrue(false, 'Error executing prepared query: '.$result->getUserInfo());
         }
-        $this->assertEquals($value, $result, '"MDB2_PORTABILITY_RTRIM = off" not working');
+
+        $stmt->free();
+
+        $result =& $this->db->query('SELECT document, picture FROM files WHERE id = 1', array('clob', 'blob'));
+        if (PEAR::isError($result)) {
+            $this->assertTrue(false, 'Error selecting from files'.$result->getMessage());
+        }
+
+        $this->assertTrue($result->valid(), 'The query result seem to have reached the end of result too soon.');
+
+        $row = $result->fetchRow();
+        $clob = $row[0];
+        if (!PEAR::isError($clob) && is_resource($clob)) {
+            $value = '';
+            while (!feof($clob)) {
+                $data = fread($clob, 8192);
+                $this->assertTrue(strlen($data) >= 0, 'Could not read CLOB');
+                $value.= $data;
+            }
+            $this->db->datatype->destroyLOB($clob);
+            $this->assertEquals($character_lob, $value, '"MDB2_PORTABILITY_RTRIM = on" Retrieved character LOB value is different from what was stored');
+        } else {
+            $this->assertTrue(false, 'Error retrieving CLOB result');
+        }
+
+        $blob = $row[1];
+        if (!PEAR::isError($blob) && is_resource($blob)) {
+            $value = '';
+            while (!feof($blob)) {
+                $data = fread($blob, 8192);
+                $this->assertTrue(strlen($data) >= 0, 'Could not read BLOB');
+                $value.= $data;
+            }
+
+            $this->db->datatype->destroyLOB($blob);
+            $this->assertEquals($binary_lob, $value, '"MDB2_PORTABILITY_RTRIM = on" Retrieved binary LOB value is different from what was stored');
+        } else {
+            $this->assertTrue(false, 'Error retrieving BLOB result');
+        }
+        $result->free();
+    }
+
+    /**
+     * Test getAsKeyword()
+     */
+    function testgetAsKeyword()
+    {
+        $query = 'INSERT INTO users (' . implode(', ', array_keys($this->fields)) . ') VALUES ('.implode(', ', array_fill(0, count($this->fields), '?')).')';
+        $stmt = $this->db->prepare($query, array_values($this->fields), MDB2_PREPARE_MANIP);
+        $data = $this->getSampleData(1);
+        $result = $stmt->execute(array_values($data));
+        if (PEAR::isError($result)) {
+            $this->assertTrue(false, 'Error executing prepared query'.$result->getMessage());
+        }
+        $stmt->free();
+
+        $query = 'SELECT user_id'.$this->db->getAsKeyword().'foo FROM users';
+        $result = $this->db->queryRow($query, array('integer'), MDB2_FETCHMODE_ASSOC);
+        if (PEAR::isError($result)) {
+            $this->assertFalse(true, 'Error getting alias column:'. $result->getMessage());
+        } else {
+            $this->assertTrue((array_key_exists('foo', $result)), 'Error: could not alias "user_id" with "foo" :'.var_export($result, true));
+        }
     }
 }
 

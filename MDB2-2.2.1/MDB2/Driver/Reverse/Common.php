@@ -42,7 +42,7 @@
 // | Author: Lukas Smith <smith@pooteeweet.org>                           |
 // +----------------------------------------------------------------------+
 //
-// $Id: Common.php,v 1.24 2006/07/19 07:18:52 lsmith Exp $
+// $Id: Common.php,v 1.28 2006/08/15 11:24:51 lsmith Exp $
 //
 
 /**
@@ -325,7 +325,7 @@ class MDB2_Driver_Reverse_Common extends MDB2_Module_Common
                 'method not implemented', __FUNCTION__);
         }
 
-        $db->loadModule('Manager');
+        $db->loadModule('Manager', null, true);
         $fields = $db->manager->listTableFields($result);
         if (PEAR::isError($fields)) {
             return $fields;
@@ -333,14 +333,19 @@ class MDB2_Driver_Reverse_Common extends MDB2_Module_Common
 
         $flags = array();
 
+        $idxname_format = $db->getOption('idxname_format');
+        $db->setOption('idxname_format', '%s');
+
         $indexes = $db->manager->listTableIndexes($result);
         if (PEAR::isError($indexes)) {
+            $db->setOption('idxname_format', $idxname_format);
             return $indexes;
         }
 
         foreach ($indexes as $index) {
             $definition = $this->getTableIndexDefinition($result, $index);
             if (PEAR::isError($definition)) {
+                $db->setOption('idxname_format', $idxname_format);
                 return $definition;
             }
             if (count($definition['fields']) > 1) {
@@ -353,12 +358,20 @@ class MDB2_Driver_Reverse_Common extends MDB2_Module_Common
         $constraints = $db->manager->listTableConstraints($result);
         if (PEAR::isError($constraints)) {
             return $constraints;
+        }
+
+        foreach ($constraints as $constraint) {
+            $definition = $this->getTableConstraintDefinition($result, $constraint);
+            if (PEAR::isError($definition)) {
+                $db->setOption('idxname_format', $idxname_format);
+                return $definition;
+            }
             $flag = !empty($definition['primary'])
                 ? 'primary_key' : (!empty($definition['unique'])
                     ? 'unique_key' : false);
             if ($flag) {
                 foreach ($definition['fields'] as $field => $sort) {
-                    if (!empty($flags[$field]) || $flags[$field] != 'primary_key') {
+                    if (empty($flags[$field]) || $flags[$field] != 'primary_key') {
                         $flags[$field] = $flag;
                     }
                 }
@@ -372,12 +385,13 @@ class MDB2_Driver_Reverse_Common extends MDB2_Module_Common
         foreach ($fields as $i => $field) {
             $definition = $this->getTableFieldDefinition($result, $field);
             if (PEAR::isError($definition)) {
+                $db->setOption('idxname_format', $idxname_format);
                 return $definition;
             }
             $res[$i] = $definition[0];
             $res[$i]['name'] = $field;
             $res[$i]['table'] = $result;
-            $res[$i]['type'] = $definition[0]['nativetype'];
+            $res[$i]['type'] = preg_replace('/^([a-z]+).*$/i', '\\1', trim($definition[0]['nativetype']));
             // 'primary_key', 'unique_key', 'multiple_key'
             $res[$i]['flags'] = empty($flags[$field]) ? '' : $flags[$field];
             // not_null', 'unsigned', 'auto_increment', 'default_[rawencodedvalue]'
@@ -402,6 +416,7 @@ class MDB2_Driver_Reverse_Common extends MDB2_Module_Common
             }
         }
 
+        $db->setOption('idxname_format', $idxname_format);
         return $res;
     }
 }

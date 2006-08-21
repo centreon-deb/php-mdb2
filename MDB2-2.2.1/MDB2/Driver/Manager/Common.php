@@ -42,7 +42,7 @@
 // | Author: Lukas Smith <smith@pooteeweet.org>                           |
 // +----------------------------------------------------------------------+
 //
-// $Id: Common.php,v 1.54 2006/07/15 13:07:15 lsmith Exp $
+// $Id: Common.php,v 1.56 2006/08/21 16:18:10 nrf Exp $
 //
 
 /**
@@ -250,6 +250,9 @@ class MDB2_Driver_Manager_Common extends MDB2_Module_Common
         $query_fields = $this->getFieldDeclarationList($fields);
         if (PEAR::isError($query_fields)) {
             return $query_fields;
+        }
+        if (!empty($options['primary'])) {
+            $query_fields.= ', PRIMARY KEY ('.implode(', ', array_keys($options['primary'])).')';
         }
 
         $name = $db->quoteIdentifier($name, true);
@@ -717,7 +720,7 @@ class MDB2_Driver_Manager_Common extends MDB2_Module_Common
     // {{{ listTableConstraints()
 
     /**
-     * list all sonstraints in a table
+     * list all constraints in a table
      *
      * @param string    $table      name of table that should be used in method
      * @return mixed data array on success, a MDB2 error on failure

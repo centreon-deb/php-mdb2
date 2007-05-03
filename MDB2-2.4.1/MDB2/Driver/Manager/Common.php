@@ -42,7 +42,7 @@
 // | Author: Lukas Smith <smith@pooteeweet.org>                           |
 // +----------------------------------------------------------------------+
 //
-// $Id: Common.php,v 1.61 2007/03/12 14:44:23 quipo Exp $
+// $Id: Common.php,v 1.62 2007/03/28 16:39:55 quipo Exp $
 //
 
 /**
@@ -65,7 +65,7 @@ class MDB2_Driver_Manager_Common extends MDB2_Module_Common
     /**
      * Get declaration of a number of field in bulk
      *
-     * @param string $fields  a multidimensional associative array.
+     * @param array $fields  a multidimensional associative array.
      *      The first dimension determines the field name, while the second
      *      dimension is keyed with the name of the properties
      *      of the field being declared as array indexes. Currently, the types

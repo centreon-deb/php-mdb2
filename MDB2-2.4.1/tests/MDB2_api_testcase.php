@@ -41,7 +41,7 @@
 // | Author: Paul Cooper <pgc@ucecom.com>                                 |
 // +----------------------------------------------------------------------+
 //
-// $Id: MDB2_api_testcase.php,v 1.21 2007/02/03 13:23:43 quipo Exp $
+// $Id: MDB2_api_testcase.php,v 1.22 2007/04/25 09:11:35 quipo Exp $
 
 require_once 'MDB2_testcase.php';
 
@@ -224,6 +224,15 @@ class MDB2_Api_TestCase extends MDB2_TestCase {
         $result = $this->standardQuery();
 
         $this->assertTrue(MDB2::isResult($result), 'query: $result returned is not a resource');
+    }
+
+    function testExec() {
+        if (!$this->methodExists($this->db, 'exec')) {
+            return;
+        }
+        $result = $this->db->exec('UPDATE users SET user_name = user_name WHERE user_id = user_id');
+        $this->assertFalse(PEAR::isError($result), 'exec: $result returned is an error');
+        $this->assertEquals(0, $result, 'exec: incorrect number of affected rows returned');
     }
 
     function testFetchRow() {

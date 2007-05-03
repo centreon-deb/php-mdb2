@@ -41,7 +41,7 @@
 // | Author: Lorenzo Alberton <l dot alberton at quipo dot it>            |
 // +----------------------------------------------------------------------+
 //
-// $Id: MDB2_reverse_testcase.php,v 1.43 2007/03/05 01:26:54 quipo Exp $
+// $Id: MDB2_reverse_testcase.php,v 1.46 2007/03/29 18:18:06 quipo Exp $
 
 require_once 'MDB2_testcase.php';
 
@@ -256,7 +256,8 @@ class MDB2_Reverse_TestCase extends MDB2_TestCase
         } else {
             $field_info = array_shift($field_info);
             $this->assertEquals('integer', $field_info['type'], 'The field type is different from the expected one');
-            $this->assertEquals(4, $field_info['length'], 'The field length is different from the expected one');
+            $expected_length = ($this->db->phptype == 'oci8') ? 10 : 4;
+            $this->assertEquals($expected_length, $field_info['length'], 'The field length is different from the expected one');
             $this->assertTrue($field_info['notnull'], 'The field can be null unlike it was expected');
             $this->assertEquals('0', $field_info['default'], 'The field default value is different from the expected one');
         }
@@ -290,7 +291,9 @@ class MDB2_Reverse_TestCase extends MDB2_TestCase
             $this->assertTrue(false, 'Error in getTableFieldDefinition(): '.$field_info->getMessage());
         } else {
             $field_info = array_shift($field_info);
-            $this->assertEquals($field_info['type'], 'decimal', 'The field type is different from the expected one');
+            $this->assertEquals('decimal', $field_info['type'], 'The field type is different from the expected one');
+            $expected_length = ($this->db->phptype == 'oci8') ? '22,2' : '18,2';
+            $this->assertEquals($expected_length, $field_info['length'], 'The field length is different from the expected one');
         }
     }
 
@@ -326,6 +329,7 @@ class MDB2_Reverse_TestCase extends MDB2_TestCase
             $expected_fields = array_keys($this->indices[$index_name]['fields']);
             $actual_fields = array_keys($index_info['fields']);
             $this->assertEquals($expected_fields, $actual_fields, 'The INDEX field names don\'t match');
+            $this->assertEquals(1, $index_info['fields'][$expected_fields[0]]['position'], 'The field position in the INDEX is not correct');
         }
 
         //test INDEX on MULTIPLE FIELDS
@@ -338,6 +342,8 @@ class MDB2_Reverse_TestCase extends MDB2_TestCase
             $expected_fields = array_keys($this->indices[$index_name]['fields']);
             $actual_fields = array_keys($index_info['fields']);
             $this->assertEquals($expected_fields, $actual_fields, 'The INDEX field names don\'t match');
+            $this->assertEquals(1, $index_info['fields'][$expected_fields[0]]['position'], 'The field position in the INDEX is not correct');
+            $this->assertEquals(2, $index_info['fields'][$expected_fields[1]]['position'], 'The field position in the INDEX is not correct');
         }
 
         if (!$this->setUpConstraints()) {
@@ -378,7 +384,7 @@ class MDB2_Reverse_TestCase extends MDB2_TestCase
                 $result = $this->db->reverse->getTableConstraintDefinition($this->table, $constraint_name);
             }
             if (PEAR::isError($result)) {
-                $this->assertFalse(true, 'Error getting table constraint definition');
+                $this->assertFalse(true, 'Error getting table constraint definition ('.$constraint_name.')');
             } else {
                 $constraint_names = array_keys($constraint['fields']);
                 $this->assertEquals($constraint_names, array_keys($result['fields']), 'Error listing constraint fields');
@@ -420,6 +426,7 @@ class MDB2_Reverse_TestCase extends MDB2_TestCase
             $expected_fields = array_keys($this->constraints[$constraint_name]['fields']);
             $actual_fields = array_keys($constraint_info['fields']);
             $this->assertEquals($expected_fields, $actual_fields, 'The UNIQUE INDEX field names don\'t match');
+            $this->assertEquals(1, $constraint_info['fields'][$expected_fields[0]]['position'], 'The field position in the INDEX is not correct');
         }
 
         //test UNIQUE on MULTIPLE FIELDS
@@ -434,6 +441,8 @@ class MDB2_Reverse_TestCase extends MDB2_TestCase
             $expected_fields = array_keys($this->constraints[$constraint_name]['fields']);
             $actual_fields = array_keys($constraint_info['fields']);
             $this->assertEquals($expected_fields, $actual_fields, 'The UNIQUE INDEX field names don\'t match');
+            $this->assertEquals(1, $constraint_info['fields'][$expected_fields[0]]['position'], 'The field position in the INDEX is not correct');
+            $this->assertEquals(2, $constraint_info['fields'][$expected_fields[1]]['position'], 'The field position in the INDEX is not correct');
         }
     }
 

@@ -41,7 +41,7 @@
 // | Author: Lorenzo Alberton <l dot alberton at quipo dot it>            |
 // +----------------------------------------------------------------------+
 //
-// $Id: MDB2_datatype_testcase.php,v 1.16 2007/03/06 11:27:22 quipo Exp $
+// $Id: MDB2_datatype_testcase.php,v 1.18 2007/03/28 16:39:02 quipo Exp $
 
 require_once 'MDB2_testcase.php';
 
@@ -50,7 +50,7 @@ require_once 'MDB2_testcase.php';
  * ensuring that custom datatype callback features are handled
  * correctly.
  *
- * @param MDB2   $db         The MDB2 database reource object.
+ * @param MDB2   $db         The MDB2 database resource object.
  * @param string $method     The name of the MDB2_Driver_Datatype_Common method
  *                           the callback function was called from. One of
  *                           "getValidTypes", "convertResult", "getDeclaration",
@@ -330,6 +330,10 @@ class MDB2_Datatype_TestCase extends MDB2_TestCase
         $actual = $this->db->quote($non_us, 'decimal');
         $this->assertEquals($expected, $actual);
 
+        // test quoting with invalid chars
+        $val = '100.3abc";d@a[\\';
+        $this->assertEquals(100.3, $this->db->quote($val, 'decimal'));
+
         if (!$emulate_prepared && !$this->db->getOption('emulate_prepared')) {
             $this->testDecimalDataType(true);
         } elseif($emulate_prepared) {
@@ -400,6 +404,10 @@ class MDB2_Datatype_TestCase extends MDB2_TestCase
         $non_us = '1.000,35';
         $actual = $this->db->quote($non_us, 'float');
         $this->assertEquals($expected, $actual);
+
+        // test quoting with invalid chars
+        $val = '100.3abc";d@a[\\';
+        $this->assertEquals(100.3, $this->db->quote($val, 'float'));
 
         if (!$emulate_prepared && !$this->db->getOption('emulate_prepared')) {
             $this->testFloatDataType(true);
@@ -695,6 +703,18 @@ class MDB2_Datatype_TestCase extends MDB2_TestCase
         $field = array('type' => 'test');
         $result = $this->db->datatype->getDeclaration($type, $name, $field);
         $this->assertEquals('datatype_test_callback::getdeclaration', $result, 'getDeclaration');
+        
+        // Test with a custom datatype without datatype_map_callback function
+        $name = 'address';
+        $type = 'text';
+        $field = array(
+            'name' => 'company_addr',
+            'type' => 'address',
+        );
+        $this->db->setOption('datatype_map', array($name => $type));
+        $result = $this->db->datatype->getDeclaration($field['type'], $field['name'], $field);
+        $expected = $field['name'].' '.$this->db->datatype->getTypeDeclaration(array('type' => $type)).' DEFAULT NULL';
+        $this->assertEquals($expected, $result);
         unset($this->db->options['datatype_map']);
         unset($this->db->options['datatype_map_callback']);
     }
@@ -768,6 +788,9 @@ class MDB2_Datatype_TestCase extends MDB2_TestCase
         // Test with an MDB2 datatype, eg. "text"
         $type = 'text';
         $result = $this->db->datatype->mapPrepareDatatype($type);
+        if ($this->db->phptype == 'mysqli') {
+            $type = 's';
+        }
         $this->assertEquals($type, $result, 'mapPrepareDatatype');
 
         // Test with a custom datatype
@@ -796,7 +819,7 @@ class MDB2_Datatype_TestCase extends MDB2_TestCase
             $field['type'] = 'integer';
         }
         $expected_length = 8;
-        if (in_array($this->db->phptype, array('mysql', 'mysqli', 'pgsql', 'sqlite'))) {
+        if (in_array($this->db->phptype, array('mysql', 'mysqli', 'pgsql', 'sqlite', 'mssql'))) {
             $expected_length = 4;
         }
         $result = $this->db->datatype->mapNativeDatatype($field);
@@ -816,8 +839,8 @@ class MDB2_Datatype_TestCase extends MDB2_TestCase
         );
         $result = $this->db->datatype->mapNativeDatatype($field);
         $this->assertTrue(is_array($result), 'mapNativeDatatype');
-        $this->assertEquals(count($result), 4, 'mapNativeDatatype');
-        $this->assertEquals($result[0][0], 'test', 'mapNativeDatatype');
+        $this->assertEquals(4, count($result), 'mapNativeDatatype');
+        $this->assertEquals('test', $result[0][0], 'mapNativeDatatype');
         $this->assertNull($result[1], 'mapNativeDatatype');
         $this->assertNull($result[2], 'mapNativeDatatype');
         $this->assertNull($result[3], 'mapNativeDatatype');

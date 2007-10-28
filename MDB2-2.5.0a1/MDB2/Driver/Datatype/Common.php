@@ -42,7 +42,7 @@
 // | Author: Lukas Smith <smith@pooteeweet.org>                           |
 // +----------------------------------------------------------------------+
 //
-// $Id: Common.php,v 1.126 2007/03/28 16:49:43 quipo Exp $
+// $Id: Common.php,v 1.127 2007/09/09 13:47:36 quipo Exp $
 
 require_once 'MDB2/LOB.php';
 
@@ -54,6 +54,9 @@ require_once 'MDB2/LOB.php';
 
 /**
  * MDB2_Driver_Common: Base class that is extended by each MDB2 driver
+ *
+ * To load this module in the MDB2 object:
+ * $mdb->loadModule('Datatype');
  *
  * @package MDB2
  * @category Database

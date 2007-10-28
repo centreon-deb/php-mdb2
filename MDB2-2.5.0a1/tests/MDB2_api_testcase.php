@@ -41,7 +41,7 @@
 // | Author: Paul Cooper <pgc@ucecom.com>                                 |
 // +----------------------------------------------------------------------+
 //
-// $Id: MDB2_api_testcase.php,v 1.22 2007/04/25 09:11:35 quipo Exp $
+// $Id: MDB2_api_testcase.php,v 1.24 2007/10/15 21:57:42 quipo Exp $
 
 require_once 'MDB2_testcase.php';
 
@@ -222,8 +222,8 @@ class MDB2_Api_TestCase extends MDB2_TestCase {
             return;
         }
         $result = $this->standardQuery();
-
         $this->assertTrue(MDB2::isResult($result), 'query: $result returned is not a resource');
+        $this->assertTrue(MDB2::isResultCommon($result), 'query: $result returned is not a resource');
     }
 
     function testExec() {
@@ -233,6 +233,15 @@ class MDB2_Api_TestCase extends MDB2_TestCase {
         $result = $this->db->exec('UPDATE users SET user_name = user_name WHERE user_id = user_id');
         $this->assertFalse(PEAR::isError($result), 'exec: $result returned is an error');
         $this->assertEquals(0, $result, 'exec: incorrect number of affected rows returned');
+    }
+
+    function testPrepare() {
+        if (!$this->methodExists($this->db, 'prepare')) {
+            return;
+        }
+        $stmt = $this->db->prepare('SELECT user_name FROM users WHERE user_id = ?', array('integer'), MDB2_PREPARE_RESULT);
+        $this->assertTrue(MDB2::isStatement($stmt));
+        $stmt->free();
     }
 
     function testFetchRow() {
@@ -290,6 +299,21 @@ class MDB2_Api_TestCase extends MDB2_TestCase {
             $this->assertTrue(false, 'Error: '.$server_info->getMessage().' - '.$server_info->getUserInfo());
         } else {
             $this->assertTrue(is_array($server_info), 'Error: Server info is not returned as an array: '. serialize($server_info));
+        }
+    }
+
+    function testQuoteIdentifier() {
+        if ($this->db->phptype != 'ibase') {
+            $start = $this->db->identifier_quoting['start'];
+            $end = $this->db->identifier_quoting['end'];
+
+            $string = 'test';
+            $expected = $start . $string . $end;
+            $this->assertEquals($expected, $this->db->quoteIdentifier($string, false), 'Error: identifier not quoted properly');
+
+            $string = 'test.test';
+            $expected = $start . 'test' . $end . '.' . $start . 'test' . $end;
+            $this->assertEquals($expected, $this->db->quoteIdentifier($string, false), 'Error: identifier not quoted properly');
         }
     }
 }

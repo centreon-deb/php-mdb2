@@ -41,7 +41,7 @@
 // | Author: Lorenzo Alberton <l dot alberton at quipo dot it>            |
 // +----------------------------------------------------------------------+
 //
-// $Id: MDB2_function_testcase.php,v 1.20 2006/08/07 20:15:57 lsmith Exp $
+// $Id: MDB2_function_testcase.php,v 1.22 2007/08/11 16:36:11 quipo Exp $
 
 class MDB2_Function_TestCase extends MDB2_TestCase
 {
@@ -223,6 +223,26 @@ class MDB2_Function_TestCase extends MDB2_TestCase
             $this->assertFalse(true, 'Error getting upper case value:'. $result->getMessage());
         } else {
             $this->assertTrue(($result === 'FOO'), 'Error: could not upper case "FoO": '.$result);
+        }
+    }
+
+    /**
+     * Test length()
+     */
+    function testLenght()
+    {
+        if (!$this->methodExists($this->db->function, 'length')) {
+            return;
+        }
+        $string = $this->db->quote('foo');
+        $length_clause = $this->db->function->length($string);
+        $functionTable_clause = $this->db->function->functionTable();
+        $query = 'SELECT '.$length_clause . $functionTable_clause;
+        $len = $this->db->queryOne($query, 'integer');
+        if (PEAR::isError($len)) {
+            $this->assertFalse(true, 'Error getting upper case value:'. $len->getMessage());
+        } else {
+            $this->assertEquals(3, $len, 'Error: incorrect length for "foo" string: '.$len);
         }
     }
 }

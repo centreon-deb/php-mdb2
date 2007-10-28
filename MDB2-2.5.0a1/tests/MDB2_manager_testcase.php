@@ -42,7 +42,7 @@
 // |          Lorenzo Alberton <l dot alberton at quipo dot it>           |
 // +----------------------------------------------------------------------+
 //
-// $Id: MDB2_manager_testcase.php,v 1.55 2007/03/05 01:28:13 quipo Exp $
+// $Id: MDB2_manager_testcase.php,v 1.60 2007/09/23 18:46:05 quipo Exp $
 
 require_once 'MDB2_testcase.php';
 
@@ -75,13 +75,16 @@ class MDB2_Manager_TestCase extends MDB2_TestCase {
             ),
         );
         if (!$this->tableExists($this->table)) {
-            $this->db->manager->createTable($this->table, $this->fields);
+            $result = $this->db->manager->createTable($this->table, $this->fields);
+            $this->assertFalse(PEAR::isError($result), 'Error creating table');
+            $this->assertEquals(MDB2_OK, $result, 'Invalid return value for createTable()');
         }
     }
 
     function tearDown() {
         if ($this->tableExists($this->table)) {
-            $this->db->manager->dropTable($this->table);
+            $result = $this->db->manager->dropTable($this->table);
+            $this->assertFalse(PEAR::isError($result), 'Error dropping table');
         }
         $this->db->popExpect();
         unset($this->dsn);
@@ -252,7 +255,7 @@ class MDB2_Manager_TestCase extends MDB2_TestCase {
         if (!$this->methodExists($this->db->manager, 'createConstraint')) {
             return;
         }
-        $index = array(
+        $constraint = array(
             'fields' => array(
                 'id' => array(
                     'sorting' => 'ascending',
@@ -261,8 +264,8 @@ class MDB2_Manager_TestCase extends MDB2_TestCase {
             'primary' => true,
         );
         $name = 'pkindex';
-        $result = $this->db->manager->createConstraint($this->table, $name, $index);
-        $this->assertFalse(PEAR::isError($result), 'Error creating primary index');
+        $result = $this->db->manager->createConstraint($this->table, $name, $constraint);
+        $this->assertFalse(PEAR::isError($result), 'Error creating primary key constraint');
     }
 
     /**
@@ -272,7 +275,7 @@ class MDB2_Manager_TestCase extends MDB2_TestCase {
         if (!$this->methodExists($this->db->manager, 'createConstraint')) {
             return;
         }
-        $index = array(
+        $constraint = array(
             'fields' => array(
                 'somename' => array(
                     'sorting' => 'ascending',
@@ -281,8 +284,101 @@ class MDB2_Manager_TestCase extends MDB2_TestCase {
             'unique' => true,
         );
         $name = 'uniqueindex';
-        $result = $this->db->manager->createConstraint($this->table, $name, $index);
-        $this->assertFalse(PEAR::isError($result), 'Error creating unique index');
+        $result = $this->db->manager->createConstraint($this->table, $name, $constraint);
+        $this->assertFalse(PEAR::isError($result), 'Error creating unique constraint');
+    }
+
+    /**
+     *
+     */
+    function testCreateForeignKeyConstraint() {
+        if (!$this->methodExists($this->db->manager, 'createConstraint')) {
+            return;
+        }
+        $constraint = array(
+            'fields' => array(
+                'id' => array(
+                    'sorting' => 'ascending',
+                ),
+            ),
+            'foreign' => true,
+            'references' => array(
+                'table' => 'users',
+                'fields' => array(
+                    'user_id' => array(
+                        'position' => 1,
+                    ),
+                ),
+            ),
+            'initiallydeferred' => false,
+            'deferrable' => false,
+            'match' => 'SIMPLE',
+            'onupdate' => 'CASCADE',
+            'ondelete' => 'CASCADE',
+        );
+        $constraint_name = 'fkconstraint';
+        $result = $this->db->manager->createConstraint($this->table, $constraint_name, $constraint);
+        $this->assertFalse(PEAR::isError($result), 'Error creating FOREIGN KEY constraint');
+
+        //now check that it is enforced...
+
+        //insert a row in the primary table
+        $result = $this->db->exec('INSERT INTO users (user_id) VALUES (1)');
+        $this->assertTrue(!PEAR::isError($result), 'Insert failed');
+
+        //insert a row in the FK table with an id that references
+        //the newly inserted row on the primary table: should not fail
+        $query = 'INSERT INTO '.$this->db->quoteIdentifier($this->table)
+                .' ('.$this->db->quoteIdentifier('id').') VALUES (1)';
+        $result = $this->db->exec($query);
+        $this->assertTrue(!PEAR::isError($result), 'Insert failed');
+
+        //try to insert a row into the FK table with an id that does not
+        //exist in the primary table: should fail
+        $query = 'INSERT INTO '.$this->db->quoteIdentifier($this->table)
+                .' ('.$this->db->quoteIdentifier('id').') VALUES (123456)';
+        $this->db->expectError();
+        $result = $this->db->exec($query);
+        $this->db->popExpect();
+        $this->assertTrue(PEAR::isError($result), 'Foreign Key constraint is not enforced for INSERT query');
+
+        //try to update the first row of the FK table with an id that does not
+        //exist in the primary table: should fail
+        $query = 'UPDATE '.$this->db->quoteIdentifier($this->table)
+                .' SET '.$this->db->quoteIdentifier('id').' = 123456 '
+                .' WHERE '.$this->db->quoteIdentifier('id').' = 1';
+        $this->db->expectError();
+        $result = $this->db->exec($query);
+        $this->db->popExpect();
+        $this->assertTrue(PEAR::isError($result), 'Foreign Key constraint is not enforced for UPDATE query');
+
+        $numrows_query = 'SELECT COUNT(*) FROM '. $this->db->quoteIdentifier($this->table);
+        $numrows = $this->db->queryOne($numrows_query, 'integer');
+        $this->assertEquals(1, $numrows, 'Invalid number of rows in the FK table');
+
+        //insert the PK value of the primary table: the new value should be
+        //propagated to the FK table (ON UPDATE CASCADE)
+        $result = $this->db->exec('UPDATE users SET user_id = 2');
+        $this->assertTrue(!PEAR::isError($result), 'Update failed');
+
+        $numrows = $this->db->queryOne($numrows_query, 'integer');
+        $this->assertEquals(1, $numrows, 'Invalid number of rows in the FK table');
+
+        $query = 'SELECT id FROM '.$this->db->quoteIdentifier($this->table);
+        $newvalue = $this->db->queryOne($query, 'integer');
+        $this->assertEquals(2, $newvalue, 'The value of the FK field was not updated (CASCADE failed)');
+
+        //delete the row of the primary table: the row in the FK table should be
+        //deleted automatically (ON DELETE CASCADE)
+        $result = $this->db->exec('DELETE FROM users');
+        $this->assertTrue(!PEAR::isError($result), 'Delete failed');
+
+        $numrows = $this->db->queryOne($numrows_query, 'integer');
+        $this->assertEquals(0, $numrows, 'Invalid number of rows in the FK table (CASCADE failed)');
+
+        //cleanup
+        $result = $this->db->manager->dropConstraint($this->table, $constraint_name);
+        $this->assertTrue(!PEAR::isError($result), 'Error dropping the constraint');
     }
 
     /**
@@ -307,6 +403,21 @@ class MDB2_Manager_TestCase extends MDB2_TestCase {
         } else {
             $result = $this->db->manager->dropConstraint($this->table, $name, true);
             $this->assertFalse(PEAR::isError($result), 'Error dropping primary key index');
+        }
+    }
+
+    /**
+     *
+     */
+    function testListDatabases() {
+        if (!$this->methodExists($this->db->manager, 'listDatabases')) {
+            return;
+        }
+        $result = $this->db->manager->listDatabases();
+        if (PEAR::isError($result)) {
+            $this->assertFalse(true, 'Error listing databases ('.$result->getMessage().')');
+        } else {
+            $this->assertTrue(in_array(strtolower($this->database), $result), 'Error listing databases');
         }
     }
 

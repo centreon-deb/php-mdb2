@@ -2,7 +2,7 @@
 // +----------------------------------------------------------------------+
 // | PHP versions 4 and 5                                                 |
 // +----------------------------------------------------------------------+
-// | Copyright (c) 2007 m3 Media Services Ltd.                            |
+// | Copyright (c) 2008 m3 Media Services Ltd.                            |
 // | All rights reserved.                                                 |
 // +----------------------------------------------------------------------+
 // | MDB2 is a merge of PEAR DB and Metabases that provides a unified DB  |
@@ -42,7 +42,7 @@
 // |         Andrew Hill <andrew.hill@openads.org>                        |
 // +----------------------------------------------------------------------+
 //
-// $Id: MDB2_internals_testcase.php,v 1.1 2007/03/02 16:39:22 quipo Exp $
+// $Id: MDB2_internals_testcase.php,v 1.4 2008/06/12 11:10:43 quipo Exp $
 
 require_once 'MDB2_testcase.php';
 
@@ -432,8 +432,7 @@ class MDB2_Internals_TestCase extends MDB2_TestCase {
     }
 
     /**
-     * Tests that the MDB2::setDSN() method correctly sets
-     * the DSN.
+     * Tests that the MDB2::setDSN() method correctly sets the DSN.
      */
     function test_setDSN()
     {
@@ -453,8 +452,7 @@ class MDB2_Internals_TestCase extends MDB2_TestCase {
     }
 
     /**
-     * Tests that the MDB2::getDSN() method correctly gets
-     * the DSN.
+     * Tests that the MDB2::getDSN() method correctly gets the DSN.
      */
     function test_getDSN()
     {
@@ -474,7 +472,62 @@ class MDB2_Internals_TestCase extends MDB2_TestCase {
         $this->assertRegExp($dsn_rex, $dsn_get, 'testGetDSN');
         $dsn_rex = "/{$this->dsn['phptype']}[\w\W]+/";
         $this->assertRegExp($dsn_rex, $dsn_get, 'testGetDSN');
+    }
 
+    /**
+     * Tests that the 'new_link' DSN option is read correctly
+     */
+    function test_isNewLinkSet()
+    {
+        $dsn = array(
+            'phptype'  => 'mydbms',
+            'host'     => 'localhost',
+            'database' => 'dbname',
+            'username' => 'myname',
+            'password' => 'mypassword',
+        );
+        $this->db->setDSN($dsn);
+        $this->assertFalse($this->db->_isNewLinkSet());
+        $dsn['new_link'] = true;
+        $this->db->setDSN($dsn);
+        $this->assertTrue($this->db->_isNewLinkSet());
+        $dsn['new_link'] = false;
+        $this->db->setDSN($dsn);
+        $this->assertFalse($this->db->_isNewLinkSet());
+        $dsn['new_link'] = 'true';
+        $this->db->setDSN($dsn);
+        $this->assertTrue($this->db->_isNewLinkSet());
+        $dsn['new_link'] = 'false';
+        $this->db->setDSN($dsn);
+        $this->assertFalse($this->db->_isNewLinkSet());
+        $dsn['new_link'] = 1;
+        $this->db->setDSN($dsn);
+        $this->assertTrue($this->db->_isNewLinkSet());
+        $dsn['new_link'] = 0;
+        $this->db->setDSN($dsn);
+        $this->assertFalse($this->db->_isNewLinkSet());
+        $dsn['new_link'] = '1';
+        $this->db->setDSN($dsn);
+        $this->assertTrue($this->db->_isNewLinkSet());
+        $dsn['new_link'] = '0';
+        $this->db->setDSN($dsn);
+        $this->assertFalse($this->db->_isNewLinkSet());
+        $dsn['new_link'] = 'True';
+        $this->db->setDSN($dsn);
+        $this->assertTrue($this->db->_isNewLinkSet());
+        $dsn['new_link'] = 'TRUE';
+        $this->db->setDSN($dsn);
+        $this->assertTrue($this->db->_isNewLinkSet());
+        //now test some invalid values...
+        $dsn['new_link'] = new StdClass;
+        $this->db->setDSN($dsn);
+        $this->assertFalse($this->db->_isNewLinkSet());
+        $dsn['new_link'] = '';
+        $this->db->setDSN($dsn);
+        $this->assertFalse($this->db->_isNewLinkSet());
+        $dsn['new_link'] = 'blah';
+        $this->db->setDSN($dsn);
+        $this->assertFalse($this->db->_isNewLinkSet());
     }
 
     /**
@@ -517,8 +570,7 @@ class MDB2_Internals_TestCase extends MDB2_TestCase {
     }
 
     /**
-     * Tests that the MDB2::getIndexName() method correctly gets
-     * index names.
+     * Tests that the MDB2::getIndexName() method correctly gets index names.
      */
     function test_getIndexName()
     {
@@ -541,6 +593,34 @@ class MDB2_Internals_TestCase extends MDB2_TestCase {
         $this->assertEquals('', $this->db->connected_server_info, 'disconnect');
         $this->assertNull($this->db->in_transaction, 'disconnect');
         $this->assertNull($this->db->nested_transaction_counter, 'disconnect');
+    }
+    
+    /**
+     * Test that the MDB2::_skipDelimitedStrings() method correctly recognizes
+     * parameter placeholders from quoted strings
+     */
+    function test_skipDelimitedStrings() {
+        $query = "UPDATE tbl SET fld='' WHERE fld2=:param AND fld3=':fakeparam' AND fld3=:param2";
+        $this->assertEquals(0, $this->db->_skipDelimitedStrings($query, 0, 0));
+        $this->assertEquals(18, $this->db->_skipDelimitedStrings($query, 18, 19));
+        $this->assertEquals(20, $this->db->_skipDelimitedStrings($query, 20, 20));
+        $this->assertEquals(21, $this->db->_skipDelimitedStrings($query, 19, 21));
+        $this->assertEquals(30, $this->db->_skipDelimitedStrings($query, 30, 33));
+        $this->assertEquals(30, $this->db->_skipDelimitedStrings($query, 30, 34));
+        $this->assertEquals(33, $this->db->_skipDelimitedStrings($query, 33, 33));
+        $this->assertEquals(50, $this->db->_skipDelimitedStrings($query, 50, 50));
+        $this->assertEquals(61, $this->db->_skipDelimitedStrings($query, 49, 51));
+        $this->assertEquals(52, $this->db->_skipDelimitedStrings($query, 52, 52));
+        $this->assertEquals(70, $this->db->_skipDelimitedStrings($query, 70, 72));
+        $this->assertEquals(71, $this->db->_skipDelimitedStrings($query, 71, 72));
+        $this->assertEquals(72, $this->db->_skipDelimitedStrings($query, 72, 72));
+
+        //be careful about SQL comments that are not comments (because within quotes)
+        $query = "UPDATE tbl SET fld='--some text' WHERE col2=?";
+        $this->assertEquals(0, $this->db->_skipDelimitedStrings($query, 0, 0));
+        $this->assertEquals(18, $this->db->_skipDelimitedStrings($query, 18, 19));
+        $this->assertEquals(20, $this->db->_skipDelimitedStrings($query, 20, 20));
+        $this->assertEquals(32, $this->db->_skipDelimitedStrings($query, 19, 21));
     }
 
 }

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<package packagerversion="1.7.1" version="2.0" xmlns="http://pear.php.net/dtd/package-2.0" xmlns:tasks="http://pear.php.net/dtd/tasks-1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pear.php.net/dtd/tasks-1.0 http://pear.php.net/dtd/tasks-1.0.xsd http://pear.php.net/dtd/package-2.0 http://pear.php.net/dtd/package-2.0.xsd">
+<package packagerversion="1.7.2" version="2.0" xmlns="http://pear.php.net/dtd/package-2.0" xmlns:tasks="http://pear.php.net/dtd/tasks-1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pear.php.net/dtd/tasks-1.0 http://pear.php.net/dtd/tasks-1.0.xsd http://pear.php.net/dtd/package-2.0 http://pear.php.net/dtd/package-2.0.xsd">
  <name>MDB2</name>
  <channel>pear.php.net</channel>
  <extends>MDB</extends>
@@ -70,25 +70,29 @@ can be used to construct portable SQL statements:
   <email>afz@dev-code.com</email>
   <active>yes</active>
  </helper>
- <date>2008-03-15</date>
- <time>10:25:51</time>
+ <date>2009-01-14</date>
+ <time>16:28:09</time>
  <version>
-  <release>2.5.0b1</release>
-  <api>2.5.0b1</api>
+  <release>2.5.0b2</release>
+  <api>2.5.0b2</api>
  </version>
  <stability>
   <release>beta</release>
   <api>beta</api>
  </stability>
  <license>BSD License</license>
- <notes>- request #12731: added truncateTable() in the Manager module
-- request #12732: added vacuum() in the Manager module for OPTIMIZE/VACUUM TABLE abstraction
-- request #12800: added alterDatabase() in the Manager module [afz]
-- fixed bug #12924: correctly handle internal expected errors even with custom error handling
-- fixed bug #12991: new error code in errorInfo() [afz]
-- added databaseExists() method [afz]
-- request #13106: added unixtimestamp() in the Function module
-- added max_identifiers_length option
+ <notes>- fixed bug #12117: disconnect() does not work as documented
+- fixed bug #12912: replace() documentation
+- fixed bug #13811: _skipDelimitedStrings() fails on empty strings
+- fixed bug #13898: more tolerant check for &apos;new_link&apos; DSN option
+- request #13929: added &apos;default_fk_action_ondelete&apos; and &apos;default_fk_action_onupdate&apos;
+  options for default FOREIGN KEY constraints actions
+- fixed bug #14124: _skipDelimitedStrings() and prepare() fail with sql comments
+  inside quoted strings
+- fixed bug #14179: declaration of MDB2_Driver_Common::raiseError() must be
+  compatible with that of PEAR::raiseError()
+- fixed doc bug #14290: connect should mention the type of object returned
+- fixed bug #14831: $ignores in _skipDelimitedStrings() [patch by Aleksander Machniak]
 
 open todo items:
 - handle autoincrement fields in alterTable()
@@ -138,25 +142,25 @@ open todo items:
    <file baseinstalldir="/" md5sum="ec0c4383ddfd3af69d577344d0d5b4dd" name="docs/TODO" role="doc">
     <tasks:replace from="@package_version@" to="version" type="package-info" />
    </file>
-   <file baseinstalldir="/" md5sum="ec879f00c2300fed15d7612a7129e7f4" name="MDB2/Driver/Datatype/Common.php" role="php">
+   <file baseinstalldir="/" md5sum="df546ebe47bac7f9bffc0507bd4b9fb8" name="MDB2/Driver/Datatype/Common.php" role="php">
     <tasks:replace from="@package_version@" to="version" type="package-info" />
    </file>
-   <file baseinstalldir="/" md5sum="8e5e13e71d30f4650cef4360df016d98" name="MDB2/Driver/Function/Common.php" role="php">
+   <file baseinstalldir="/" md5sum="20f28774a2ce11a63ed63e9259089f00" name="MDB2/Driver/Function/Common.php" role="php">
     <tasks:replace from="@package_version@" to="version" type="package-info" />
    </file>
-   <file baseinstalldir="/" md5sum="49e0a78e70560bc4820133e3759fef67" name="MDB2/Driver/Manager/Common.php" role="php">
+   <file baseinstalldir="/" md5sum="6ec44c256b313bffb6848c46cb448a1b" name="MDB2/Driver/Manager/Common.php" role="php">
     <tasks:replace from="@package_version@" to="version" type="package-info" />
    </file>
    <file baseinstalldir="/" md5sum="b39a72d463db838a5635954e4d6517c2" name="MDB2/Driver/Native/Common.php" role="php">
     <tasks:replace from="@package_version@" to="version" type="package-info" />
    </file>
-   <file baseinstalldir="/" md5sum="88c515c8b5a949480cbdde21c59416b5" name="MDB2/Driver/Reverse/Common.php" role="php">
+   <file baseinstalldir="/" md5sum="78a2568b3a7d3aa19ee924802a2decc7" name="MDB2/Driver/Reverse/Common.php" role="php">
     <tasks:replace from="@package_version@" to="version" type="package-info" />
    </file>
    <file baseinstalldir="/" md5sum="af81dd360b2d2d09f8c978214b06a553" name="MDB2/Date.php" role="php">
     <tasks:replace from="@package_version@" to="version" type="package-info" />
    </file>
-   <file baseinstalldir="/" md5sum="11277575840f8ee5bae9c9c378cc0502" name="MDB2/Extended.php" role="php">
+   <file baseinstalldir="/" md5sum="609260a4c185d579e05755814d092059" name="MDB2/Extended.php" role="php">
     <tasks:replace from="@package_version@" to="version" type="package-info" />
    </file>
    <file baseinstalldir="/" md5sum="023c4bda6db2d8f277d8d3c76dc8f850" name="MDB2/Iterator.php" role="php">
@@ -177,7 +181,7 @@ open todo items:
    <file baseinstalldir="/" md5sum="2a2c534ab4afb0c05ca9d7ca47815bf5" name="tests/Console_TestListener.php" role="test">
     <tasks:replace from="@package_version@" to="version" type="package-info" />
    </file>
-   <file baseinstalldir="/" md5sum="22a05d1f0b0faf61e252ff8dbbe540e4" name="tests/driver_test.schema.xml" role="test" />
+   <file baseinstalldir="/" md5sum="e1c8488c950b5c55440cb06344b989f1" name="tests/driver_test.schema.xml" role="test" />
    <file baseinstalldir="/" md5sum="d46a8f267dbd54f0c7ff55e479d33e7e" name="tests/HTML_TestListener.php" role="test">
     <tasks:replace from="@package_version@" to="version" type="package-info" />
    </file>
@@ -191,17 +195,17 @@ open todo items:
    <file baseinstalldir="/" md5sum="f8534befe37efc7f35beb0897b75f951" name="tests/MDB2_Connect_Test.php" role="test">
     <tasks:replace from="@package_version@" to="version" type="package-info" />
    </file>
-   <file baseinstalldir="/" md5sum="04961b3b67ff9d11fa177688699a32bc" name="tests/MDB2_datatype_testcase.php" role="test">
+   <file baseinstalldir="/" md5sum="6180571aff0f56a569f42c100aa8ffde" name="tests/MDB2_datatype_testcase.php" role="test">
     <tasks:replace from="@package_version@" to="version" type="package-info" />
    </file>
    <file baseinstalldir="/" md5sum="52612ab88c430f08e108d146b46a57d2" name="tests/MDB2_extended_testcase.php" role="test">
     <tasks:replace from="@package_version@" to="version" type="package-info" />
    </file>
-   <file baseinstalldir="/" md5sum="02adfb63ed2bedb100f5b0fd9e173774" name="tests/MDB2_function_testcase.php" role="test">
+   <file baseinstalldir="/" md5sum="31a90d80a1a2da0dcdb57cd412e005e1" name="tests/MDB2_function_testcase.php" role="test">
     <tasks:replace from="@package_version@" to="version" type="package-info" />
    </file>
-   <file baseinstalldir="/" md5sum="e063e6c063d963de546c3bd90cb25283" name="tests/MDB2_internals_testcase.php" role="test" />
-   <file baseinstalldir="/" md5sum="e1b895ba99dbf00048aeaa852df439d2" name="tests/MDB2_manager_testcase.php" role="test">
+   <file baseinstalldir="/" md5sum="a6e35fa7d253e5d9426fdefc0e9f2cb6" name="tests/MDB2_internals_testcase.php" role="test" />
+   <file baseinstalldir="/" md5sum="11d77a1de12eab42ebf776669ed0293b" name="tests/MDB2_manager_testcase.php" role="test">
     <tasks:replace from="@package_version@" to="version" type="package-info" />
    </file>
    <file baseinstalldir="/" md5sum="22be0efc5b2b81bd6cd6ebe31747445e" name="tests/MDB2_native_testcase.php" role="test">
@@ -215,13 +219,13 @@ open todo items:
    <file baseinstalldir="/" md5sum="d8c9287b3614da53d818ef86bfc9ef86" name="tests/MDB2_nonstandard_oci8.php" role="test" />
    <file baseinstalldir="/" md5sum="3e790ed8bf0b3b91ec518cdab9eba271" name="tests/MDB2_nonstandard_pgsql.php" role="test" />
    <file baseinstalldir="/" md5sum="54882586bf87e9f3b5d5ab9a20e3e5f7" name="tests/MDB2_nonstandard_sqlite.php" role="test" />
-   <file baseinstalldir="/" md5sum="b7402f3abddcf9ebc011ed8b879689ba" name="tests/MDB2_reverse_testcase.php" role="test">
+   <file baseinstalldir="/" md5sum="5830541f8688756ad7ec430957fed9ad" name="tests/MDB2_reverse_testcase.php" role="test">
     <tasks:replace from="@package_version@" to="version" type="package-info" />
    </file>
    <file baseinstalldir="/" md5sum="2925fd7431313d5df54e068544f8982f" name="tests/MDB2_testcase.php" role="test">
     <tasks:replace from="@package_version@" to="version" type="package-info" />
    </file>
-   <file baseinstalldir="/" md5sum="fa216750711c5cb4732daa8f971b182d" name="tests/MDB2_usage_testcase.php" role="test">
+   <file baseinstalldir="/" md5sum="b51595b4713c262bb9edc9e96da599b6" name="tests/MDB2_usage_testcase.php" role="test">
     <tasks:replace from="@package_version@" to="version" type="package-info" />
    </file>
    <file baseinstalldir="/" md5sum="ca453d042076964cbd3350902ad25fa6" name="tests/README" role="test">
@@ -243,7 +247,7 @@ open todo items:
     <tasks:replace from="@package_version@" to="version" type="package-info" />
    </file>
    <file baseinstalldir="/" md5sum="a5019765abfd14334f25231c61c568ef" name="LICENSE" role="data" />
-   <file baseinstalldir="/" md5sum="344ead6e79757ce49d824d4d434450ad" name="MDB2.php" role="php">
+   <file baseinstalldir="/" md5sum="bb931c6bfff1e98f6dc045c6b82310cb" name="MDB2.php" role="php">
     <tasks:replace from="@package_version@" to="version" type="package-info" />
    </file>
   </dir>
@@ -273,42 +277,42 @@ open todo items:
    <subpackage>
     <name>MDB2_Driver_ibase</name>
     <channel>pear.php.net</channel>
-    <min>1.5.0b1</min>
+    <min>1.5.0b2</min>
    </subpackage>
   </group>
   <group hint="MS SQL Server driver for MDB2" name="mssql">
    <subpackage>
     <name>MDB2_Driver_mssql</name>
     <channel>pear.php.net</channel>
-    <min>1.3.0b1</min>
+    <min>1.3.0b2</min>
    </subpackage>
   </group>
   <group hint="MySQL driver for MDB2" name="mysql">
    <subpackage>
     <name>MDB2_Driver_mysql</name>
     <channel>pear.php.net</channel>
-    <min>1.5.0b1</min>
+    <min>1.5.0b2</min>
    </subpackage>
   </group>
   <group hint="MySQLi driver for MDB2" name="mysqli">
    <subpackage>
     <name>MDB2_Driver_mysqli</name>
     <channel>pear.php.net</channel>
-    <min>1.5.0b1</min>
+    <min>1.5.0b2</min>
    </subpackage>
   </group>
   <group hint="Oracle driver for MDB2" name="oci8">
    <subpackage>
     <name>MDB2_Driver_oci8</name>
     <channel>pear.php.net</channel>
-    <min>1.5.0b1</min>
+    <min>1.5.0b2</min>
    </subpackage>
   </group>
   <group hint="PostgreSQL driver for MDB2" name="pgsql">
    <subpackage>
     <name>MDB2_Driver_pgsql</name>
     <channel>pear.php.net</channel>
-    <min>1.5.0b1</min>
+    <min>1.5.0b2</min>
    </subpackage>
   </group>
   <group hint="Querysim driver for MDB2" name="querysim">
@@ -322,12 +326,56 @@ open todo items:
    <subpackage>
     <name>MDB2_Driver_sqlite</name>
     <channel>pear.php.net</channel>
-    <min>1.5.0b1</min>
+    <min>1.5.0b2</min>
    </subpackage>
   </group>
  </dependencies>
  <phprelease />
  <changelog>
+  <release>
+   <version>
+    <release>2.5.0b2</release>
+    <api>2.5.0b2</api>
+   </version>
+   <stability>
+    <release>beta</release>
+    <api>beta</api>
+   </stability>
+   <date>2009-01-14</date>
+   <license>BSD License</license>
+   <notes>- fixed bug #12117: disconnect() does not work as documented
+- fixed bug #12912: replace() documentation
+- fixed bug #13811: _skipDelimitedStrings() fails on empty strings
+- fixed bug #13898: more tolerant check for &apos;new_link&apos; DSN option
+- request #13929: added &apos;default_fk_action_ondelete&apos; and &apos;default_fk_action_onupdate&apos;
+  options for default FOREIGN KEY constraints actions
+- fixed bug #14124: _skipDelimitedStrings() and prepare() fail with sql comments
+  inside quoted strings
+- fixed bug #14179: declaration of MDB2_Driver_Common::raiseError() must be
+  compatible with that of PEAR::raiseError()
+- fixed doc bug #14290: connect should mention the type of object returned
+- fixed bug #14831: $ignores in _skipDelimitedStrings() [patch by Aleksander Machniak]
+
+open todo items:
+- handle autoincrement fields in alterTable()
+- add length handling to LOB reverse engineering
+- add EXPLAIN abstraction
+- add cursor support along the lines of PDO (Request #3660 etc.)
+- add PDO based drivers, especially a driver to support SQLite 3 (Request #6907)
+- add support to export/import in CSV format
+- add more functions to the Function module (MD5(), IFNULL(), etc.)
+- add support for database/table/row LOCKs
+- add support for CHECK (ENUM as possible mysql fallback) constraints
+- generate STATUS file from test suite results and allow users to submit test results
+- add support for full text index creation and querying
+- add tests to check if the RDBMS specific handling with portability options
+  disabled behaves as expected
+- handle implicit commits (like for DDL) in any affected driver (mysql, sqlite..)
+- add a getTableFieldsDefinitions() method to be used in tableInfo()
+- drop ILIKE from matchPattern() and instead add a second parameter to
+  handle case sensitivity with arbitrary operators
+- handle LOBs in buffered result sets (Request #8793)</notes>
+  </release>
   <release>
    <version>
     <release>2.5.0b1</release>

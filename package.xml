@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<package packagerversion="1.9.1" version="2.0" xmlns="http://pear.php.net/dtd/package-2.0" xmlns:tasks="http://pear.php.net/dtd/tasks-1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pear.php.net/dtd/tasks-1.0 http://pear.php.net/dtd/tasks-1.0.xsd http://pear.php.net/dtd/package-2.0 http://pear.php.net/dtd/package-2.0.xsd">
+<package packagerversion="1.9.4" version="2.0" xmlns="http://pear.php.net/dtd/package-2.0" xmlns:tasks="http://pear.php.net/dtd/tasks-1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pear.php.net/dtd/tasks-1.0 http://pear.php.net/dtd/tasks-1.0.xsd http://pear.php.net/dtd/package-2.0 http://pear.php.net/dtd/package-2.0.xsd">
  <name>MDB2</name>
  <channel>pear.php.net</channel>
  <extends>MDB</extends>
@@ -46,18 +46,18 @@ can be used to construct portable SQL statements:
   <email>l.alberton@quipo.it</email>
   <active>yes</active>
  </lead>
+ <lead>
+  <name>Daniel Convissor</name>
+  <user>danielc</user>
+  <email>danielc@php.net</email>
+  <active>yes</active>
+ </lead>
  <contributor>
   <name>Paul Cooper</name>
   <user>pgc</user>
   <email>pgc@ucecom.com</email>
   <active>no</active>
  </contributor>
- <helper>
-  <name>Daniel Convissor</name>
-  <user>danielc</user>
-  <email>danielc@php.net</email>
-  <active>yes</active>
- </helper>
  <helper>
   <name>David Coallier</name>
   <user>davidc</user>
@@ -70,11 +70,11 @@ can be used to construct portable SQL statements:
   <email>afz@dev-code.com</email>
   <active>yes</active>
  </helper>
- <date>2010-08-29</date>
- <time>12:59:43</time>
+ <date>2012-10-23</date>
+ <time>18:12:26</time>
  <version>
-  <release>2.5.0b3</release>
-  <api>2.5.0b3</api>
+  <release>2.5.0b4</release>
+  <api>2.5.0b4</api>
  </version>
  <stability>
   <release>beta</release>
@@ -82,19 +82,37 @@ can be used to construct portable SQL statements:
  </stability>
  <license>BSD License</license>
  <notes>
-- fixed bug #15912: MDB2::loadClass can return MDB2_OK without loading class
-- fixed bug #16020: unable to set params via dsn string in parseDSN()
-- fixed bug #16508: reusing var name + return by ref [rix0r]
-- fixed bug #16727: quote(url, &apos;clob&apos;)) fetches URL even if lob_allow_url_include option is false
-- fixed unreported bug in parseDSN() and oracle&apos;s Easy Connect syntax
-- fixed bug #16973 and #17039: Wrong _skipDelimitedStrings behavior with escaped quotes
-- fixed bug #16994: incompatible declaration of setTransactionIsolation() in some drivers
-- dropped PHP 4 support
-- PHP 5.3 compatibility fixes
-- performance tweaks (reduced number of internal function calls)
-- added new sqlsrv driver (native SQL Server driver) [Chris Pucci, Mike Ketcham]
-- added new ODBC experimental driver [pschellhaas]
-- Switched test suite to PHPUnit 3.5
+- MDB2 is now E_STRICT compliant! [danielc]
+- Fix Bug #9502: Strong typing query result misbehaves [danielc]
+- Fix Bug #16508: mdb2-2.5.0b1 not working with PHP 5.3.0 [quipo]
+- Fix Bug #17552: MDB2_Driver_Manager_ibase::listTableConstraints returns list of indices [quipo]
+- Fix Bug #17890: Improper use of array_search in psgsql.php v1.173  prepare function [quipo]
+- Fix Bug #18050: Many &amp;quot;Deprecated&amp;quot; [quipo]
+- Fix Bug #18175: Using MDB2::factory raises fatal error [quipo]
+- Fix Bug #18203: Type introspection breaks with associative arrays if names are identical [danielc] (patch by Peter Bex)
+- Fix Bug #18398: non-static functions called statically [danielc]
+- Fix Bug #18427: Notices appear while debugging [quipo]
+- Fix Bug #18721: DSN URLs do not support &amp;quot;@&amp;quot; in database names [danielc]
+- Fix Bug #18826: Crash and security problem with is_a() in combination with value escaping [doconnor]
+- Fix Bug #18886: Deprecated code generates warnings [astembridge]
+- Fix Bug #18978: upgrade from alpha2 to beta3 breaks iterator.php [danielc]
+- Fix Bug #19008: remove error_reporting (for PEAR QA team) [danielc]
+- Fix Bug #19136: Infinite Recurcsion makes result object unuseable [danielc]
+- Fix Bug #19148: &amp;quot;undefined variable result&amp;quot; in MDB2_Driver_Common::_wrapQuery() [danielc]
+- Fix Bug #19191: Have dropSequence() return MDB2_OK on success, as documented [danielc]
+- Fix Bug #19192: Have createSequence() return MDB2_OK on success, as documented [danielc]
+- Fix Bug #19193: Have createConstraint() return MDB2_OK on success, as documented [danielc]
+- Fix Bug #19194: Have dropConstraint() return MDB2_OK on success, as documented [danielc]
+- Fix Bug #19195: Have createIndex() return MDB2_OK on success, as documented [danielc]
+- Fix Bug #19196: Have vacuum() return MDB2_OK on success, as documented [danielc]
+- Fix Bug #19199: Have dropTable() return MDB2_OK on success, as documented [danielc]
+- Fix Bug #19200: Have alterTable() return MDB2_OK on success, as documented [danielc]
+- Fix Bug #19201: Have truncateTable() return MDB2_OK on success, as documented [danielc]
+- Fix Bug #19202: sqlite foreign key violations produce generic MDB2_ERROR [danielc]
+- Fix Bug #19262: Fetchmode constants WERE bitwise [gauthierm]
+- Implement Feature #17367: Documentation Sync Drift [quipo]
+- Implement Feature #18759: User note that is a documentation problem [danielc]
+- small performance tweaks
 
 open todo items:
 - handle autoincrement fields in alterTable()
@@ -118,140 +136,86 @@ open todo items:
  </notes>
  <contents>
   <dir baseinstalldir="/" name="/">
-   <file baseinstalldir="/" md5sum="938dcdbf0b87c9d3c15a1615ed0dd2e3" name="docs/examples/example.php" role="doc">
+   <file baseinstalldir="/" md5sum="5a689ee5fa18f686905e6bd55bea11be" name="docs/examples/example.php" role="doc">
     <tasks:replace from="@package_version@" to="version" type="package-info" />
    </file>
-   <file baseinstalldir="/" md5sum="2b5540740cae87f3951b83c0d3be7edf" name="docs/examples/example_php5.php" role="doc">
+   <file baseinstalldir="/" md5sum="a89ca12c63535e42b75c5c1177689747" name="docs/examples/example_php5.php" role="doc">
     <tasks:replace from="@package_version@" to="version" type="package-info" />
    </file>
-   <file baseinstalldir="/" md5sum="d535b68a6f56f8219fe34e21aaded385" name="docs/examples/metapear_test_db.schema" role="doc">
+   <file baseinstalldir="/" md5sum="74b2bb45de61eccbffed7d75d5268af9" name="docs/examples/metapear_test_db.schema" role="doc">
     <tasks:replace from="@package_version@" to="version" type="package-info" />
    </file>
-   <file baseinstalldir="/" md5sum="db7e866796c2b00a35341c0ccfb7c5de" name="docs/CONTRIBUTORS" role="doc">
+   <file baseinstalldir="/" md5sum="a253b37e185622112acfef6c94b79aef" name="docs/CONTRIBUTORS" role="doc">
     <tasks:replace from="@package_version@" to="version" type="package-info" />
    </file>
-   <file baseinstalldir="/" md5sum="e8446835d556aa01467d9d68b33f6313" name="docs/datatypes.html" role="doc">
+   <file baseinstalldir="/" md5sum="fb6255492763a38f2ad95d86e7ccbbf1" name="docs/datatypes.html" role="doc">
     <tasks:replace from="@package_version@" to="version" type="package-info" />
    </file>
-   <file baseinstalldir="/" md5sum="3d7e477a688a3eefcee696ac55042cd2" name="docs/MAINTAINERS" role="doc">
+   <file baseinstalldir="/" md5sum="a70b17bcd8e56911f74a4dff61a3ff8d" name="docs/MAINTAINERS" role="doc">
     <tasks:replace from="@package_version@" to="version" type="package-info" />
    </file>
-   <file baseinstalldir="/" md5sum="621c626291dbd9754caadc1b0b5fe9c8" name="docs/README" role="doc">
+   <file baseinstalldir="/" md5sum="c7b68ea23aa2ae6d91913703a2246f15" name="docs/README" role="doc">
     <tasks:replace from="@package_version@" to="version" type="package-info" />
    </file>
-   <file baseinstalldir="/" md5sum="09494dec96d1653b77745768ff45aa27" name="docs/STATUS" role="doc">
+   <file baseinstalldir="/" md5sum="9eca356459bd2c74976e2dc08114ccdd" name="docs/STATUS" role="doc">
     <tasks:replace from="@package_version@" to="version" type="package-info" />
    </file>
-   <file baseinstalldir="/" md5sum="443581494f3ca6ab183e39fc81eda906" name="docs/TODO" role="doc">
+   <file baseinstalldir="/" md5sum="ec0c4383ddfd3af69d577344d0d5b4dd" name="docs/TODO" role="doc">
     <tasks:replace from="@package_version@" to="version" type="package-info" />
    </file>
-   <file baseinstalldir="/" md5sum="9e5216c3e2e8fab8d43bc8245ba2cfa3" name="MDB2/Driver/Datatype/Common.php" role="php">
+   <file baseinstalldir="/" md5sum="2b6956a82c390271e810554aea9a6844" name="MDB2/Driver/Datatype/Common.php" role="php">
     <tasks:replace from="@package_version@" to="version" type="package-info" />
    </file>
-   <file baseinstalldir="/" md5sum="37e70aac710c9a70dc183019a1e4eb76" name="MDB2/Driver/Function/Common.php" role="php">
+   <file baseinstalldir="/" md5sum="06ac8297c5b84810e244ef3f296c9909" name="MDB2/Driver/Function/Common.php" role="php">
     <tasks:replace from="@package_version@" to="version" type="package-info" />
    </file>
-   <file baseinstalldir="/" md5sum="46c4cd179220c9c318db44aa475fd07d" name="MDB2/Driver/Manager/Common.php" role="php">
+   <file baseinstalldir="/" md5sum="1f2671765f855b4e42317584c5c5cefc" name="MDB2/Driver/Manager/Common.php" role="php">
     <tasks:replace from="@package_version@" to="version" type="package-info" />
    </file>
-   <file baseinstalldir="/" md5sum="2c1735b06ed2d6301902ba3a1d2bbd95" name="MDB2/Driver/Native/Common.php" role="php">
+   <file baseinstalldir="/" md5sum="977e6c68269ab679f233bf72cfa46db6" name="MDB2/Driver/Native/Common.php" role="php">
     <tasks:replace from="@package_version@" to="version" type="package-info" />
    </file>
-   <file baseinstalldir="/" md5sum="c1cc0be94946262f7dbb5ecad9b3b3ae" name="MDB2/Driver/Reverse/Common.php" role="php">
+   <file baseinstalldir="/" md5sum="7ede6c3c81506349871e68949ff4cbe9" name="MDB2/Driver/Reverse/Common.php" role="php">
     <tasks:replace from="@package_version@" to="version" type="package-info" />
    </file>
-   <file baseinstalldir="/" md5sum="f5c10ebfca045855bbce9e28d0a6bc0f" name="MDB2/Date.php" role="php">
+   <file baseinstalldir="/" md5sum="9431ecf0ca9aa4be2278b5a67d56692f" name="MDB2/Date.php" role="php">
     <tasks:replace from="@package_version@" to="version" type="package-info" />
    </file>
-   <file baseinstalldir="/" md5sum="4c8de41af8b004f52e40a0706c812314" name="MDB2/Extended.php" role="php">
+   <file baseinstalldir="/" md5sum="bb05a17304899664eeef90d4185d2c90" name="MDB2/Extended.php" role="php">
     <tasks:replace from="@package_version@" to="version" type="package-info" />
    </file>
-   <file baseinstalldir="/" md5sum="369a45a104a55722bad73bfe79b46027" name="MDB2/Iterator.php" role="php">
+   <file baseinstalldir="/" md5sum="dff24e2d856068d6ae716289fc5fa602" name="MDB2/Iterator.php" role="php">
     <tasks:replace from="@package_version@" to="version" type="package-info" />
    </file>
-   <file baseinstalldir="/" md5sum="7f3ff40d1f759c239d334b769334b47a" name="MDB2/LOB.php" role="php">
+   <file baseinstalldir="/" md5sum="0995b814a2269ee98e56810ee7c56743" name="MDB2/LOB.php" role="php">
     <tasks:replace from="@package_version@" to="version" type="package-info" />
    </file>
-   <file baseinstalldir="/" md5sum="8c89c1eabb70779bac8b8888680fcd7f" name="tests/basic.phpt" role="test">
+   <file baseinstalldir="/" md5sum="495ce610af17e85504bcaa4948dd674b" name="tests/Nonstandard/Base.php" role="test" />
+   <file baseinstalldir="/" md5sum="88180b869efe23dcc10dc335d1a86cc9" name="tests/Nonstandard/SqlservHelper.php" role="test" />
+   <file baseinstalldir="/" md5sum="6154365fbc935bff18d09ce85631c591" name="tests/Standard/Abstract.php" role="test" />
+   <file baseinstalldir="/" md5sum="4c1b01bcbff9f867fcc4334bfc1e5741" name="tests/Standard/ApiTest.php" role="test" />
+   <file baseinstalldir="/" md5sum="60c35310a22ba937ffcf4705711d8031" name="tests/Standard/BugsTest.php" role="test" />
+   <file baseinstalldir="/" md5sum="4805340558ca79c65620450a716a33ba" name="tests/Standard/DatatypeTest.php" role="test" />
+   <file baseinstalldir="/" md5sum="49b9e7b6b6734038e8d099571e1c75b8" name="tests/Standard/ExtendedTest.php" role="test" />
+   <file baseinstalldir="/" md5sum="fca11883f6012a7b22bf37341b3ca8bb" name="tests/Standard/FunctionTest.php" role="test" />
+   <file baseinstalldir="/" md5sum="97304276004bac265ef27e970ac2efb4" name="tests/Standard/InternalsTest.php" role="test">
     <tasks:replace from="@package_version@" to="version" type="package-info" />
    </file>
-   <file baseinstalldir="/" md5sum="43a1607b5ddf7a12b7d00ae075aad293" name="tests/clitest.php" role="test">
-    <tasks:replace from="@package_version@" to="version" type="package-info" />
+   <file baseinstalldir="/" md5sum="55dd0b2ab097bed18f472116f5b55eae" name="tests/Standard/ManagerTest.php" role="test" />
+   <file baseinstalldir="/" md5sum="7d65b9467fc024c78ea45698cf0bae0d" name="tests/Standard/ReverseTest.php" role="test" />
+   <file baseinstalldir="/" md5sum="f2d7ea80c8a30db85420e60279269272" name="tests/Standard/UsageTest.php" role="test" />
+   <file baseinstalldir="/" md5sum="a4ad7d4f5bb1caf918d6922674dd1c41" name="tests/AllTests.php" role="test" />
+   <file baseinstalldir="/" md5sum="5ef86f767c99dc2fdf5ee9ac5a0db9a6" name="tests/autoload.inc" role="test">
+    <tasks:replace from="@php_dir@" to="php_dir" type="pear-config" />
    </file>
-   <file baseinstalldir="/" md5sum="c827f29af67f351eee06c978c735827f" name="tests/config.php" role="test">
-    <tasks:replace from="@package_version@" to="version" type="package-info" />
-   </file>
-   <file baseinstalldir="/" md5sum="d6abd438c2aca3cdcead940331e6b14e" name="tests/Console_TestListener.php" role="test">
-    <tasks:replace from="@package_version@" to="version" type="package-info" />
-   </file>
-   <file baseinstalldir="/" md5sum="57dccf86c4f6ca7877466192cd898c70" name="tests/driver_test.schema.xml" role="test" />
-   <file baseinstalldir="/" md5sum="618f68f2c396efe057a6d18c002ceb8a" name="tests/HTML_TestListener.php" role="test">
-    <tasks:replace from="@package_version@" to="version" type="package-info" />
-   </file>
-   <file baseinstalldir="/" md5sum="ff346ecb984d644ec23584ddb02527b5" name="tests/import.schema.php" role="test" />
-   <file baseinstalldir="/" md5sum="11348d0fb9bd985c50a52f8014e107f3" name="tests/MDB2_api_testcase.php" role="test">
-    <tasks:replace from="@package_version@" to="version" type="package-info" />
-   </file>
-   <file baseinstalldir="/" md5sum="c7246e81e443d70a90cbc74f314e73ec" name="tests/MDB2_bugs_testcase.php" role="test">
-    <tasks:replace from="@package_version@" to="version" type="package-info" />
-   </file>
-   <file baseinstalldir="/" md5sum="8630016c49fd401900e008a3c69bdb5c" name="tests/MDB2_Connect_Test.php" role="test">
-    <tasks:replace from="@package_version@" to="version" type="package-info" />
-   </file>
-   <file baseinstalldir="/" md5sum="de87edf8e5f33f7f3a52f2a997044306" name="tests/MDB2_datatype_testcase.php" role="test">
-    <tasks:replace from="@package_version@" to="version" type="package-info" />
-   </file>
-   <file baseinstalldir="/" md5sum="355f7ccbdc1f4a7559726ddc106307c0" name="tests/MDB2_extended_testcase.php" role="test">
-    <tasks:replace from="@package_version@" to="version" type="package-info" />
-   </file>
-   <file baseinstalldir="/" md5sum="2b1dd5872a4d5456669053fb2ab3dae5" name="tests/MDB2_function_testcase.php" role="test">
-    <tasks:replace from="@package_version@" to="version" type="package-info" />
-   </file>
-   <file baseinstalldir="/" md5sum="1258758bc4d6e32ef337d7429ba2fc0d" name="tests/MDB2_internals_testcase.php" role="test" />
-   <file baseinstalldir="/" md5sum="1d26793c5a0efad4dfdca70f1fc52243" name="tests/MDB2_manager_testcase.php" role="test">
-    <tasks:replace from="@package_version@" to="version" type="package-info" />
-   </file>
-   <file baseinstalldir="/" md5sum="3ab13f19d15ea4b7f1c2aaaa29976e25" name="tests/MDB2_native_testcase.php" role="test">
-    <tasks:replace from="@package_version@" to="version" type="package-info" />
-   </file>
-   <file baseinstalldir="/" md5sum="9b1503f900f7855ab20f5b90700b67be" name="tests/MDB2_nonstandard.php" role="test" />
-   <file baseinstalldir="/" md5sum="196f0b246734bc699b166114eb444aea" name="tests/MDB2_nonstandard_ibase.php" role="test" />
-   <file baseinstalldir="/" md5sum="4738f4f25ea51e4f0ba48959944f86c3" name="tests/MDB2_nonstandard_mssql.php" role="test" />
-   <file baseinstalldir="/" md5sum="67383dae9d2b22630d4e013d7fe47e9f" name="tests/MDB2_nonstandard_mysql.php" role="test" />
-   <file baseinstalldir="/" md5sum="1c9e5f3ff0cff84f2f41f21a60fdf7e2" name="tests/MDB2_nonstandard_mysqli.php" role="test" />
-   <file baseinstalldir="/" md5sum="f2f37d18351d57f661b8c99fddabb198" name="tests/MDB2_nonstandard_oci8.php" role="test" />
-   <file baseinstalldir="/" md5sum="a28380c1cdf097528387daaed975bdb3" name="tests/MDB2_nonstandard_pgsql.php" role="test" />
-   <file baseinstalldir="/" md5sum="99496c7a90c003a390e9494f881f4082" name="tests/MDB2_nonstandard_sqlite.php" role="test" />
-   <file baseinstalldir="/" md5sum="9e903e7ce597d13d3970705c78363f8b" name="tests/MDB2_nonstandard_sqlsrv.php" role="test" />
-   <file baseinstalldir="/" md5sum="a278789c62d54a80fa0dcf8d498d38da" name="tests/MDB2_reverse_testcase.php" role="test">
-    <tasks:replace from="@package_version@" to="version" type="package-info" />
-   </file>
-   <file baseinstalldir="/" md5sum="4838711e7d09eef9e01b4bce2f9ef28f" name="tests/MDB2_testcase.php" role="test">
-    <tasks:replace from="@package_version@" to="version" type="package-info" />
-   </file>
-   <file baseinstalldir="/" md5sum="c4f199bfc2c44b3b96d70ff7aa2e1e78" name="tests/MDB2_usage_testcase.php" role="test">
-    <tasks:replace from="@package_version@" to="version" type="package-info" />
-   </file>
-   <file baseinstalldir="/" md5sum="b502289830e328c9688960b906e30853" name="tests/README" role="test">
-    <tasks:replace from="@package_version@" to="version" type="package-info" />
-   </file>
-   <file baseinstalldir="/" md5sum="0c021c8adcf1f9d86db7074217782dcb" name="tests/test.php" role="test">
-    <tasks:replace from="@package_version@" to="version" type="package-info" />
-   </file>
-   <file baseinstalldir="/" md5sum="c3192f0eb08d7c0fffaa25da3bbdef3a" name="tests/testchoose.php" role="test">
-    <tasks:replace from="@package_version@" to="version" type="package-info" />
-   </file>
-   <file baseinstalldir="/" md5sum="0ddbf9fd0c12b587777bfe5bbb9d3e96" name="tests/tests.css" role="test">
-    <tasks:replace from="@package_version@" to="version" type="package-info" />
-   </file>
-   <file baseinstalldir="/" md5sum="93a1fd3afdfc979f28604c57e4874699" name="tests/testUtils.php" role="test">
-    <tasks:replace from="@package_version@" to="version" type="package-info" />
-   </file>
-   <file baseinstalldir="/" md5sum="cb3d83b6df1c1ed43f26d971e9990fd3" name="tests/test_setup.php.dist" role="test">
-    <tasks:replace from="@package_version@" to="version" type="package-info" />
-   </file>
-   <file baseinstalldir="/" md5sum="2f415d5f65232f3b05bd3c175d464484" name="LICENSE" role="data" />
-   <file baseinstalldir="/" md5sum="9e7ee31f0c81d42339448f24a00a4342" name="MDB2.php" role="php">
+   <file baseinstalldir="/" md5sum="8a1c23383cab0a3aa2c5e977c5cfdc49" name="tests/Debug.php" role="test" />
+   <file baseinstalldir="/" md5sum="e9d8a45ae62be18000f51a08c5cdf143" name="tests/dsn.inc" role="test" />
+   <file baseinstalldir="/" md5sum="dd740b466aff47209486c0a967cef86a" name="tests/functions.inc" role="test" />
+   <file baseinstalldir="/" md5sum="64882e6a2b9bd1b459c0c52f34db396b" name="tests/import.schema.php" role="test" />
+   <file baseinstalldir="/" md5sum="997685ec0ba37bd6a2db8e9ec728e61c" name="tests/README" role="test" />
+   <file baseinstalldir="/" md5sum="8f37058a24d6b0b343370452483595ea" name="tests/schema.xml" role="test" />
+   <file baseinstalldir="/" md5sum="a5019765abfd14334f25231c61c568ef" name="LICENSE" role="data" />
+   <file baseinstalldir="/" md5sum="c1bc8a0befdd4468d54c9301ecc4b562" name="MDB2.php" role="php">
     <tasks:replace from="@package_version@" to="version" type="package-info" />
    </file>
   </dir>
@@ -259,7 +223,7 @@ open todo items:
  <dependencies>
   <required>
    <php>
-    <min>5.3.0</min>
+    <min>5.2.0</min>
    </php>
    <pearinstaller>
     <min>1.9.1</min>
@@ -350,6 +314,71 @@ open todo items:
  </dependencies>
  <phprelease />
  <changelog>
+  <release>
+   <version>
+    <release>2.5.0b4</release>
+    <api>2.5.0b4</api>
+   </version>
+   <stability>
+    <release>beta</release>
+    <api>beta</api>
+   </stability>
+   <date>2012-10-23</date>
+   <license>BSD License</license>
+   <notes>
+- MDB2 is now E_STRICT compliant! [danielc]
+- Fix Bug #9502: Strong typing query result misbehaves [danielc]
+- Fix Bug #16508: mdb2-2.5.0b1 not working with PHP 5.3.0 [quipo]
+- Fix Bug #17552: MDB2_Driver_Manager_ibase::listTableConstraints returns list of indices [quipo]
+- Fix Bug #17890: Improper use of array_search in psgsql.php v1.173  prepare function [quipo]
+- Fix Bug #18050: Many &amp;quot;Deprecated&amp;quot; [quipo]
+- Fix Bug #18175: Using MDB2::factory raises fatal error [quipo]
+- Fix Bug #18203: Type introspection breaks with associative arrays if names are identical [danielc] (patch by Peter Bex)
+- Fix Bug #18398: non-static functions called statically [danielc]
+- Fix Bug #18427: Notices appear while debugging [quipo]
+- Fix Bug #18721: DSN URLs do not support &amp;quot;@&amp;quot; in database names [danielc]
+- Fix Bug #18826: Crash and security problem with is_a() in combination with value escaping [doconnor]
+- Fix Bug #18886: Deprecated code generates warnings [astembridge]
+- Fix Bug #18978: upgrade from alpha2 to beta3 breaks iterator.php [danielc]
+- Fix Bug #19008: remove error_reporting (for PEAR QA team) [danielc]
+- Fix Bug #19136: Infinite Recurcsion makes result object unuseable [danielc]
+- Fix Bug #19148: &amp;quot;undefined variable result&amp;quot; in MDB2_Driver_Common::_wrapQuery() [danielc]
+- Fix Bug #19191: Have dropSequence() return MDB2_OK on success, as documented [danielc]
+- Fix Bug #19192: Have createSequence() return MDB2_OK on success, as documented [danielc]
+- Fix Bug #19193: Have createConstraint() return MDB2_OK on success, as documented [danielc]
+- Fix Bug #19194: Have dropConstraint() return MDB2_OK on success, as documented [danielc]
+- Fix Bug #19195: Have createIndex() return MDB2_OK on success, as documented [danielc]
+- Fix Bug #19196: Have vacuum() return MDB2_OK on success, as documented [danielc]
+- Fix Bug #19199: Have dropTable() return MDB2_OK on success, as documented [danielc]
+- Fix Bug #19200: Have alterTable() return MDB2_OK on success, as documented [danielc]
+- Fix Bug #19201: Have truncateTable() return MDB2_OK on success, as documented [danielc]
+- Fix Bug #19202: sqlite foreign key violations produce generic MDB2_ERROR [danielc]
+- Fix Bug #19262: Fetchmode constants WERE bitwise [gauthierm]
+- Implement Feature #17367: Documentation Sync Drift [quipo]
+- Implement Feature #18759: User note that is a documentation problem [danielc]
+- small performance tweaks
+
+open todo items:
+- handle autoincrement fields in alterTable()
+- add length handling to LOB reverse engineering
+- add EXPLAIN abstraction
+- add cursor support along the lines of PDO (Request #3660 etc.)
+- add PDO based drivers, especially a driver to support SQLite 3 (Request #6907)
+- add support to export/import in CSV format
+- add more functions to the Function module (MD5(), IFNULL(), etc.)
+- add support for database/table/row LOCKs
+- add support for CHECK (ENUM as possible mysql fallback) constraints
+- generate STATUS file from test suite results and allow users to submit test results
+- add support for full text index creation and querying
+- add tests to check if the RDBMS specific handling with portability options
+  disabled behaves as expected
+- handle implicit commits (like for DDL) in any affected driver (mysql, sqlite..)
+- add a getTableFieldsDefinitions() method to be used in tableInfo()
+- drop ILIKE from matchPattern() and instead add a second parameter to
+  handle case sensitivity with arbitrary operators
+- handle LOBs in buffered result sets (Request #8793)
+   </notes>
+  </release>
   <release>
    <version>
     <release>2.5.0b3</release>

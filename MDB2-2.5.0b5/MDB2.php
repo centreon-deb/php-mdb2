@@ -43,7 +43,7 @@
 // | Author: Lukas Smith <smith@pooteeweet.org>                           |
 // +----------------------------------------------------------------------+
 //
-// $Id: MDB2.php 327316 2012-08-27 15:17:02Z danielc $
+// $Id: MDB2.php 328183 2012-10-29 15:10:42Z danielc $
 //
 
 /**
@@ -536,7 +536,7 @@ class MDB2
      */
     static function apiVersion()
     {
-        return '2.5.0b4';
+        return '2.5.0b5';
     }
 
     // }}}
@@ -1993,7 +1993,44 @@ class MDB2_Driver_Common
         if (null !== $module) {
             return call_user_func_array(array(&$this->modules[$module], $method), $params);
         }
-        trigger_error(sprintf('Call to undefined function: %s::%s().', get_class($this), $method), E_USER_ERROR);
+
+        $class = get_class($this);
+        $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
+        $loc = 'in ' . $trace[0]['file'] . ' on line ' . $trace[0]['line'];
+        if ($method == 'isError') {
+            trigger_error("Deprecated: $class::isError() is deprecated, use MDB2::isError() $loc", E_USER_DEPRECATED);
+            if (!array_key_exists(0, $params)) {
+                trigger_error("Missing argument 1 for $class::$method, called $loc", E_USER_ERROR);
+            }
+            return MDB2::isError($params[0]);
+        }
+        trigger_error("Call to undefined function: $class::$method() $loc.", E_USER_ERROR);
+    }
+
+    // }}}
+    // {{{ function __callStatic($method, $params)
+
+    /**
+     * Calls a module method using the __callStatic magic method
+     *
+     * @param   string  Method name.
+     * @param   array   Arguments.
+     *
+     * @return  mixed   Returned value.
+     */
+    public static function __callStatic($method, $params)
+    {
+        $class = get_called_class();
+        $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
+        $loc = 'in ' . $trace[0]['file'] . ' on line ' . $trace[0]['line'];
+        if ($method == 'isError') {
+            trigger_error("Deprecated: $class::isError() is deprecated, use MDB2::isError() $loc", E_USER_DEPRECATED);
+            if (!array_key_exists(0, $params)) {
+                trigger_error("Missing argument 1 for $class::$method, called $loc", E_USER_ERROR);
+            }
+            return MDB2::isError($params[0]);
+        }
+        trigger_error("Call to undefined function: $class::$method() $loc.", E_USER_ERROR);
     }
 
     // }}}

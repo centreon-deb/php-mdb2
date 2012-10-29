@@ -41,7 +41,7 @@
 // | Author: Paul Cooper <pgc@ucecom.com>                                 |
 // +----------------------------------------------------------------------+
 //
-// $Id: BugsTest.php 327313 2012-08-27 15:16:42Z danielc $
+// $Id: BugsTest.php 328182 2012-10-29 15:10:30Z danielc $
 
 require_once dirname(__DIR__) . '/autoload.inc';
 
@@ -327,7 +327,7 @@ class Standard_BugsTest extends Standard_Abstract {
             'id'    => 2,
             'title' => 'foo'
         );
-        $this->assertEquals($expected, $record);
+        $this->assertSame($expected, $record);
     }
 
     /**
@@ -494,5 +494,195 @@ class Standard_BugsTest extends Standard_Abstract {
         $db = new MDB2;
         $db->connect($dsn);
         error_reporting($oer);
+    }
+
+    /**
+     * Multiple database handles seem to collide
+     * @see http://pear.php.net/bugs/bug.php?id=15232
+     * @dataProvider provider
+     */
+    public function testBug15232($ci) {
+        $this->manualSetUp($ci);
+
+        $data = $this->getSampleData(1);
+
+        $this->db->beginTransaction();
+        $stmt = $this->db->prepare('INSERT INTO ' . $this->table_users . ' (' . implode(', ', array_keys($this->fields)) . ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', array_values($this->fields), MDB2_PREPARE_MANIP);
+        $result = $stmt->execute(array_values($data));
+
+        $result = $this->db->query('SELECT * FROM ' . $this->table_users);
+        $numrows = $result->numRows();
+        $this->assertEquals(1, $numrows, 'First connection did not insert.');
+
+        $ci['dsn']['new_link'] = true;
+        $db2 = MDB2::factory($ci['dsn'], $ci['options']);
+        if (MDB2::isError($db2)) {
+            $this->markTestSkipped($db2->getMessage());
+        }
+        $database = $db2->getDatabase();
+        $db2->setDatabase($database);
+        $result = $db2->query('SELECT * FROM ' . $this->table_users);
+        $numrows = $result->numRows();
+        $this->assertEquals(0, $numrows, 'Second connection should get no results.');
+
+        $stmt->free();
+    }
+
+    /**
+     * compareDefinition() turns NULL defaults into empty strings for
+     * NOT NULL columns
+     * @see http://pear.php.net/bugs/bug.php?id=16280
+     * @dataProvider provider
+     */
+    public function testBug16280($ci) {
+        $this->manualSetUp($ci);
+
+        $previous = array(
+            'notnull' => true,
+            'nativetype' => 'varchar',
+            'length' => '50',
+            'fixed' => false,
+            'default' => '',
+            'type' => 'text',
+            'mdb2type' => 'text',
+            'was' => 'name'
+        );
+        $current = array(
+            'type' => 'text',
+            'length' => '50',
+            'notnull' => true,
+            'was' => 'name'
+        );
+        $result = $this->db->compareDefinition($current, $previous);
+        $this->assertEquals(array('default' => 1), $result);
+    }
+
+    /**
+     * _compareIntegerDefinition() ignores length change
+     * @see http://pear.php.net/bugs/bug.php?id=18494
+     * @dataProvider provider
+     */
+    public function testBug18494($ci) {
+        $this->manualSetUp($ci);
+
+        $previous = array(
+            'notnull' => true,
+            'nativetype' => 'int',
+            'length' => 4,
+            'unsigned' => 1,
+            'default' => 42,
+            'type' => 'integer',
+            'mdb2type' => 'integer',
+            'was' => 'foo',
+        );
+        $current = array(
+            'notnull' => true,
+            'nativetype' => 'int',
+            'length' => 8,
+            'unsigned' => 1,
+            'default' => 42,
+            'type' => 'integer',
+            'mdb2type' => 'integer',
+            'was' => 'foo',
+        );
+        $result = $this->db->compareDefinition($current, $previous);
+        $this->assertEquals(array('length' => 8), $result);
+    }
+
+    /**
+     * Turning empty columns incorrectly to NULL
+     * @see http://pear.php.net/bugs/bug.php?id=16314
+     * @dataProvider provider
+     */
+    public function testBug16314($ci) {
+        $this->manualSetUp($ci);
+
+        $t = 'test_16314';
+
+        $this->db->setOption('field_case', CASE_LOWER);
+        $this->db->setOption('portability', MDB2_PORTABILITY_FIX_CASE | MDB2_PORTABILITY_ERRORS | MDB2_PORTABILITY_FIX_ASSOC_FIELD_NAMES);
+
+        $result = $this->db->exec("CREATE TABLE $t (id varchar(1) NOT NULL)");
+        if (MDB2::isError($result)) {
+            $this->fail('Error creating table: ' . $result->getMessage());
+        }
+
+        $stmt = $this->db->prepare("INSERT INTO $t VALUES (?)", null, MDB2_PREPARE_MANIP);
+        if (MDB2::isError($stmt)) {
+            $result = $this->db->exec("DROP TABLE $t");
+            if (MDB2::isError($result)) {
+                $this->fail('Error dropping table: ' . $result->getMessage());
+            }
+            $this->fail('Prepare had problem: ' . $stmt->getMessage());
+        }
+
+        $result = $stmt->execute(array(''));
+        if (MDB2::isError($result)) {
+            $result = $this->db->exec("DROP TABLE $t");
+            if (MDB2::isError($result)) {
+                $this->fail('Error dropping table: ' . $result->getMessage());
+            }
+            $this->fail('Error executing prepared query '.$result->getMessage());
+        }
+
+        $result = $this->db->exec("DROP TABLE $t");
+        if (MDB2::isError($result)) {
+            $this->fail('Error dropping table: ' . $result->getMessage());
+        }
+        $stmt->free();
+    }
+
+    /**
+     * prepare(), execute() fail when statement combines placeholders and
+     * null values
+     * @see http://pear.php.net/bugs/bug.php?id=17270
+     * @dataProvider provider
+     */
+    public function testBug17270($ci) {
+        $this->manualSetUp($ci);
+
+        $data = array(
+            'name' => 'Abcd',
+        );
+        $types = array(
+            'text',
+        );
+
+        $stmt = $this->db->prepare('INSERT INTO ' . $this->table_users . ' (user_name, user_password) VALUES (:name, NULL)', $types, MDB2_PREPARE_MANIP);
+        if (MDB2::isError($stmt)) {
+            $this->fail('Error preparing query: ' . $stmt->getMessage());
+        }
+
+        $result = $stmt->execute($data);
+        if (MDB2::isError($result)) {
+            $this->fail('Error executing query: ' . $result->getMessage());
+        }
+
+        $stmt->free();
+    }
+
+    /**
+     * Memory Leak in MDB2_Error and/or PEAR_Error
+     * @see http://pear.php.net/bugs/bug.php?id=12038
+     */
+    public function testBug12038() {
+        $this->markTestSkipped("Bug still exists.");
+
+        $mem_init = memory_get_usage();
+        $mem_times = 2;
+        $mem_stop = $mem_init * $mem_times;
+
+        for ($row = 0; $row < 1000; $row++) {
+            $pear = new PEAR;
+            // Okay.
+            //$pear->raiseError(null, 1, 'mode', array(), 'hi');
+            //$pear->raiseError(null, 1, 'mode', array(), 'hi', 'StdClass', true);
+            // Leaks
+            $pear->raiseError(null, 1, 'mode', array(), 'hi', 'MDB2_Error', true);
+            $mem_current = memory_get_usage();
+            if ($mem_current > $mem_stop) {
+                $this->fail("Memory has gotten $mem_times times bigger.");
+            }
+        }
     }
 }

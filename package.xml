@@ -70,11 +70,11 @@ can be used to construct portable SQL statements:
   <email>afz@dev-code.com</email>
   <active>yes</active>
  </helper>
- <date>2012-10-23</date>
- <time>18:12:26</time>
+ <date>2012-10-29</date>
+ <time>15:41:51</time>
  <version>
-  <release>2.5.0b4</release>
-  <api>2.5.0b4</api>
+  <release>2.5.0b5</release>
+  <api>2.5.0b5</api>
  </version>
  <stability>
   <release>beta</release>
@@ -82,37 +82,9 @@ can be used to construct portable SQL statements:
  </stability>
  <license>BSD License</license>
  <notes>
-- MDB2 is now E_STRICT compliant! [danielc]
-- Fix Bug #9502: Strong typing query result misbehaves [danielc]
-- Fix Bug #16508: mdb2-2.5.0b1 not working with PHP 5.3.0 [quipo]
-- Fix Bug #17552: MDB2_Driver_Manager_ibase::listTableConstraints returns list of indices [quipo]
-- Fix Bug #17890: Improper use of array_search in psgsql.php v1.173  prepare function [quipo]
-- Fix Bug #18050: Many &amp;quot;Deprecated&amp;quot; [quipo]
-- Fix Bug #18175: Using MDB2::factory raises fatal error [quipo]
-- Fix Bug #18203: Type introspection breaks with associative arrays if names are identical [danielc] (patch by Peter Bex)
-- Fix Bug #18398: non-static functions called statically [danielc]
-- Fix Bug #18427: Notices appear while debugging [quipo]
-- Fix Bug #18721: DSN URLs do not support &amp;quot;@&amp;quot; in database names [danielc]
-- Fix Bug #18826: Crash and security problem with is_a() in combination with value escaping [doconnor]
-- Fix Bug #18886: Deprecated code generates warnings [astembridge]
-- Fix Bug #18978: upgrade from alpha2 to beta3 breaks iterator.php [danielc]
-- Fix Bug #19008: remove error_reporting (for PEAR QA team) [danielc]
-- Fix Bug #19136: Infinite Recurcsion makes result object unuseable [danielc]
-- Fix Bug #19148: &amp;quot;undefined variable result&amp;quot; in MDB2_Driver_Common::_wrapQuery() [danielc]
-- Fix Bug #19191: Have dropSequence() return MDB2_OK on success, as documented [danielc]
-- Fix Bug #19192: Have createSequence() return MDB2_OK on success, as documented [danielc]
-- Fix Bug #19193: Have createConstraint() return MDB2_OK on success, as documented [danielc]
-- Fix Bug #19194: Have dropConstraint() return MDB2_OK on success, as documented [danielc]
-- Fix Bug #19195: Have createIndex() return MDB2_OK on success, as documented [danielc]
-- Fix Bug #19196: Have vacuum() return MDB2_OK on success, as documented [danielc]
-- Fix Bug #19199: Have dropTable() return MDB2_OK on success, as documented [danielc]
-- Fix Bug #19200: Have alterTable() return MDB2_OK on success, as documented [danielc]
-- Fix Bug #19201: Have truncateTable() return MDB2_OK on success, as documented [danielc]
-- Fix Bug #19202: sqlite foreign key violations produce generic MDB2_ERROR [danielc]
-- Fix Bug #19262: Fetchmode constants WERE bitwise [gauthierm]
-- Implement Feature #17367: Documentation Sync Drift [quipo]
-- Implement Feature #18759: User note that is a documentation problem [danielc]
-- small performance tweaks
+- fixed bug #18494: _compareIntegerDefinition() ignores length change.
+- fixed bug #16280: compareDefinition() turns NULL defaults into empty strings for NOT NULL columns.
+- fixed bug #19677: Call to undefined function: MDB2_Driver_mysql::isError()
 
 open todo items:
 - handle autoincrement fields in alterTable()
@@ -163,7 +135,7 @@ open todo items:
    <file baseinstalldir="/" md5sum="ec0c4383ddfd3af69d577344d0d5b4dd" name="docs/TODO" role="doc">
     <tasks:replace from="@package_version@" to="version" type="package-info" />
    </file>
-   <file baseinstalldir="/" md5sum="2b6956a82c390271e810554aea9a6844" name="MDB2/Driver/Datatype/Common.php" role="php">
+   <file baseinstalldir="/" md5sum="76f4aef169e3249e89946b1a4ee1e72e" name="MDB2/Driver/Datatype/Common.php" role="php">
     <tasks:replace from="@package_version@" to="version" type="package-info" />
    </file>
    <file baseinstalldir="/" md5sum="06ac8297c5b84810e244ef3f296c9909" name="MDB2/Driver/Function/Common.php" role="php">
@@ -194,16 +166,16 @@ open todo items:
    <file baseinstalldir="/" md5sum="88180b869efe23dcc10dc335d1a86cc9" name="tests/Nonstandard/SqlservHelper.php" role="test" />
    <file baseinstalldir="/" md5sum="6154365fbc935bff18d09ce85631c591" name="tests/Standard/Abstract.php" role="test" />
    <file baseinstalldir="/" md5sum="4c1b01bcbff9f867fcc4334bfc1e5741" name="tests/Standard/ApiTest.php" role="test" />
-   <file baseinstalldir="/" md5sum="60c35310a22ba937ffcf4705711d8031" name="tests/Standard/BugsTest.php" role="test" />
+   <file baseinstalldir="/" md5sum="867da09d597872d66b475319b63147f0" name="tests/Standard/BugsTest.php" role="test" />
    <file baseinstalldir="/" md5sum="4805340558ca79c65620450a716a33ba" name="tests/Standard/DatatypeTest.php" role="test" />
    <file baseinstalldir="/" md5sum="49b9e7b6b6734038e8d099571e1c75b8" name="tests/Standard/ExtendedTest.php" role="test" />
    <file baseinstalldir="/" md5sum="fca11883f6012a7b22bf37341b3ca8bb" name="tests/Standard/FunctionTest.php" role="test" />
-   <file baseinstalldir="/" md5sum="97304276004bac265ef27e970ac2efb4" name="tests/Standard/InternalsTest.php" role="test">
+   <file baseinstalldir="/" md5sum="124d2c68bfc8dc924f0a31201c98134e" name="tests/Standard/InternalsTest.php" role="test">
     <tasks:replace from="@package_version@" to="version" type="package-info" />
    </file>
    <file baseinstalldir="/" md5sum="55dd0b2ab097bed18f472116f5b55eae" name="tests/Standard/ManagerTest.php" role="test" />
    <file baseinstalldir="/" md5sum="7d65b9467fc024c78ea45698cf0bae0d" name="tests/Standard/ReverseTest.php" role="test" />
-   <file baseinstalldir="/" md5sum="f2d7ea80c8a30db85420e60279269272" name="tests/Standard/UsageTest.php" role="test" />
+   <file baseinstalldir="/" md5sum="359888848e14308dc4d22fa4c292aa09" name="tests/Standard/UsageTest.php" role="test" />
    <file baseinstalldir="/" md5sum="a4ad7d4f5bb1caf918d6922674dd1c41" name="tests/AllTests.php" role="test" />
    <file baseinstalldir="/" md5sum="5ef86f767c99dc2fdf5ee9ac5a0db9a6" name="tests/autoload.inc" role="test">
     <tasks:replace from="@php_dir@" to="php_dir" type="pear-config" />
@@ -215,7 +187,7 @@ open todo items:
    <file baseinstalldir="/" md5sum="997685ec0ba37bd6a2db8e9ec728e61c" name="tests/README" role="test" />
    <file baseinstalldir="/" md5sum="8f37058a24d6b0b343370452483595ea" name="tests/schema.xml" role="test" />
    <file baseinstalldir="/" md5sum="a5019765abfd14334f25231c61c568ef" name="LICENSE" role="data" />
-   <file baseinstalldir="/" md5sum="c1bc8a0befdd4468d54c9301ecc4b562" name="MDB2.php" role="php">
+   <file baseinstalldir="/" md5sum="e5bd768cca253a9ff668b3c0afe07396" name="MDB2.php" role="php">
     <tasks:replace from="@package_version@" to="version" type="package-info" />
    </file>
   </dir>
@@ -245,75 +217,112 @@ open todo items:
    <subpackage>
     <name>MDB2_Driver_ibase</name>
     <channel>pear.php.net</channel>
-    <min>1.5.0b3</min>
+    <min>1.5.0b4</min>
    </subpackage>
   </group>
   <group hint="MS SQL Server driver for MDB2" name="mssql">
    <subpackage>
     <name>MDB2_Driver_mssql</name>
     <channel>pear.php.net</channel>
-    <min>1.5.0b3</min>
+    <min>1.5.0b4</min>
    </subpackage>
   </group>
   <group hint="MySQL driver for MDB2" name="mysql">
    <subpackage>
     <name>MDB2_Driver_mysql</name>
     <channel>pear.php.net</channel>
-    <min>1.5.0b3</min>
+    <min>1.5.0b4</min>
    </subpackage>
   </group>
   <group hint="MySQLi driver for MDB2" name="mysqli">
    <subpackage>
     <name>MDB2_Driver_mysqli</name>
     <channel>pear.php.net</channel>
-    <min>1.5.0b3</min>
+    <min>1.5.0b4</min>
    </subpackage>
   </group>
   <group hint="Oracle driver for MDB2" name="oci8">
    <subpackage>
     <name>MDB2_Driver_oci8</name>
     <channel>pear.php.net</channel>
-    <min>1.5.0b3</min>
+    <min>1.5.0b4</min>
    </subpackage>
   </group>
   <group hint="ODBC driver for MDB2" name="odbc">
    <subpackage>
     <name>MDB2_Driver_odbc</name>
     <channel>pear.php.net</channel>
-    <min>0.1.0</min>
+    <min>0.2.0</min>
    </subpackage>
   </group>
   <group hint="PostgreSQL driver for MDB2" name="pgsql">
    <subpackage>
     <name>MDB2_Driver_pgsql</name>
     <channel>pear.php.net</channel>
-    <min>1.5.0b3</min>
+    <min>1.5.0b4</min>
    </subpackage>
   </group>
   <group hint="Querysim driver for MDB2" name="querysim">
    <subpackage>
     <name>MDB2_Driver_querysim</name>
     <channel>pear.php.net</channel>
-    <min>0.6.0</min>
+    <min>0.7.0</min>
    </subpackage>
   </group>
   <group hint="SQLite2 driver for MDB2" name="sqlite">
    <subpackage>
     <name>MDB2_Driver_sqlite</name>
     <channel>pear.php.net</channel>
-    <min>1.5.0b3</min>
+    <min>1.5.0b4</min>
    </subpackage>
   </group>
   <group hint="MS SQL Server driver for MDB2" name="sqlsrv">
    <subpackage>
     <name>MDB2_Driver_sqlsrv</name>
     <channel>pear.php.net</channel>
-    <min>1.5.0b3</min>
+    <min>1.5.0b5</min>
    </subpackage>
   </group>
  </dependencies>
  <phprelease />
  <changelog>
+  <release>
+   <version>
+    <release>2.5.0b5</release>
+    <api>2.5.0b5</api>
+   </version>
+   <stability>
+    <release>beta</release>
+    <api>beta</api>
+   </stability>
+   <date>2012-10-29</date>
+   <license>BSD License</license>
+   <notes>
+- fixed bug #18494: _compareIntegerDefinition() ignores length change.
+- fixed bug #16280: compareDefinition() turns NULL defaults into empty strings for NOT NULL columns.
+- fixed bug #19677: Call to undefined function: MDB2_Driver_mysql::isError()
+
+open todo items:
+- handle autoincrement fields in alterTable()
+- add length handling to LOB reverse engineering
+- add EXPLAIN abstraction
+- add cursor support along the lines of PDO (Request #3660 etc.)
+- add PDO based drivers, especially a driver to support SQLite 3 (Request #6907)
+- add support to export/import in CSV format
+- add more functions to the Function module (MD5(), IFNULL(), etc.)
+- add support for database/table/row LOCKs
+- add support for CHECK (ENUM as possible mysql fallback) constraints
+- generate STATUS file from test suite results and allow users to submit test results
+- add support for full text index creation and querying
+- add tests to check if the RDBMS specific handling with portability options
+  disabled behaves as expected
+- handle implicit commits (like for DDL) in any affected driver (mysql, sqlite..)
+- add a getTableFieldsDefinitions() method to be used in tableInfo()
+- drop ILIKE from matchPattern() and instead add a second parameter to
+  handle case sensitivity with arbitrary operators
+- handle LOBs in buffered result sets (Request #8793)
+   </notes>
+  </release>
   <release>
    <version>
     <release>2.5.0b4</release>

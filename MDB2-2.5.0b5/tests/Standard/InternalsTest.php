@@ -42,7 +42,7 @@
 // |         Andrew Hill <andrew.hill@openads.org>                        |
 // +----------------------------------------------------------------------+
 //
-// $Id: InternalsTest.php 327318 2012-08-27 15:17:14Z danielc $
+// $Id: InternalsTest.php 328183 2012-10-29 15:10:42Z danielc $
 
 require_once dirname(__DIR__) . '/autoload.inc';
 
@@ -58,7 +58,7 @@ class Standard_InternalsTest extends Standard_Abstract {
         $this->manualSetUp($ci);
 
         $result = MDB2::apiVersion();
-        if ('@'.'package_version'.'@' == '2.5.0b4') {
+        if ('@'.'package_version'.'@' == '2.5.0b5') {
             $this->assertEquals('@'.'package_version'.'@', $result);
             return;
         }
@@ -697,4 +697,133 @@ class Standard_InternalsTest extends Standard_Abstract {
         $this->assertEquals(32, $this->db->_skipDelimitedStrings($query, 19, 21));
     }
 
+    /**
+     * Double check that errors are a MDB2_Error
+     * @see http://pear.php.net/bugs/bug.php?id=19677
+     * @dataProvider provider
+     */
+    public function testMDB2_Error($ci) {
+        $this->manualSetUp($ci);
+
+        $result = $this->db->query("GOTTA FAIL");
+        if (!MDB2::isError($result)) {
+            $this->fail("What!?  That should have been a MDB2 error.");
+        }
+    }
+
+    /**
+     * Double check that errors are a PEAR_Error
+     * @see http://pear.php.net/bugs/bug.php?id=19677
+     * @depends testMDB2_Error
+     * @dataProvider provider
+     */
+    public function testPEAR_Error($ci) {
+        $this->manualSetUp($ci);
+
+        $result = $this->db->query("GOTTA FAIL");
+        if (!@PEAR::isError($result)) {
+            $this->fail("What!?  That should have been a PEAR error.");
+        }
+    }
+
+    /**
+     * Call to undefined function: MDB2_Driver_Common::isError()
+     * @see http://pear.php.net/bugs/bug.php?id=19677
+     * @depends testMDB2_Error
+     * @dataProvider provider
+     * @expectedException PHPUnit_Framework_Error
+     * @expectedExceptionMessage isError() is deprecated, use MDB2::isError()
+     */
+    public function testDriverIsError_object($ci) {
+        $this->manualSetUp($ci);
+
+        $result = $this->db->query("GOTTA FAIL");
+        // Problem raised in bug 19677.
+        if (!$this->db->isError($result)) {
+            $this->fail("What!?  That should have been an OOP error.");
+        }
+    }
+
+    /**
+     * Call to undefined function: MDB2_Driver_Common::isError()
+     * @see http://pear.php.net/bugs/bug.php?id=19677
+     * @depends testMDB2_Error
+     * @dataProvider provider
+     * @expectedException PHPUnit_Framework_Error
+     * @expectedExceptionMessage isError() is deprecated, use MDB2::isError()
+     */
+    public function testDriverIsError_static($ci) {
+        $this->manualSetUp($ci);
+
+        $result = $this->db->query("GOTTA FAIL");
+        // Cover this scenario too.
+        $class = get_class($this->db);
+        if (!$class::isError($result)) {
+            $this->fail("What!?  That should have been a static error.");
+        }
+    }
+
+    /**
+     * Parameter missing for MDB2_Driver_Common::isError()
+     * @see http://pear.php.net/bugs/bug.php?id=19677
+     * @depends testMDB2_Error
+     * @dataProvider provider
+     * @expectedException PHPUnit_Framework_Error
+     * @expectedExceptionMessage isError() is deprecated, use MDB2::isError()
+     * @expectedExceptionMessage Missing argument 1
+     */
+    public function testDriverIsError_object_param_missing($ci) {
+        $this->manualSetUp($ci);
+
+        if (!$this->db->isError()) {
+            $this->fail("What!?  That should have been an OOP error.");
+        }
+    }
+
+    /**
+     * Parameter missing for MDB2_Driver_Common::isError()
+     * @see http://pear.php.net/bugs/bug.php?id=19677
+     * @depends testMDB2_Error
+     * @dataProvider provider
+     * @expectedException PHPUnit_Framework_Error
+     * @expectedExceptionMessage isError() is deprecated, use MDB2::isError()
+     * @expectedExceptionMessage Missing argument 1
+     */
+    public function testDriverIsError_static_param_missing($ci) {
+        $this->manualSetUp($ci);
+
+        $class = get_class($this->db);
+        if (!$class::isError()) {
+            $this->fail("What!?  That should have been a static error.");
+        }
+    }
+
+    /**
+     * Call to undefined function: MDB2_Driver_common::unknownfunction
+     * @see http://pear.php.net/bugs/bug.php?id=19677
+     * @depends testMDB2_Error
+     * @dataProvider provider
+     * @expectedException PHPUnit_Framework_Error
+     * @expectedExceptionMessage Call to undefined function
+     */
+    public function testDriverIsError_object_unknown($ci) {
+        $this->manualSetUp($ci);
+
+        $result = $this->db->unkownfunction();
+    }
+
+    /**
+     * Call to undefined function: MDB2_Driver_common::unknownfunction
+     * @see http://pear.php.net/bugs/bug.php?id=19677
+     * @depends testMDB2_Error
+     * @dataProvider provider
+     * @expectedException PHPUnit_Framework_Error
+     * @expectedExceptionMessage Call to undefined function
+     */
+    public function testDriverIsError_static_unknown($ci) {
+        $this->manualSetUp($ci);
+
+        $class = get_class($this->db);
+        $class::unknownfunction();
+    }
 }

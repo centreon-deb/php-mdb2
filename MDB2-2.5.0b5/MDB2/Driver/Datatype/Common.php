@@ -42,7 +42,7 @@
 // | Author: Lukas Smith <smith@pooteeweet.org>                           |
 // +----------------------------------------------------------------------+
 //
-// $Id: Common.php 327310 2012-08-27 15:16:18Z danielc $
+// $Id: Common.php 328137 2012-10-25 02:26:35Z danielc $
 
 require_once 'MDB2/LOB.php';
 
@@ -909,9 +909,9 @@ class MDB2_Driver_Datatype_Common extends MDB2_Module_Common
         }
 
         $previous_default = array_key_exists('default', $previous) ? $previous['default'] :
-            ($previous_notnull ? '' : null);
+            null;
         $default = array_key_exists('default', $current) ? $current['default'] :
-            ($notnull ? '' : null);
+            null;
         if ($previous_default !== $default) {
             $change['default'] = true;
         }
@@ -933,6 +933,11 @@ class MDB2_Driver_Datatype_Common extends MDB2_Module_Common
     function _compareIntegerDefinition($current, $previous)
     {
         $change = array();
+        $previous_length = !empty($previous['length']) ? $previous['length'] : 4;
+        $length = !empty($current['length']) ? $current['length'] : 4;
+        if ($previous_length != $length) {
+            $change['length'] = $length;
+        }
         $previous_unsigned = !empty($previous['unsigned']) ? $previous['unsigned'] : false;
         $unsigned = !empty($current['unsigned']) ? $current['unsigned'] : false;
         if ($previous_unsigned != $unsigned) {

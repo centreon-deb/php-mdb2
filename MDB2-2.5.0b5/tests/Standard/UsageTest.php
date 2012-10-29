@@ -42,7 +42,7 @@
 // |          Daniel Convissor <danielc@php.net>                          |
 // +----------------------------------------------------------------------+
 //
-// $Id: UsageTest.php 327313 2012-08-27 15:16:42Z danielc $
+// $Id: UsageTest.php 328146 2012-10-25 20:21:06Z danielc $
 
 require_once dirname(__DIR__) . '/autoload.inc';
 
@@ -127,6 +127,124 @@ class Standard_UsageTest extends Standard_Abstract {
                 $this->assertEquals(strval($data[$row][$field]), strval(trim($value)), 'the query field '.$field.' of type '.$type.' for row '.$row);
             }
         }
+    }
+
+    /**
+     * Test fetchRow()
+     *
+     * Touch on issues raised in bugs 9502, 18203, 19303.
+     *
+     * @dataProvider provider
+     */
+    public function testFetchRow($ci) {
+        $this->manualSetUp($ci);
+
+        $data = array();
+        $total_rows = 1;
+
+        $query = 'INSERT INTO ' . $this->table_users . ' (' . implode(', ', array_keys($this->fields)) . ') VALUES ('.implode(', ', array_fill(0, count($this->fields), '?')).')';
+        $stmt = $this->db->prepare($query, array_values($this->fields), MDB2_PREPARE_MANIP);
+        if (MDB2::isError($stmt)) {
+            $this->fail('Error preparing query: ' . $stmt->getUserInfo());
+        }
+
+        for ($row = 1; $row <= $total_rows; $row++) {
+            $data[$row] = $this->getSampleData($row);
+            $result = $stmt->execute(array_values($data[$row]));
+
+            if (MDB2::isError($result)) {
+                @$stmt->free();
+                $this->fail('Error executing prepared query: ' . $result->getUserInfo());
+            }
+        }
+
+        $stmt->free();
+
+        $query = "INSERT INTO $this->table_files (id) VALUES (1)";
+        $result = $this->db->exec($query);
+        if (MDB2::isError($result)) {
+            $this->fail('Error inserting files: ' . $result->getUserInfo());
+        }
+
+        if ($this->db->phptype == 'oci8') {
+            $as = '';
+        } else {
+            $as = 'AS';
+        }
+
+        $query = "SELECT u.user_name, u.user_id $as id, f.id
+            FROM $this->table_users AS u
+            LEFT JOIN $this->table_files AS f ON (u.user_id = f.id)
+            ORDER BY user_name";
+
+        $expect_obj_type = new stdClass;
+        $expect_obj_type->user_name = 'user_1';
+        $expect_obj_type->id = 1;
+
+        $expect_obj_string = new stdClass;
+        $expect_obj_string->user_name = 'user_1';
+        $expect_obj_string->id = '1';
+
+        $expect_assoc_type = (array) $expect_obj_type;
+        $expect_assoc_string = (array) $expect_obj_string;
+        $expect_enum_type = array_values($expect_assoc_type);
+        $expect_enum_type[] = 1;
+        $expect_enum_string = array_values($expect_assoc_string);
+        $expect_enum_string[] = '1';
+
+        // Untyped.
+        $result = $this->db->query($query);
+        if (MDB2::isError($result)) {
+            $this->fail('Error selecting: ' . $result->getUserInfo());
+        }
+        $values = $result->fetchRow(MDB2_FETCHMODE_ORDERED);
+        $this->assertSame($expect_enum_string, $values, 'untyped, ordered');
+
+        $result = $this->db->query($query);
+        $values = $result->fetchRow(MDB2_FETCHMODE_ASSOC);
+        $this->assertSame($expect_assoc_string, $values, 'untyped, assoc');
+
+        $result = $this->db->query($query);
+        $values = $result->fetchRow(MDB2_FETCHMODE_OBJECT);
+        // Need to compare strings because they're different objects.
+        $this->assertSame(var_export($expect_obj_string, true),
+            var_export($values, true), 'untyped, object');
+
+        // Enum typed.
+        $types = array('text', 'integer', 'integer');
+
+        $result = $this->db->query($query, $types);
+        $values = $result->fetchRow(MDB2_FETCHMODE_ORDERED);
+        $this->assertSame($expect_enum_type, $values, 'enum typed, ordered');
+
+# Unsupported...
+#        $result = $this->db->query($query, $types);
+#        $values = $result->fetchRow(MDB2_FETCHMODE_ASSOC);
+#        $this->assertSame($expect_assoc_type, $values, 'enum typed, assoc');
+#
+#        $result = $this->db->query($query, $types);
+#        $values = $result->fetchRow(MDB2_FETCHMODE_OBJECT);
+#        // Need to compare strings because they're different objects.
+#        $this->assertSame(var_export($expect_obj_type, true),
+#            var_export($values, true), 'enum typed, object');
+
+        // Assoc typed.
+        $types = array('user_name' => 'text', 'id' => 'integer');
+
+# Unsupported...
+#        $result = $this->db->query($query, $types);
+#        $values = $result->fetchRow(MDB2_FETCHMODE_ORDERED);
+#        $this->assertSame($expect_enum_type, $values, 'assoc typed, ordered');
+
+        $result = $this->db->query($query, $types);
+        $values = $result->fetchRow(MDB2_FETCHMODE_ASSOC);
+        $this->assertSame($expect_assoc_type, $values, 'assoc typed, assoc');
+
+        $result = $this->db->query($query, $types);
+        $values = $result->fetchRow(MDB2_FETCHMODE_OBJECT);
+        // Need to compare strings because they're different objects.
+        $this->assertSame(var_export($expect_obj_type, true),
+            var_export($values, true), 'assoc typed, object');
     }
 
     /**

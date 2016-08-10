@@ -1,0 +1,20 @@
+#!/bin/sh
+
+REPOSITORY=php-mdb2
+VERSION=2.5.0b5
+
+ORIGIN_URL=https://github.com/centreon-deb/$REPOSITORY
+ORIGIN_REMOTE=origin
+
+
+git clone $ORIGIN_URL
+cd $REPOSITORY
+
+git fetch -a --tags
+
+cat <<EOF
+To get build instructions:
+  git show remotes/$ORIGIN_REMOTE/debian:README.Build.md
+To build:
+   cd $REPOSITORY && git deb-pkg -C -U -u $VERSION -d $ORIGIN_REMOTE/debian build
+EOF

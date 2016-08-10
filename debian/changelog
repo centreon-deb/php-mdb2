@@ -1,0 +1,6 @@
+php-mdb2 (2:2.5.0b5-1) trusty; urgency=low
+
+  * Initial release.
+
+ -- Sébastien Gross <seb-ppa@chezwam.org>  Wed, 10 Aug 2016 12:36:39 +0000
+

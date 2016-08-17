@@ -7,7 +7,7 @@ Standards-Version: 3.9.5
 Homepage: https://pear.php.net/package/MDB2
 
 Package: php-mdb2
-Architecture: any
+Architecture: all
 Depends: ${misc:Depends}, ${phppear:Debian-Depends}
 Recommends: ${phppear:Debian-Recommends}
 Breaks: ${phppear:Debian-Breaks}
